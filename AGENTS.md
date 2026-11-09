@@ -16,6 +16,9 @@
   - 修饰键 + 双击的 CGEventTap（`ClickTap`）跑在自己的线程上：回调里只能读写 `ClickTap` 里用锁保护的状态（配置快照、自己窗口的矩形），不能碰主线程对象，要做事就 `DispatchQueue.main.async`。功能关闭时不装 tap；`ClickTrigger` 每秒检查一次辅助功能权限，撤销后拆掉 tap 退回旁观监听。
   - AX 查询（`AXRegionFinder`）不绑定主线程，在后台调用，避免目标 app 卡住时冻结界面。
 - PiP 面板只有一条关闭路径：`PiPPanel.close()` → `WindowCapture.stop()`（停止并移除输出）→ `onClose` 从 `PiPManager` 移除。抓取意外结束也走这条路径。NSPanel 一定要 `hidesOnDeactivate = false`。
+- PiP 面板不用 `isMovableByWindowBackground`：`PiPContentView` 按下后移动 ≥ 4 点才 `performDrag`，否则松开算单击（单击切回原窗口，⌥ + 单击快速查看）。缩放手柄、× 按钮是子视图，事件不经过单击逻辑。× 只调 `PiPPanel.close()`。
+- 切回原窗口（`SourceWindowActivator`）：先 `NSRunningApplication.activate()`；只有已授权辅助功能时才在后台用 AX 按位置大小匹配并 `AXRaise`，带超时，绝不在这里请求权限。
+- 快速查看（`SnapshotPreview`）：`SCScreenshotManager` 原生分辨率截图 → `NSTemporaryDirectory()/PipDog` 里的 PNG（替换时删旧文件，启动和退出时删目录）→ `QLPreviewPanel`。控制者是 PiP 面板（`canBecomeMain = true`，快速查看从主窗口的响应链找控制者）；PipDog 不在前台时先激活自己，关闭后若仍在前台把前台还给之前的 app。不加键盘监听。
 - 给用户的错误反馈用 `Feedback.show(...)`（提示浮层）；缺权限用 `Permissions.showAlert(...)`。不要只写 NSLog。
 - 签名配置在 `Config/Signing.xcconfig`，不要在 `project.yml` 里写签名设置；本机覆盖用未跟踪的 `Config/Signing.local.xcconfig`。开启了 Hardened Runtime，新增需要特殊权限的能力（Apple Events、JIT 等）时要补 entitlements。
 - 打包用 `./scripts/package.sh`，产物在 `build/dist/`（不提交），完整日志在 `build/xcodebuild.log`。脚本不能输出任何密钥，公证凭据只用 notarytool 钥匙串配置。
