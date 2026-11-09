@@ -28,13 +28,13 @@ final class PiPManager {
         }
     }
 
-    /// PiP 当前聚焦的整个窗口。
+    /// PiP 最前面 app 的窗口。最前面的 app 没有可 PiP 的窗口时只提示，不去抓别的 app 的窗口。
     func pipFocusedWindow() async {
-        guard let window = WindowLocator.focusedWindow() else {
-            NSLog("PipDog: 没找到可 PiP 的窗口")
-            return
+        switch WindowLocator.focusedWindow() {
+        case .found(let window): await open(window, region: nil)
+        case .noWindow(let appName): Feedback.show("「\(appName)」没有可以 PiP 的窗口")
+        case .nothing: Feedback.show("屏幕上没有可以 PiP 的窗口")
         }
-        await open(window, region: nil)
     }
 
     /// 显示框选遮罩，选完后 PiP 选中的区域。
@@ -50,18 +50,22 @@ final class PiPManager {
     func pipRegion(_ rect: CGRect) async {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         guard let window = WindowLocator.window(at: center) else {
-            NSLog("PipDog: 选区下方没有可 PiP 的窗口")
+            Feedback.show("选区下方没有可以 PiP 的窗口")
             return
         }
         await open(window, screenRegion: rect)
     }
 
     /// 修饰键 + 双击：PiP 鼠标下方的容器元素；找不到合适元素时用以点击处为中心的固定大小区域。
+    /// 辅助功能查询放在后台线程，避免目标 app 卡住时冻结主线程。
     func pipElement(at point: CGPoint) async {
-        guard let window = WindowLocator.window(at: point) else { return }
-        let region = AXRegionFinder.containerFrame(at: point, in: window)
-            ?? CGRect(x: point.x - fallbackRegionSize.width / 2, y: point.y - fallbackRegionSize.height / 2,
-                      width: fallbackRegionSize.width, height: fallbackRegionSize.height)
+        guard let window = WindowLocator.window(at: point) else {
+            Feedback.show("鼠标下方没有可以 PiP 的窗口")
+            return
+        }
+        let found = await Task.detached { AXRegionFinder.containerFrame(at: point, in: window) }.value
+        let region = found ?? CGRect(x: point.x - fallbackRegionSize.width / 2, y: point.y - fallbackRegionSize.height / 2,
+                                     width: fallbackRegionSize.width, height: fallbackRegionSize.height)
         await open(window, screenRegion: region)
     }
 
@@ -76,7 +80,10 @@ final class PiPManager {
     /// 把屏幕区域裁剪到窗口内并换成窗口内坐标，然后打开 PiP。
     private func open(_ window: WindowInfo, screenRegion: CGRect) async {
         let clipped = screenRegion.intersection(window.bounds)
-        guard !clipped.isNull, clipped.width >= minimumRegion, clipped.height >= minimumRegion else { return }
+        guard !clipped.isNull, clipped.width >= minimumRegion, clipped.height >= minimumRegion else {
+            Feedback.show("区域太小（至少 \(Int(minimumRegion))×\(Int(minimumRegion))），没有打开 PiP")
+            return
+        }
         let relative = clipped.offsetBy(dx: -window.bounds.minX, dy: -window.bounds.minY)
         await open(window, region: relative)
     }
@@ -93,11 +100,12 @@ final class PiPManager {
 
         do {
             guard let scWindow = try await WindowLocator.shareableWindow(for: window.id) else {
-                NSLog("PipDog: ScreenCaptureKit 找不到 \(window.ownerName) 的窗口 \(window.id)")
+                Feedback.show("无法抓取「\(window.ownerName)」的这个窗口")
                 return
             }
-            let panel = PiPPanel(window: scWindow, region: region, cascadeIndex: panels.count)
+            let panel = PiPPanel(window: scWindow, region: region, sourceBounds: window.bounds, cascadeIndex: panels.count)
             panel.onClose = { [weak self] in self?.panels[key] = nil }
+            panel.onEnded = { message in Feedback.show(message) }
             panels[key] = panel
             do {
                 try await panel.start()
@@ -106,7 +114,16 @@ final class PiPManager {
                 throw error
             }
         } catch {
-            NSLog("PipDog: 启动 PiP 失败：\(error.localizedDescription)")
+            report(error)
+        }
+    }
+
+    private func report(_ error: any Error) {
+        NSLog("PipDog: 启动 PiP 失败：\(error.localizedDescription)")
+        if Permissions.isScreenRecordingError(error) {
+            Permissions.showAlert(.screenRecording)
+        } else {
+            Feedback.show("启动 PiP 失败：\(error.localizedDescription)")
         }
     }
 }

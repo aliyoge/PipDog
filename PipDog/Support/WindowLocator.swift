@@ -12,6 +12,13 @@ struct WindowInfo: Sendable {
 /// 用公开的 CGWindowList / ScreenCaptureKit 接口定位窗口。始终排除 PipDog 自己的窗口。
 @MainActor
 enum WindowLocator {
+    enum FocusedWindow {
+        case found(WindowInfo)
+        /// 最前面的 app 没有可 PiP 的窗口
+        case noWindow(appName: String)
+        case nothing
+    }
+
     /// 屏幕上可见的普通窗口，按从前到后排列。
     static func onScreenWindows() -> [WindowInfo] {
         let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
@@ -22,8 +29,7 @@ enum WindowLocator {
             guard (dict["kCGWindowLayer"] as? Int) == 0,
                   let id = dict["kCGWindowNumber"] as? CGWindowID,
                   let pid = dict["kCGWindowOwnerPID"] as? pid_t, pid != me,
-                  let boundsDict = dict["kCGWindowBounds"] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+                  let bounds = bounds(from: dict),
                   bounds.width >= 40, bounds.height >= 40
             else { return nil }
             if let alpha = dict["kCGWindowAlpha"] as? Double, alpha <= 0 { return nil }
@@ -32,11 +38,14 @@ enum WindowLocator {
         }
     }
 
-    /// 当前聚焦的窗口：最前面 app 的第一个普通窗口；如果最前面是 PipDog 自己，就取屏幕上最前面的别人的窗口。
-    static func focusedWindow() -> WindowInfo? {
+    /// 最前面 app 的第一个普通窗口。最前面是 PipDog 自己（例如设置窗口打开时）就取屏幕上最前面的别人的窗口。
+    static func focusedWindow() -> FocusedWindow {
         let windows = onScreenWindows()
-        let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        return windows.first { $0.pid == pid } ?? windows.first
+        guard let app = NSWorkspace.shared.frontmostApplication, app != NSRunningApplication.current else {
+            return windows.first.map(FocusedWindow.found) ?? .nothing
+        }
+        if let window = windows.first(where: { $0.pid == app.processIdentifier }) { return .found(window) }
+        return .noWindow(appName: app.localizedName ?? "最前面的 app")
     }
 
     /// 包含某点（左上角原点的全局坐标）的最上层普通窗口。
@@ -44,9 +53,22 @@ enum WindowLocator {
         onScreenWindows().first { $0.bounds.contains(point) }
     }
 
+    /// 某个窗口当前的位置和大小（包括最小化或在别的 Space 上的窗口）；窗口已关闭时为 nil。
+    static func bounds(of id: CGWindowID) -> CGRect? {
+        guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
+              let dict = list.first(where: { ($0["kCGWindowNumber"] as? CGWindowID) == id })
+        else { return nil }
+        return bounds(from: dict)
+    }
+
     /// 根据 CGWindowID 找到对应的 SCWindow。
     static func shareableWindow(for id: CGWindowID) async throws -> SCWindow? {
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
         return content.windows.first { $0.windowID == id }
+    }
+
+    private static func bounds(from dict: [String: Any]) -> CGRect? {
+        guard let boundsDict = dict["kCGWindowBounds"] as? NSDictionary else { return nil }
+        return CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
     }
 }
