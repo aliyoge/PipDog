@@ -18,7 +18,52 @@ xcodebuild -scheme PipDog -configuration Debug -derivedDataPath build build
 open build/Build/Products/Debug/PipDog.app
 ```
 首次运行需在「系统设置 › 隐私与安全性」里授予 **屏幕录制** 和 **辅助功能** 权限。
-当前是本地临时签名（ad-hoc），每次重新构建后系统可能要求重新授权；以后可换成自己的开发者证书签名。
+现在用固定的开发者证书签名，重新构建后这些权限一般会保留（之前签过 ad-hoc 版的话，可能需要在权限列表里删掉旧条目重新授权一次）。
+
+## 应用图标
+- 原图在 `Design/AppIcon-1024.png`（1024×1024 透明 PNG，图标主体约 824×824，符合 macOS 图标网格）。
+- `PipDog/Resources/Assets.xcassets/AppIcon.appiconset` 里是各尺寸（16–512 的 @1x/@2x）。换图标时替换原图后重新生成：
+  ```sh
+  cd PipDog/Resources/Assets.xcassets/AppIcon.appiconset
+  for s in 16 32 128 256 512; do
+    sips -z $s $s ../../../../Design/AppIcon-1024.png --out icon_${s}x${s}.png
+    sips -z $((s*2)) $((s*2)) ../../../../Design/AppIcon-1024.png --out icon_${s}x${s}@2x.png
+  done
+  ```
+- 菜单栏图标仍是 SF Symbol `pip`。
+
+## 签名
+- 默认值在 `Config/Signing.xcconfig`（已提交）：`Apple Development` 证书、团队 `653QLVW4RT`、手动签名、开启 Hardened Runtime、非沙盒。Release 不带 `get-task-allow`。
+- 本机想换证书或团队时，新建未跟踪的 `Config/Signing.local.xcconfig` 覆盖即可（已在 `.gitignore`），例如：
+  ```
+  CODE_SIGN_IDENTITY = Developer ID Application
+  DEVELOPMENT_TEAM = XXXXXXXXXX
+  ```
+- 查看本机可用证书：`security find-identity -v -p codesigning`。
+
+## 打包
+```sh
+./scripts/package.sh
+```
+会构建 Release（通用二进制 arm64 + x86_64），校验签名（`codesign --verify --deep --strict`），打印 Gatekeeper 评估（`spctl`），并生成：
+- `build/dist/PipDog-<版本>.zip`
+- `build/dist/PipDog-<版本>.dmg`（里面有拖到 Applications 的快捷方式）
+
+版本号取 `project.yml` 里的 `MARKETING_VERSION`。
+
+用 Apple Development 证书签的包 **没有公证**：`spctl` 会显示 rejected，这是正常的。在自己的 Mac 上可以直接用；发给别人时对方需要右键 › 打开，或在「隐私与安全性」里点「仍要打开」。
+
+### 以后换成 Developer ID 并公证
+1. 在 Apple 开发者账号里创建 **Developer ID Application** 证书并装进钥匙串。
+2. 保存公证凭据（只需一次，密码会存进钥匙串，不会写进仓库）：
+   ```sh
+   xcrun notarytool store-credentials pipdog-notary --apple-id <Apple ID> --team-id <团队 ID>
+   ```
+3. 打包时指定身份和凭据名：
+   ```sh
+   SIGN_IDENTITY="Developer ID Application: 名字 (团队 ID)" NOTARY_PROFILE=pipdog-notary ./scripts/package.sh
+   ```
+   脚本会用 hardened runtime 加时间戳重新签名，用 `notarytool submit --wait` 提交 app 和 dmg 去公证，再用 `stapler staple` 把票据装订进去。也可以在 `Signing.local.xcconfig` 里改默认身份。
 
 ## 使用
 以下是默认快捷键，都可以在「设置…」（菜单栏 › 设置…，⌘,）里修改：
@@ -45,6 +90,9 @@ open build/Build/Products/Debug/PipDog.app
 - 设置保存在 UserDefaults（`com.hwj.PipDog` 的 `PipDog.shortcutConfig` 和 `PipDog.captureFrameRate`），启动时读取；没有保存过时用默认值。
 
 ## 目录
+- `Config`：签名配置（xcconfig）
+- `Design`：图标原图
+- `scripts`：打包脚本
 - `PipDog/App`：入口、菜单栏、权限、快捷键注册
 - `PipDog/PiP`：PiP 管理、浮窗面板、窗口抓取（支持区域 `sourceRect`）
 - `PipDog/Settings`：快捷键设置（存储、注册、录制）和设置界面
@@ -61,4 +109,5 @@ open build/Build/Products/Debug/PipDog.app
 - [ ] 缩放/平移、透明度、悬停自动隐藏
 - [ ] 空闲/变化检测与通知、触发脚本
 - [ ] 媒体控制
+- [x] 应用图标、固定签名、打包 zip/dmg（可选公证）
 - [ ] 开机自启

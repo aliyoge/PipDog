@@ -1,0 +1,10 @@
+// 签名默认值（已提交）。本机覆盖写在同目录未跟踪的 Signing.local.xcconfig 里，例如：
+//   CODE_SIGN_IDENTITY = Developer ID Application
+//   DEVELOPMENT_TEAM = XXXXXXXXXX
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM = 653QLVW4RT
+ENABLE_HARDENED_RUNTIME = YES
+OTHER_CODE_SIGN_FLAGS = $(inherited) --timestamp=none
+
+#include? "Signing.local.xcconfig"

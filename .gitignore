@@ -3,3 +3,5 @@ build/
 DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+dist/
+Config/Signing.local.xcconfig

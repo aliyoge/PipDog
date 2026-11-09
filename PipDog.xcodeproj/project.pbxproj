@@ -19,6 +19,7 @@
 		5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */; };
 		A6972FFFA4C9291479CA5717 /* ShortcutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */; };
 		BD4233E206B891D98EB2A231 /* PipDogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C94F14FF5432A7293CD6E6 /* PipDogApp.swift */; };
+		C2B5DF9C7BE8F6AB94F51DD5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57A089021CE6A958FE9A0EF8 /* Assets.xcassets */; };
 		C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */; };
 		C6D2C7C7605BD961DFD14312 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DB25E6799937CAC283C08D /* SettingsView.swift */; };
 		E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */; };
@@ -36,11 +37,13 @@
 		41A899DE6811F684ECCFCC2C /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
 		4E5A85744DB48BD0C55BB5C4 /* PipDog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PipDog.entitlements; sourceTree = "<group>"; };
 		5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXRegionFinder.swift; sourceTree = "<group>"; };
+		57A089021CE6A958FE9A0EF8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6E9C072D7011344CAE8F6E6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutConfig.swift; sourceTree = "<group>"; };
 		727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPPanel.swift; sourceTree = "<group>"; };
 		7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
 		8F30E976895527D62F26E134 /* WindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapture.swift; sourceTree = "<group>"; };
+		A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLocator.swift; sourceTree = "<group>"; };
 		C9DB25E6799937CAC283C08D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeNames.swift; sourceTree = "<group>"; };
@@ -77,6 +80,7 @@
 		75C786C371F1B49AF1E3E9A8 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				57A089021CE6A958FE9A0EF8 /* Assets.xcassets */,
 				6E9C072D7011344CAE8F6E6C /* Info.plist */,
 				4E5A85744DB48BD0C55BB5C4 /* PipDog.entitlements */,
 			);
@@ -128,6 +132,7 @@
 		E1E48AF06A692BAC9B42E2F2 = {
 			isa = PBXGroup;
 			children = (
+				F81D0971BF70A115CDF3452D /* Config */,
 				AA494D5A19257609B25C27C6 /* PipDog */,
 				D1ADBEFF8AFC0E57CBA9B455 /* Products */,
 			);
@@ -143,6 +148,14 @@
 			path = Support;
 			sourceTree = "<group>";
 		};
+		F81D0971BF70A115CDF3452D /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -151,6 +164,7 @@
 			buildConfigurationList = 21156C0BAB2A3B6700820889 /* Build configuration list for PBXNativeTarget "PipDog" */;
 			buildPhases = (
 				A01D8ED1694D9BC91FD0C2D4 /* Sources */,
+				1A91874240977FD4445F3FA2 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -173,6 +187,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					68889DF6F6EFB7FCA11759BC = {
+						DevelopmentTeam = 653QLVW4RT;
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -195,6 +210,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1A91874240977FD4445F3FA2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2B5DF9C7BE8F6AB94F51DD5 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A01D8ED1694D9BC91FD0C2D4 /* Sources */ = {
@@ -230,6 +256,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PipDog/Resources/PipDog.entitlements;
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = PipDog/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -243,6 +270,7 @@
 		};
 		2000E28311AB59DF450847B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -274,12 +302,9 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -327,6 +352,7 @@
 		};
 		ADED1AE8EE1D6BE72BE20571 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -358,12 +384,9 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
