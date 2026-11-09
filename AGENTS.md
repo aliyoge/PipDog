@@ -7,7 +7,9 @@
 - 非沙盒 app（需要辅助功能和屏幕录制），最低系统 macOS 14。
 - 并发约定（Swift 6 严格并发）：
   - UI、设置和抓取状态都是 `@MainActor`。`WindowCapture` 也是 `@MainActor`，只有 SCStream 的帧回调和停止回调是 `nonisolated`，它们只能碰线程安全的 `FrameMailbox`，再用 `DispatchQueue.main.async` 切回主线程；不要每帧创建 Task。
-  - Carbon 快捷键回调和 CGEventTap 回调都在主 run loop 上执行，用 `MainActor.assumeIsolated`。
+  - `WindowCapture` 的配置只通过 `setNeedsUpdate()` 串行更新，每次用 `makeConfiguration()` 新建 `SCStreamConfiguration`，不要修改正在更新中的配置对象。输出尺寸以面板像素尺寸为上限（长边 ≤ 4096），面板缩放结束时调用 `PiPPanel.contentSizeDidSettle()`。
+  - Carbon 快捷键回调在主 run loop 上执行，用 `MainActor.assumeIsolated`。
+  - 修饰键 + 双击的 CGEventTap（`ClickTap`）跑在自己的线程上：回调里只能读写 `ClickTap` 里用锁保护的状态（配置快照、自己窗口的矩形），不能碰主线程对象，要做事就 `DispatchQueue.main.async`。功能关闭时不装 tap；`ClickTrigger` 每秒检查一次辅助功能权限，撤销后拆掉 tap 退回旁观监听。
   - AX 查询（`AXRegionFinder`）不绑定主线程，在后台调用，避免目标 app 卡住时冻结界面。
 - PiP 面板只有一条关闭路径：`PiPPanel.close()` → `WindowCapture.stop()`（停止并移除输出）→ `onClose` 从 `PiPManager` 移除。抓取意外结束也走这条路径。NSPanel 一定要 `hidesOnDeactivate = false`。
 - 给用户的错误反馈用 `Feedback.show(...)`（提示浮层）；缺权限用 `Permissions.showAlert(...)`。不要只写 NSLog。
