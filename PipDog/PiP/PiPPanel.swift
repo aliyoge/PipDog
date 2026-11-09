@@ -60,7 +60,16 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     func start() async throws {
         orderFrontRegardless()
-        try await capture.start()
+        try await capture.start(fps: CaptureSettings.shared.frameRate)
+    }
+
+    /// 把新的帧率应用到正在运行的抓取。
+    func setFrameRate(_ fps: Int) {
+        Task {
+            do { try await capture.setFrameRate(fps) } catch {
+                NSLog("PipDog: 修改帧率失败：\(error.localizedDescription)")
+            }
+        }
     }
 
     override var canBecomeKey: Bool { true }

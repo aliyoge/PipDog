@@ -3,6 +3,7 @@ import SwiftUI
 /// 设置窗口：全局快捷键、修饰键 + 双击触发。
 struct SettingsView: View {
     private var settings: ShortcutSettings { .shared }
+    private var capture: CaptureSettings { .shared }
 
     var body: some View {
         Form {
@@ -41,9 +42,20 @@ struct SettingsView: View {
                 }
             }
 
+            Section("画面") {
+                Picker("帧率", selection: Binding(get: { capture.frameRate }, set: { capture.frameRate = $0 })) {
+                    ForEach(CaptureSettings.frameRateOptions, id: \.self) { Text("\($0) fps").tag($0) }
+                }
+                Text("修改后立即应用到已打开的 PiP。帧率越高画面越流畅，但 CPU 占用也越高；盯日志、进度条用 5–10 fps 就够了。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             HStack {
                 Spacer()
-                Button("恢复默认") { settings.restoreDefaults() }
+                Button("恢复默认") {
+                    settings.restoreDefaults()
+                    capture.restoreDefaults()
+                }
             }
         }
         .formStyle(.grouped)

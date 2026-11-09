@@ -22,6 +22,12 @@ final class PiPManager {
     private let minimumRegion: CGFloat = 20
     private let fallbackRegionSize = CGSize(width: 480, height: 300)
 
+    init() {
+        CaptureSettings.shared.onFrameRateChange = { [weak self] fps in
+            self?.panels.values.forEach { $0.setFrameRate(fps) }
+        }
+    }
+
     /// PiP 当前聚焦的整个窗口。
     func pipFocusedWindow() async {
         guard let window = WindowLocator.focusedWindow() else {
