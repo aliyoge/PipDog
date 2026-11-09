@@ -1,11 +1,14 @@
 import AppKit
 import Carbon.HIToolbox
+import QuickLookUI
 import ScreenCaptureKit
 
 /// 一个置顶、跨 Space 的浮动面板，实时显示某个窗口（或其中一块区域）的画面。
 @MainActor
 final class PiPPanel: NSPanel, NSWindowDelegate {
     private let capture: WindowCapture
+    /// 原窗口（单击切回、⌥ 单击快速查看时用）
+    private let source: WindowInfo
     private let imageLayer = CALayer()
     /// 正在显示的帧；保留到下一帧到来，避免它的 IOSurface 被复用
     private var currentFrame: CapturedFrame?
@@ -16,12 +19,13 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     /// - Parameters:
     ///   - region: 窗口内区域（点，窗口左上角为原点）；nil 表示整个窗口
-    ///   - sourceBounds: 原窗口在屏幕上的位置（左上角原点的全局坐标），用来决定面板放在哪块屏幕
+    ///   - source: 原窗口；它在屏幕上的位置用来决定面板放在哪块屏幕
     ///   - cascadeIndex: 第几个面板，用来错开位置
-    init(window target: SCWindow, region: CGRect?, sourceBounds: CGRect, cascadeIndex: Int) {
+    init(window target: SCWindow, region: CGRect?, source: WindowInfo, cascadeIndex: Int) {
         capture = WindowCapture(window: target, region: region)
+        self.source = source
         let size = Self.panelSize(for: region?.size ?? target.frame.size, isRegion: region != nil)
-        let screen = (Geometry.screen(containingTopLeftRect: sourceBounds) ?? Geometry.screenUnderMouse ?? NSScreen.main)?
+        let screen = (Geometry.screen(containingTopLeftRect: source.bounds) ?? Geometry.screenUnderMouse ?? NSScreen.main)?
             .visibleFrame ?? .zero
         let offset = CGFloat(cascadeIndex % 8) * 28
         let origin = NSPoint(x: max(screen.minX, screen.maxX - size.width - 20 - offset),
@@ -33,7 +37,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         hidesOnDeactivate = false // NSPanel 默认 true：PipDog 一失去激活（框选结束、设置窗口切走）面板就会消失
-        isMovableByWindowBackground = true
+        isMovableByWindowBackground = false // 拖动由 PiPContentView 区分单击后自己发起
         hasShadow = true
         isOpaque = false
         backgroundColor = .clear // 透明窗口 + 圆角图层，四角才不会露出黑色方角
@@ -41,7 +45,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         contentAspectRatio = size
         delegate = self // 自己接收缩放结束、换屏等通知
 
-        let view = NSView(frame: NSRect(origin: .zero, size: size))
+        let view = PiPContentView(frame: NSRect(origin: .zero, size: size))
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.black.cgColor
         view.layer?.cornerRadius = 12
@@ -55,6 +59,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         let handle = ResizeHandle(frame: NSRect(x: size.width - handleSize, y: 0, width: handleSize, height: handleSize))
         handle.autoresizingMask = [.minXMargin, .maxYMargin]
         view.addSubview(handle)
+        view.onClick = { [weak self] modifiers in self?.clicked(modifiers: modifiers) }
+        view.onCloseButton = { [weak self] in self?.close() }
         contentView = view
 
         capture.onFrame = { [weak self] frame in self?.show(frame) }
@@ -102,6 +108,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     func windowDidChangeBackingProperties(_ notification: Notification) { contentSizeDidSettle() }
 
     override var canBecomeKey: Bool { true }
+    /// 快速查看从主窗口的响应链找控制者，PiP 要能成为主窗口
+    override var canBecomeMain: Bool { true }
 
     override func keyDown(with event: NSEvent) {
         let code = Int(event.keyCode)
@@ -121,6 +129,45 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         onClose?()
         onClose = nil
         onEnded = nil
+    }
+
+    // MARK: - 单击
+
+    /// 单击切回原窗口；⌥ + 单击用快速查看看原尺寸截图。
+    private func clicked(modifiers: NSEvent.ModifierFlags) {
+        guard !isClosing else { return }
+        if modifiers.contains(.option) {
+            showQuickLook()
+        } else {
+            SourceWindowActivator.bringToFront(pid: source.pid, windowID: source.id, appName: source.ownerName)
+        }
+    }
+
+    private func showQuickLook() {
+        let previousApp = NSWorkspace.shared.frontmostApplication // 截图要一点时间，先记下来
+        Task {
+            do {
+                let image = try await capture.snapshot()
+                guard !isClosing else { return }
+                try await SnapshotPreview.shared.present(image, name: source.ownerName, from: self, previousApp: previousApp)
+            } catch {
+                Feedback.show("快速查看失败：\(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - 快速查看控制者（QLPreviewPanel 通过响应链在主线程调用；方法声明在 NSObject 分类里，不带隔离）
+
+    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool {
+        MainActor.assumeIsolated { SnapshotPreview.shared.hasItem }
+    }
+
+    override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated { SnapshotPreview.shared.beginControl(panel) }
+    }
+
+    override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated { SnapshotPreview.shared.endControl(panel) }
     }
 
     // MARK: - 内部

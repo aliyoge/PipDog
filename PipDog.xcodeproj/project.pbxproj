@@ -18,6 +18,8 @@
 		4FA8A63A86154A4FDEA92255 /* AXRegionFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */; };
 		5EE94440916AF71B3F6901C8 /* ClickTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */; };
 		5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */; };
+		60287A9E87198FC4C0CD8224 /* PiPContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63478B0496FA5EFB6DE0764F /* PiPContentView.swift */; };
+		7282503B8F3E17BC1D7BABB8 /* SnapshotPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */; };
 		A0BA9C151C9E070E0F6713B0 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2DED32F21B7A9BE855B66 /* Feedback.swift */; };
 		A6972FFFA4C9291479CA5717 /* ShortcutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */; };
 		ADEA8AE8FBE0C94E2117A9CF /* SettingsActivation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1454D76B7C93A30D308785A /* SettingsActivation.swift */; };
@@ -29,6 +31,7 @@
 		CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */; };
 		E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */; };
 		ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187CF608B7735238BD5EC646 /* CaptureSettings.swift */; };
+		EED1C0C55B705B18CD82846F /* SourceWindowActivator.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED851B69B19361467D43631F /* SourceWindowActivator.swift */; };
 		F547B4B118C9E44DC266FF85 /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A899DE6811F684ECCFCC2C /* Permissions.swift */; };
 		F8E942665A86F876A9BE372C /* WindowCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F30E976895527D62F26E134 /* WindowCapture.swift */; };
 /* End PBXBuildFile section */
@@ -44,6 +47,7 @@
 		4E5A85744DB48BD0C55BB5C4 /* PipDog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PipDog.entitlements; sourceTree = "<group>"; };
 		5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXRegionFinder.swift; sourceTree = "<group>"; };
 		57A089021CE6A958FE9A0EF8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		63478B0496FA5EFB6DE0764F /* PiPContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPContentView.swift; sourceTree = "<group>"; };
 		6E9C072D7011344CAE8F6E6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutConfig.swift; sourceTree = "<group>"; };
 		727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPPanel.swift; sourceTree = "<group>"; };
@@ -52,6 +56,7 @@
 		8F30E976895527D62F26E134 /* WindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapture.swift; sourceTree = "<group>"; };
 		A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLocator.swift; sourceTree = "<group>"; };
+		C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotPreview.swift; sourceTree = "<group>"; };
 		C9DB25E6799937CAC283C08D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeNames.swift; sourceTree = "<group>"; };
 		CB63328F1BA896B5166AEC83 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
@@ -59,6 +64,7 @@
 		D4FA7079BB3F1B4D5633DF32 /* ShortcutSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutSettings.swift; sourceTree = "<group>"; };
 		E3C94F14FF5432A7293CD6E6 /* PipDogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipDogApp.swift; sourceTree = "<group>"; };
 		E6762FAD689375127E7E6877 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
+		ED851B69B19361467D43631F /* SourceWindowActivator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceWindowActivator.swift; sourceTree = "<group>"; };
 		EE90D65C059A172F561D8B77 /* HotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeys.swift; sourceTree = "<group>"; };
 		F1454D76B7C93A30D308785A /* SettingsActivation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActivation.swift; sourceTree = "<group>"; };
 		F73D14FD74636A14F77D2C35 /* PiPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPManager.swift; sourceTree = "<group>"; };
@@ -114,9 +120,12 @@
 			isa = PBXGroup;
 			children = (
 				D41B07AB4EDDBFE2AA6ABCDB /* CapturedFrame.swift */,
+				63478B0496FA5EFB6DE0764F /* PiPContentView.swift */,
 				F73D14FD74636A14F77D2C35 /* PiPManager.swift */,
 				727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */,
 				CB63328F1BA896B5166AEC83 /* ResizeHandle.swift */,
+				C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */,
+				ED851B69B19361467D43631F /* SourceWindowActivator.swift */,
 				8F30E976895527D62F26E134 /* WindowCapture.swift */,
 			);
 			path = PiP;
@@ -253,6 +262,7 @@
 				2DB16C3B5EA24CFD369A3EFD /* HotKeys.swift in Sources */,
 				5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */,
 				F547B4B118C9E44DC266FF85 /* Permissions.swift in Sources */,
+				60287A9E87198FC4C0CD8224 /* PiPContentView.swift in Sources */,
 				13CC6602DC53FA1B62AECD0A /* PiPManager.swift in Sources */,
 				1359FEACEA2C6FE8D7DBA4A8 /* PiPPanel.swift in Sources */,
 				BD4233E206B891D98EB2A231 /* PipDogApp.swift in Sources */,
@@ -263,6 +273,8 @@
 				A6972FFFA4C9291479CA5717 /* ShortcutConfig.swift in Sources */,
 				E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */,
 				0F3EC39CD016B935D5B78A64 /* ShortcutSettings.swift in Sources */,
+				7282503B8F3E17BC1D7BABB8 /* SnapshotPreview.swift in Sources */,
+				EED1C0C55B705B18CD82846F /* SourceWindowActivator.swift in Sources */,
 				F8E942665A86F876A9BE372C /* WindowCapture.swift in Sources */,
 				C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */,
 			);

@@ -119,7 +119,7 @@ final class PiPManager {
         }
         guard generation == closeGeneration else { return } // 查找期间按了「关闭所有」
 
-        let panel = PiPPanel(window: scWindow, region: region, sourceBounds: window.bounds, cascadeIndex: panels.count)
+        let panel = PiPPanel(window: scWindow, region: region, source: window, cascadeIndex: panels.count)
         panel.onClose = { [weak self] in self?.panels[key] = nil }
         panel.onEnded = { message in Feedback.show(message) }
         panels[key] = panel

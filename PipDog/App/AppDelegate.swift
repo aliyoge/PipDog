@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         _ = Permissions.hadScreenRecordingAtLaunch
+        SnapshotPreview.removeTemporaryFiles() // 上次异常退出时可能留下快速查看的截图
 
         let settings = ShortcutSettings.shared
         settings.performAction = { [pipManager] action in
@@ -30,5 +31,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         HotKeys.shared.unregisterAll()
         clickTrigger.stop()
+        SnapshotPreview.removeTemporaryFiles()
     }
 }

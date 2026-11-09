@@ -124,6 +124,28 @@ final class WindowCapture: NSObject {
         detach(stream)
     }
 
+    /// 原尺寸截图一张（快速查看用）：按原窗口当前大小和原生像素比例，区域 PiP 裁剪到区域；不受面板尺寸上限影响。
+    func snapshot() async throws -> CGImage {
+        guard let bounds = WindowLocator.bounds(of: window.windowID) else { throw SnapshotError.windowClosed }
+        let windowRect = CGRect(origin: .zero, size: bounds.size)
+        let rect = requestedRegion.map { $0.intersection(windowRect) } ?? windowRect
+        guard !rect.isNull, rect.width >= 1, rect.height >= 1 else { throw SnapshotError.windowClosed }
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        let scale = CGFloat(filter.pointPixelScale)
+        let config = SCStreamConfiguration()
+        if requestedRegion != nil { config.sourceRect = rect }
+        config.width = Int((rect.width * scale).rounded())
+        config.height = Int((rect.height * scale).rounded())
+        config.captureResolution = .best
+        config.showsCursor = false
+        return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+    }
+
+    enum SnapshotError: LocalizedError {
+        case windowClosed
+        var errorDescription: String? { "原窗口已关闭或不可见" }
+    }
+
     // MARK: - 配置
 
     /// 按当前状态新建一份配置（每次更新都用新对象）。
