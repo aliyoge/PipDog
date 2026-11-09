@@ -40,7 +40,8 @@ enum Permissions {
 
     /// 成功抓取后不再因启动快照或过时的 preflight 误报；明确拒绝仍需重新引导。
     static func isScreenRecordingError(_ error: any Error) -> Bool {
-        if let error = error as? SCStreamError, error.code == .userDeclined {
+        let failure = error as NSError
+        if failure.domain == SCStreamErrorDomain, failure.code == SCStreamError.Code.userDeclined.rawValue {
             captureSucceeded = false
             return true
         }
@@ -112,17 +113,6 @@ enum Permissions {
                     Feedback.show("重新启动 PipDog 失败：\(message)")
                 }
             }
-        }
-    }
-
-    // 菜单改为逐项状态后移除。
-    static func checkAndExplain() {
-        if screenRecordingState != .authorized {
-            showAlert(.screenRecording)
-        } else if ShortcutSettings.shared.config.clickEnabled, !hasAccessibility {
-            showAlert(.accessibility)
-        } else {
-            Feedback.show("所需权限已授权")
         }
     }
 }

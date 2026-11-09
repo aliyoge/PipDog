@@ -3,18 +3,31 @@ import SwiftUI
 
 /// 菜单栏 app（LSUIElement）的设置窗口：打开期间临时切成普通 app（.regular，有 Dock 图标），
 /// 窗口才能稳定地出现在最前面并接收键盘；窗口关闭后切回 .accessory。
-/// 窗口由 SettingsView 里的 WindowAccessor 交过来，不依赖私有的窗口 identifier，也不需要延时。
+/// AppKit 菜单和 ⌘, 共用此处持有的窗口；WindowAccessor 同步窗口生命周期，不依赖私有标识或延时。
 @MainActor
 final class SettingsActivation {
     static let shared = SettingsActivation()
 
-    private weak var window: NSWindow?
+    private var window: NSWindow?
     private var closeObserver: NSObjectProtocol?
 
     private init() {}
 
-    /// 菜单里点「设置…」时、调用 openSettings() 之前。
-    func willOpen() {
+    /// 菜单和 ⌘, 共用一个设置窗口。
+    func open() {
+        willOpen()
+        if window == nil {
+            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
+            window.title = "PipDog 设置"
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.isReleasedWhenClosed = false
+            window.center()
+            attach(window)
+        }
+        window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func willOpen() {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
         window?.makeKeyAndOrderFront(nil)

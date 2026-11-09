@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let pipManager = PiPManager()
     private let clickTrigger = ClickTrigger()
+    private var statusMenu: StatusMenu?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         _ = Permissions.hadScreenRecordingAtLaunch
@@ -23,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         settings.onConfigChange = { [clickTrigger] config in clickTrigger.apply(config) }
         clickTrigger.start(config: settings.config)
+        statusMenu = StatusMenu()
     }
 
     func applicationWillTerminate(_ notification: Notification) {

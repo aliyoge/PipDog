@@ -41,7 +41,7 @@ enum KeyCodeNames {
         return translate(keyCode)?.uppercased() ?? "#\(keyCode)"
     }
 
-    /// 菜单里显示快捷键用；功能键等 SwiftUI 无法表示的返回 nil。
+    /// 菜单里的按键字符；功能键等无法映射时返回 nil，在标题中显示组合键。
     static func keyEquivalent(_ keyCode: UInt32) -> KeyEquivalent? {
         switch Int(keyCode) {
         case kVK_Return: return .return
@@ -100,16 +100,4 @@ enum KeyCodeNames {
 
 extension KeyCombo {
     @MainActor var display: String { KeyCodeNames.display(self) }
-
-    /// 能在 SwiftUI 菜单里显示的快捷键；不能表示时为 nil（菜单标题里另外写出来）。
-    @MainActor var keyboardShortcut: KeyboardShortcut? {
-        guard let key = KeyCodeNames.keyEquivalent(keyCode) else { return nil }
-        let flags = KeyCodeNames.flags(fromCarbon: modifiers)
-        var mods: SwiftUI.EventModifiers = []
-        if flags.contains(.control) { mods.insert(.control) }
-        if flags.contains(.option) { mods.insert(.option) }
-        if flags.contains(.shift) { mods.insert(.shift) }
-        if flags.contains(.command) { mods.insert(.command) }
-        return KeyboardShortcut(key, modifiers: mods)
-    }
 }
