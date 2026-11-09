@@ -1,23 +1,23 @@
 import AppKit
 import ScreenCaptureKit
-import CoreMedia
 
-/// 一个置顶、跨 Space 的浮动面板，实时显示某个窗口的画面。
+/// 一个置顶、跨 Space 的浮动面板，实时显示某个窗口（或其中一块区域）的画面。
 @MainActor
 final class PiPPanel: NSPanel, NSWindowDelegate {
-    private let target: SCWindow
     private let capture: WindowCapture
     private let imageLayer = CALayer()
     var onClose: (() -> Void)?
 
-    init(window target: SCWindow) {
-        self.target = target
-        self.capture = WindowCapture(window: target)
-        let aspect = target.frame.height / max(target.frame.width, 1)
-        let width: CGFloat = 360
-        let size = NSSize(width: width, height: width * aspect)
+    /// - Parameters:
+    ///   - region: 窗口内区域（点，窗口左上角为原点）；nil 表示整个窗口
+    ///   - cascadeIndex: 第几个面板，用来错开位置
+    init(window target: SCWindow, region: CGRect?, cascadeIndex: Int) {
+        capture = WindowCapture(window: target, sourceRect: region)
+        let size = Self.panelSize(for: region?.size ?? target.frame.size, isRegion: region != nil)
         let screen = NSScreen.main?.visibleFrame ?? .zero
-        let origin = NSPoint(x: screen.maxX - size.width - 20, y: screen.minY + 20)
+        let offset = CGFloat(cascadeIndex % 8) * 28
+        let origin = NSPoint(x: max(screen.minX, screen.maxX - size.width - 20 - offset),
+                             y: min(screen.maxY - size.height, screen.minY + 20 + offset))
 
         super.init(contentRect: NSRect(origin: origin, size: size),
                    styleMask: [.borderless, .nonactivatingPanel, .resizable],
@@ -44,6 +44,18 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         capture.onFrame = { [weak self] surface in
             self?.imageLayer.contents = surface
         }
+    }
+
+    /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
+    private static func panelSize(for source: CGSize, isRegion: Bool) -> NSSize {
+        let aspect = source.height / max(source.width, 1)
+        var width: CGFloat = isRegion ? min(max(source.width, 160), 480) : 360
+        var height = width * aspect
+        if height > 480 {
+            height = 480
+            width = height / max(aspect, 0.01)
+        }
+        return NSSize(width: width, height: height)
     }
 
     func start() async throws {
