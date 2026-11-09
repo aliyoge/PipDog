@@ -17,6 +17,8 @@ final class ShortcutSettings {
     /// 快捷键按下时执行的动作，由 AppDelegate 设置
     @ObservationIgnored var performAction: ((ShortcutAction) -> Void)?
     @ObservationIgnored private var keyMonitor: Any?
+    /// 录制期间：app 失去激活或设置窗口失去焦点就取消录制，避免全局快捷键一直处于注销状态
+    @ObservationIgnored private var resignObservers: [NSObjectProtocol] = []
     @ObservationIgnored private let defaultsKey = "PipDog.shortcutConfig"
 
     private init() {
@@ -35,6 +37,11 @@ final class ShortcutSettings {
     /// 设置（或清除，combo 为 nil）一个动作的快捷键。冲突时保留原值并显示错误。
     func assign(_ combo: KeyCombo?, to action: ShortcutAction) {
         errors[action] = nil
+        if let combo, !combo.isValidHotKey {
+            errors[action] = "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
+            register(config)
+            return
+        }
         if let combo, let other = ShortcutAction.allCases.first(where: { $0 != action && config.hotKeys[$0] == combo }) {
             errors[action] = "\(combo.display) 已经用于「\(other.title)」"
             register(config)
@@ -90,6 +97,14 @@ final class ShortcutSettings {
             let handled = MainActor.assumeIsolated { self?.handleRecordedKey(keyCode: keyCode, flags: flags) ?? false }
             return handled ? nil : event
         }
+        let cancel: @Sendable (Notification) -> Void = { [weak self] _ in
+            MainActor.assumeIsolated { self?.cancelRecording() }
+        }
+        let center = NotificationCenter.default
+        resignObservers = [
+            center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main, using: cancel),
+            center.addObserver(forName: NSWindow.didResignKeyNotification, object: NSApp.keyWindow, queue: .main, using: cancel),
+        ]
     }
 
     func cancelRecording() {
@@ -101,6 +116,8 @@ final class ShortcutSettings {
     private func stopRecording() {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
+        resignObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        resignObservers = []
         recordingAction = nil
     }
 
@@ -148,10 +165,10 @@ final class ShortcutSettings {
         }
     }
 
+    /// 读取保存的设置。解码是宽容的（见 ShortcutConfig 的 init(from:)），只有数据整体损坏时才用默认值。
     private static func load(key: String) -> ShortcutConfig {
         guard let data = UserDefaults.standard.data(forKey: key),
-              let config = try? JSONDecoder().decode(ShortcutConfig.self, from: data),
-              !config.clickModifiers.isEmpty
+              let config = try? JSONDecoder().decode(ShortcutConfig.self, from: data)
         else { return .default }
         return config
     }

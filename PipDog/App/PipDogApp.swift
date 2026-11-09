@@ -29,8 +29,12 @@ struct MenuContent: View {
             Text("\(KeyCodeNames.symbols(for: settings.config.clickModifiers)) + 双击：PiP 鼠标下方的区域")
         }
         Divider()
-        Button("设置…") { showSettings() }.keyboardShortcut(",")
-        Button("检查权限") { Permissions.requestIfNeeded() }
+        Button("设置…") {
+            SettingsActivation.shared.willOpen()
+            openSettings()
+        }
+        .keyboardShortcut(",")
+        Button("检查权限") { Permissions.checkAndExplain() }
         Divider()
         Button("退出 PipDog") { NSApp.terminate(nil) }.keyboardShortcut("q")
     }
@@ -39,20 +43,8 @@ struct MenuContent: View {
         let combo = settings.combo(for: action)
         let shortcut = combo?.keyboardShortcut
         // SwiftUI 无法表示的键（如 F5）直接写在标题里
-        let title = (combo != nil && shortcut == nil) ? "\(action.title)  \(combo!.display)" : action.title
+        var title = action.title
+        if let combo, shortcut == nil { title += "  \(combo.display)" }
         return Button(title, action: perform).keyboardShortcut(shortcut)
-    }
-
-    /// 菜单栏 app 没有 Dock 图标，需要先激活自己，设置窗口才会出现在最前面。
-    private func showSettings() {
-        NSApp.activate()
-        openSettings()
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(150))
-            for window in NSApp.windows where window.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" {
-                window.makeKeyAndOrderFront(nil)
-                window.orderFrontRegardless()
-            }
-        }
     }
 }

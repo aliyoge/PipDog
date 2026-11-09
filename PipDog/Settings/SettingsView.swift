@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 设置窗口：全局快捷键、修饰键 + 双击触发。
+/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率。
 struct SettingsView: View {
     private var settings: ShortcutSettings { .shared }
     private var capture: CaptureSettings { .shared }
@@ -16,7 +16,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text("点击按钮后按下新的组合键，至少包含 ⌘、⌃ 或 ⌥。清除后该动作没有快捷键，仍可从菜单使用。")
+                Text("点击按钮后按下新的组合键，至少包含 ⌘、⌃ 或 ⌥。清除后该动作没有快捷键，仍可从菜单使用。切到别的 app 会自动取消录制。")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -34,10 +34,10 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(!settings.config.clickEnabled)
-                Text("至少选一个修饰键。双击本身仍会传给目标 app。")
+                Text("至少选一个修饰键，默认 ⌥⇧。触发用的第二次点击会被 PipDog 拦下，不会传给目标 app，第一次单击仍会照常传过去。拦截需要辅助功能权限；没有权限时只能旁观，双击仍会传给目标 app。")
                     .font(.caption).foregroundStyle(.secondary)
                 if settings.config.clickModifiers.contains(.control) {
-                    Text("提示：按住 ⌃ 点击时，macOS 会把它当成右键，目标 app 可能弹出右键菜单。")
+                    Text("提示：按住 ⌃ 点击时 macOS 会把第一次点击当成右键，目标 app 可能弹出右键菜单。")
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
@@ -61,6 +61,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+        .background(WindowAccessor { SettingsActivation.shared.attach($0) })
         .onDisappear { settings.cancelRecording() }
     }
 }
