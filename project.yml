@@ -1,0 +1,31 @@
+name: PipDog
+options:
+  bundleIdPrefix: com.hwj
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    ENABLE_HARDENED_RUNTIME: NO
+targets:
+  PipDog:
+    type: application
+    platform: macOS
+    sources:
+      - PipDog
+    info:
+      path: PipDog/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: PipDog
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        NSScreenCaptureUsageDescription: PipDog 需要屏幕录制权限来实时显示窗口画面。
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hwj.PipDog
+        CODE_SIGN_ENTITLEMENTS: PipDog/Resources/PipDog.entitlements
