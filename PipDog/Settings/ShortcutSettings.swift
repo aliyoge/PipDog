@@ -16,6 +16,8 @@ final class ShortcutSettings {
 
     /// 快捷键按下时执行的动作，由 AppDelegate 设置
     @ObservationIgnored var performAction: ((ShortcutAction) -> Void)?
+    /// 设置保存后调用（双击触发的开关和修饰键靠它同步给 ClickTrigger），由 AppDelegate 设置
+    @ObservationIgnored var onConfigChange: ((ShortcutConfig) -> Void)?
     @ObservationIgnored private var keyMonitor: Any?
     /// 录制期间：app 失去激活或设置窗口失去焦点就取消录制，避免全局快捷键一直处于注销状态
     @ObservationIgnored private var resignObservers: [NSObjectProtocol] = []
@@ -175,6 +177,7 @@ final class ShortcutSettings {
 
     private func save(_ updated: ShortcutConfig) {
         config = updated
+        onConfigChange?(updated)
         if let data = try? JSONEncoder().encode(updated) {
             UserDefaults.standard.set(data, forKey: defaultsKey)
         }

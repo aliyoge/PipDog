@@ -21,7 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clickTrigger.onTrigger = { [pipManager] point in
             Task { await pipManager.pipElement(at: point) }
         }
-        clickTrigger.start()
+        settings.onConfigChange = { [clickTrigger] config in clickTrigger.apply(config) }
+        clickTrigger.start(config: settings.config)
     }
 
     func applicationWillTerminate(_ notification: Notification) {

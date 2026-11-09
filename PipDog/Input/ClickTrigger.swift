@@ -2,103 +2,150 @@ import AppKit
 import CoreGraphics
 
 /// 监听全局「修饰键 + 双击」，触发区域 PiP。回调参数是左上角原点的全局坐标。
-/// - 有辅助功能权限时用 CGEventTap（会话级、插在最前、可修改事件）：修饰键匹配时，
+/// - 功能关闭时什么都不装。
+/// - 有辅助功能权限时用 ClickTap（独立线程上的 CGEventTap）：修饰键匹配时，
 ///   把触发用的第二次按下和对应的松开吞掉，目标 app 只收到第一次单击。
-/// - 没有权限时退回 NSEvent 全局监听（只能旁观，双击仍会传给目标 app），并每 3 秒重试建立 tap。
+/// - 没有权限时退回 NSEvent 全局监听（只能旁观，双击仍会传给目标 app）。
+/// - 功能开启期间每秒检查一次权限：授权后切到 tap，权限被撤销就拆掉 tap 退回旁观。
 @MainActor
 final class ClickTrigger {
     var onTrigger: ((CGPoint) -> Void)?
-    private var tap: CFMachPort?
-    private var tapSource: CFRunLoopSource?
-    private var fallbackMonitor: Any?
-    private var retryTimer: Timer?
-    private var swallowNextMouseUp = false
 
-    func start() {
-        guard tap == nil, fallbackMonitor == nil else { return }
-        if installTap() { return }
-        installFallbackMonitor()
-        retryTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.retryTap() }
-        }
+    private var isRunning = false
+    private var enabled = false
+    private var modifiers: NSEvent.ModifierFlags = []
+    private var tap: ClickTap?
+    private var fallbackMonitor: Any?
+    private var maintenanceTimer: Timer?
+    private var windowObservers: [NSObjectProtocol] = []
+    private var rectsRefreshScheduled = false
+
+    func start(config: ShortcutConfig) {
+        isRunning = true
+        apply(config)
+    }
+
+    /// 设置变化时调用（开关、修饰键）。
+    func apply(_ config: ShortcutConfig) {
+        enabled = config.clickEnabled
+        modifiers = config.clickModifiers
+        tap?.setConfig(enabled: enabled, modifiers: Self.eventFlags(from: modifiers))
+        refresh()
     }
 
     func stop() {
-        retryTimer?.invalidate()
-        retryTimer = nil
-        removeFallbackMonitor()
-        if let tap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-            if let tapSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), tapSource, .commonModes) }
-            CFMachPortInvalidate(tap)
+        isRunning = false
+        refresh()
+    }
+
+    // MARK: - 状态切换
+
+    /// 按「是否启用」和当前权限决定用 tap、旁观监听，还是什么都不装。
+    private func refresh() {
+        guard isRunning, enabled else {
+            removeTap()
+            removeFallbackMonitor()
+            maintenanceTimer?.invalidate()
+            maintenanceTimer = nil
+            return
         }
-        tap = nil
-        tapSource = nil
-        swallowNextMouseUp = false
+        startMaintenanceTimer()
+        if Permissions.hasAccessibility {
+            if tap == nil { installTap() }
+            if tap != nil {
+                removeFallbackMonitor()
+                return
+            }
+        } else {
+            removeTap()
+        }
+        installFallbackMonitor()
+    }
+
+    private func startMaintenanceTimer() {
+        guard maintenanceTimer == nil else { return }
+        maintenanceTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.refresh()
+                self.refreshOwnWindowRects() // 兜底：通知漏掉的窗口变化
+            }
+        }
     }
 
     // MARK: - CGEventTap
 
-    private func retryTap() {
-        guard installTap() else { return }
-        retryTimer?.invalidate()
-        retryTimer = nil
-        removeFallbackMonitor()
-    }
-
-    private func installTap() -> Bool {
-        guard tap == nil else { return true }
-        guard Permissions.hasAccessibility else { return false }
-        let mask = (CGEventMask(1) << CGEventType.leftMouseDown.rawValue)
-            | (CGEventMask(1) << CGEventType.leftMouseUp.rawValue)
-        // 回调在主运行循环上执行（下面把 source 加到了主 run loop），所以可以 assumeIsolated
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap, eventsOfInterest: mask,
-            callback: { _, type, event, refcon in
-                guard let refcon else { return Unmanaged.passUnretained(event) }
-                let trigger = Unmanaged<ClickTrigger>.fromOpaque(refcon).takeUnretainedValue()
-                let clickState = event.getIntegerValueField(.mouseEventClickState)
-                let flags = event.flags
-                let location = event.location
-                let swallow = MainActor.assumeIsolated {
-                    trigger.handleTap(type: type, clickState: clickState, flags: flags, location: location)
+    private func installTap() {
+        let tap = ClickTap(
+            onTrigger: { [weak self] point in
+                DispatchQueue.main.async { [weak self] in
+                    MainActor.assumeIsolated { self?.onTrigger?(point) }
                 }
-                return swallow ? nil : Unmanaged.passUnretained(event)
             },
-            userInfo: Unmanaged.passUnretained(self).toOpaque())
-        else {
-            NSLog("PipDog: 创建鼠标事件 tap 失败，改用只能旁观的全局监听")
-            return false
+            onTapLost: { [weak self] in
+                DispatchQueue.main.async { [weak self] in
+                    MainActor.assumeIsolated { self?.tapLost() }
+                }
+            })
+        tap.setConfig(enabled: enabled, modifiers: Self.eventFlags(from: modifiers))
+        tap.setOwnWindowRects(ownWindowRects())
+        guard tap.start() else {
+            NSLog("PipDog: 无法建立鼠标事件 tap，改用只能旁观的全局监听")
+            return
         }
-        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
         self.tap = tap
-        tapSource = source
-        return true
+        addWindowObservers()
     }
 
-    /// 返回 true 表示吞掉这个事件。
-    private func handleTap(type: CGEventType, clickState: Int64, flags: CGEventFlags, location: CGPoint) -> Bool {
-        switch type {
-        case .tapDisabledByTimeout, .tapDisabledByUserInput:
-            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-            return false
-        case .leftMouseDown:
-            guard clickState == 2, matches(Self.modifiers(from: flags)), !isOverOwnWindow(location) else { return false }
-            swallowNextMouseUp = true
-            // 尽快从 tap 回调返回，真正的处理放到下一轮主循环
-            DispatchQueue.main.async { [weak self] in
-                MainActor.assumeIsolated { self?.onTrigger?(location) }
+    private func removeTap() {
+        tap?.stop()
+        tap = nil
+        removeWindowObservers()
+    }
+
+    private func tapLost() {
+        NSLog("PipDog: 鼠标事件 tap 已失效（可能是辅助功能权限被撤销），重新检查")
+        removeTap()
+        refresh()
+    }
+
+    // MARK: - PipDog 自己的窗口（点在上面时不拦截）
+
+    private func ownWindowRects() -> [CGRect] {
+        NSApp.windows.filter { $0.isVisible && !$0.ignoresMouseEvents }.map { Geometry.flipped($0.frame) }
+    }
+
+    private func refreshOwnWindowRects() {
+        tap?.setOwnWindowRects(ownWindowRects())
+    }
+
+    /// 合并同一轮里的多次窗口变化；放到下一轮主循环，关窗通知（willClose）发出时窗口还可见。
+    private func scheduleRectsRefresh() {
+        guard !rectsRefreshScheduled else { return }
+        rectsRefreshScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                self?.rectsRefreshScheduled = false
+                self?.refreshOwnWindowRects()
             }
-            return true
-        case .leftMouseUp:
-            guard swallowNextMouseUp else { return false }
-            swallowNextMouseUp = false
-            return true
-        default:
-            return false
         }
+    }
+
+    private func addWindowObservers() {
+        guard windowObservers.isEmpty else { return }
+        let refresh: @Sendable (Notification) -> Void = { [weak self] _ in
+            MainActor.assumeIsolated { self?.scheduleRectsRefresh() }
+        }
+        let center = NotificationCenter.default
+        windowObservers = [
+            NSWindow.didMoveNotification, NSWindow.didResizeNotification, NSWindow.didChangeOcclusionStateNotification,
+            NSWindow.willCloseNotification, NSWindow.didBecomeKeyNotification,
+        ].map { center.addObserver(forName: $0, object: nil, queue: .main, using: refresh) }
+    }
+
+    private func removeWindowObservers() {
+        windowObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        windowObservers = []
     }
 
     // MARK: - 退回方案：只能旁观的全局监听
@@ -118,7 +165,8 @@ final class ClickTrigger {
     }
 
     private func handleObservedClick(clickCount: Int, flags: NSEvent.ModifierFlags) {
-        guard clickCount == 2, matches(flags) else { return }
+        let pressed = flags.intersection([.control, .option, .shift, .command])
+        guard clickCount == 2, enabled, pressed == modifiers else { return }
         guard Permissions.hasAccessibility else {
             Permissions.showAlert(.accessibility)
             return
@@ -126,27 +174,12 @@ final class ClickTrigger {
         onTrigger?(Geometry.mouseLocationTopLeft)
     }
 
-    // MARK: - 匹配
-
-    /// 修饰键精确匹配设置里的组合（忽略 Caps Lock / fn / 小键盘标志）。
-    private func matches(_ flags: NSEvent.ModifierFlags) -> Bool {
-        let config = ShortcutSettings.shared.config
-        let pressed = flags.intersection([.control, .option, .shift, .command])
-        return config.clickEnabled && pressed == config.clickModifiers
-    }
-
-    private static func modifiers(from flags: CGEventFlags) -> NSEvent.ModifierFlags {
-        var result: NSEvent.ModifierFlags = []
-        if flags.contains(.maskControl) { result.insert(.control) }
-        if flags.contains(.maskAlternate) { result.insert(.option) }
-        if flags.contains(.maskShift) { result.insert(.shift) }
-        if flags.contains(.maskCommand) { result.insert(.command) }
+    private static func eventFlags(from flags: NSEvent.ModifierFlags) -> CGEventFlags {
+        var result: CGEventFlags = []
+        if flags.contains(.control) { result.insert(.maskControl) }
+        if flags.contains(.option) { result.insert(.maskAlternate) }
+        if flags.contains(.shift) { result.insert(.maskShift) }
+        if flags.contains(.command) { result.insert(.maskCommand) }
         return result
-    }
-
-    /// 点在 PipDog 自己的窗口（PiP 面板、设置窗口）上时不拦截。
-    private func isOverOwnWindow(_ topLeftPoint: CGPoint) -> Bool {
-        let point = Geometry.flipped(topLeftPoint)
-        return NSApp.windows.contains { $0.isVisible && !$0.ignoresMouseEvents && $0.frame.contains(point) }
     }
 }

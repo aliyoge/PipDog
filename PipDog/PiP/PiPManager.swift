@@ -39,8 +39,12 @@ final class PiPManager {
         }
     }
 
-    /// 显示框选遮罩，选完后 PiP 选中的区域。
+    /// 显示框选遮罩，选完后 PiP 选中的区域。框选中再按一次（快捷键或菜单）就取消。
     func selectRegion() {
+        if regionSelector.isActive {
+            regionSelector.cancel()
+            return
+        }
         regionSelector.begin { [weak self] cocoaRect in
             guard let self, let cocoaRect else { return }
             let rect = Geometry.flipped(cocoaRect)

@@ -26,6 +26,7 @@
 		C2B5DF9C7BE8F6AB94F51DD5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57A089021CE6A958FE9A0EF8 /* Assets.xcassets */; };
 		C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */; };
 		C6D2C7C7605BD961DFD14312 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DB25E6799937CAC283C08D /* SettingsView.swift */; };
+		CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */; };
 		E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */; };
 		ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187CF608B7735238BD5EC646 /* CaptureSettings.swift */; };
 		F547B4B118C9E44DC266FF85 /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A899DE6811F684ECCFCC2C /* Permissions.swift */; };
@@ -34,6 +35,7 @@
 
 /* Begin PBXFileReference section */
 		0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelector.swift; sourceTree = "<group>"; };
+		17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTap.swift; sourceTree = "<group>"; };
 		187CF608B7735238BD5EC646 /* CaptureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSettings.swift; sourceTree = "<group>"; };
 		1B006B69A584D899E11229DD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTrigger.swift; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */,
+				17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */,
 				235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */,
 				EE90D65C059A172F561D8B77 /* HotKeys.swift */,
 				0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */,
@@ -243,6 +246,7 @@
 				1FC3DFB5FEDCAE41A0C02535 /* AppDelegate.swift in Sources */,
 				ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */,
 				02CDCCD6E31778929D45F9C0 /* CapturedFrame.swift in Sources */,
+				CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */,
 				5EE94440916AF71B3F6901C8 /* ClickTrigger.swift in Sources */,
 				A0BA9C151C9E070E0F6713B0 /* Feedback.swift in Sources */,
 				24FA5EB2BA942AB7EAD58C7B /* Geometry.swift in Sources */,
