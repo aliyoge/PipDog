@@ -5,79 +5,124 @@ import ScreenCaptureKit
 
 @MainActor
 enum Permissions {
-    enum Kind {
-        case screenRecording, accessibility
+    enum Kind { case screenRecording, accessibility }
 
-        var title: String {
-            switch self {
-            case .screenRecording: "PipDog 需要「屏幕录制」权限"
-            case .accessibility: "PipDog 需要「辅助功能」权限"
-            }
-        }
-
-        var message: String {
-            switch self {
-            case .screenRecording:
-                "没有屏幕录制权限就无法显示窗口画面。请在「系统设置 › 隐私与安全性 › 屏幕与系统录音」里打开 PipDog。授权后可能需要重新启动 PipDog。"
-            case .accessibility:
-                "修饰键 + 双击需要辅助功能权限来识别鼠标下方的区域，并拦截触发用的那次双击。请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog。"
-            }
-        }
-
-        var settingsURL: URL? {
-            switch self {
-            case .screenRecording: URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
-            case .accessibility: URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-            }
-        }
+    enum ScreenRecordingState: String {
+        case authorized = "已授权"
+        case restartRequired = "已授权，需重新启动"
+        case notAuthorized = "未授权"
     }
+
+    // 在 applicationDidFinishLaunching 中立即读取，避免第一次 PiP 时才取启动快照。
+    static let hadScreenRecordingAtLaunch = CGPreflightScreenCaptureAccess()
+    private static var captureSucceeded = false
+    private static var requestedScreenRecording = false
+    private static var showingAlert = false
+    private static var restarting = false
 
     static var hasAccessibility: Bool { AXIsProcessTrusted() }
-    static var hasScreenRecording: Bool { CGPreflightScreenCaptureAccess() }
 
-    /// 启动时调用：未授权时弹出系统自己的授权提示。
-    static func requestIfNeeded() {
-        requestAccessibility()
-        if !hasScreenRecording {
-            _ = CGRequestScreenCaptureAccess()
-        }
+    static var screenRecordingName: String {
+        if #available(macOS 15, *) { return "屏幕与系统录音" }
+        return "屏幕录制"
     }
 
-    /// 未授权时弹出系统的辅助功能授权提示。
-    static func requestAccessibility() {
-        guard !hasAccessibility else { return }
-        let key = "AXTrustedCheckOptionPrompt" // kAXTrustedCheckOptionPrompt 的值，直接引用在 Swift 6 下不是并发安全的
-        _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+    static var screenRecordingState: ScreenRecordingState {
+        // 实际抓取成功比可能过时的 preflight 更可信；明确拒绝时清除此记录。
+        if captureSucceeded { return .authorized }
+        guard CGPreflightScreenCaptureAccess() else { return .notAuthorized }
+        return hadScreenRecordingAtLaunch ? .authorized : .restartRequired
     }
 
-    /// 菜单「检查权限」：都有就提示一下；缺哪个就弹对应的说明。
-    static func checkAndExplain() {
-        if !hasScreenRecording {
-            showAlert(.screenRecording)
-        } else if !hasAccessibility {
-            showAlert(.accessibility)
-        } else {
-            Feedback.show("屏幕录制和辅助功能权限都已授予")
-        }
+    static func recordCaptureSuccess() {
+        captureSucceeded = true
     }
 
-    /// 抓取失败是否是因为没有屏幕录制权限。
+    /// 成功抓取后不再因启动快照或过时的 preflight 误报；明确拒绝仍需重新引导。
     static func isScreenRecordingError(_ error: any Error) -> Bool {
-        if let error = error as? SCStreamError, error.code == .userDeclined { return true }
-        return !hasScreenRecording
+        if let error = error as? SCStreamError, error.code == .userDeclined {
+            captureSucceeded = false
+            return true
+        }
+        return !captureSucceeded && (!hadScreenRecordingAtLaunch || !CGPreflightScreenCaptureAccess())
     }
 
-    /// 说明缺少的权限，提供「打开系统设置」按钮直接跳到对应页面。
     static func showAlert(_ kind: Kind) {
+        switch kind {
+        case .screenRecording: showScreenRecordingAlert()
+        case .accessibility:
+            guard ShortcutSettings.shared.config.clickEnabled, !hasAccessibility else { return }
+            // 只用系统授权框：登记到「辅助功能」列表，不再叠加自定义 NSAlert。
+            NSApp.activate()
+            Feedback.show("请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
+            let key = "AXTrustedCheckOptionPrompt" // 避免 Swift 6 访问非并发安全的全局 CFString
+            _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+        }
+    }
+
+    private static func showScreenRecordingAlert() {
+        guard !showingAlert else { return }
+        showingAlert = true
+        defer { showingAlert = false }
         NSApp.activate()
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = kind.title
-        alert.informativeText = kind.message
-        alert.addButton(withTitle: "打开系统设置")
-        alert.addButton(withTitle: "取消")
-        if alert.runModal() == .alertFirstButtonReturn, let url = kind.settingsURL {
-            NSWorkspace.shared.open(url)
+        if screenRecordingState == .restartRequired {
+            alert.messageText = "「\(screenRecordingName)」已授权，需要重新启动 PipDog 才能生效"
+            alert.informativeText = "重新启动后即可抓取窗口画面。"
+            alert.addButton(withTitle: "重新启动 PipDog")
+            alert.addButton(withTitle: "稍后")
+            if alert.runModal() == .alertFirstButtonReturn { restart() }
+        } else {
+            alert.messageText = "PipDog 需要「\(screenRecordingName)」权限"
+            alert.informativeText = "请在「系统设置 › 隐私与安全性 › \(screenRecordingName)」里打开 PipDog，再点「重新启动 PipDog」。授权状态可能延迟刷新；即使仍显示未授权，也可以重新启动。"
+            alert.addButton(withTitle: "打开系统设置")
+            alert.addButton(withTitle: "重新启动 PipDog")
+            alert.addButton(withTitle: "取消")
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                // 自定义弹窗已关闭后才允许系统请求；每次运行最多登记一次。
+                if !requestedScreenRecording {
+                    requestedScreenRecording = true
+                    _ = CGRequestScreenCaptureAccess()
+                }
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"),
+                   !NSWorkspace.shared.open(url) {
+                    Feedback.show("无法打开系统设置，请手动前往「隐私与安全性 › \(screenRecordingName)」")
+                }
+            } else if response == .alertSecondButtonReturn {
+                restart()
+            }
+        }
+    }
+
+    private static func restart() {
+        guard !restarting else { return }
+        restarting = true
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { app, error in
+            let launched = app != nil && error == nil
+            let message = error?.localizedDescription ?? "未能启动新实例"
+            DispatchQueue.main.async {
+                restarting = false
+                if launched {
+                    NSApp.terminate(nil)
+                } else {
+                    Feedback.show("重新启动 PipDog 失败：\(message)")
+                }
+            }
+        }
+    }
+
+    // 菜单改为逐项状态后移除。
+    static func checkAndExplain() {
+        if screenRecordingState != .authorized {
+            showAlert(.screenRecording)
+        } else if ShortcutSettings.shared.config.clickEnabled, !hasAccessibility {
+            showAlert(.accessibility)
+        } else {
+            Feedback.show("所需权限已授权")
         }
     }
 }

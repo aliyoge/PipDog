@@ -85,6 +85,7 @@ final class WindowCapture: NSObject {
             detach(stream)
             return
         }
+        Permissions.recordCaptureSuccess()
         state = .running
         sourceTimer = Timer.scheduledTimer(withTimeInterval: Self.sourceCheckInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkSource(scaleFactor: nil) }

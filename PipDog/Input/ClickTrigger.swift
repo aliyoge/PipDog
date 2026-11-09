@@ -19,18 +19,27 @@ final class ClickTrigger {
     private var maintenanceTimer: Timer?
     private var windowObservers: [NSObjectProtocol] = []
     private var rectsRefreshScheduled = false
+    private var didGuideAccessibility = false
+    private var waitingForAccessibility = false
+    private var didAnnounceAccessibility = false
 
     func start(config: ShortcutConfig) {
-        isRunning = true
         apply(config)
+        isRunning = true
+        refresh()
     }
 
     /// 设置变化时调用（开关、修饰键）。
     func apply(_ config: ShortcutConfig) {
+        let justEnabled = isRunning && !enabled && config.clickEnabled
         enabled = config.clickEnabled
         modifiers = config.clickModifiers
         tap?.setConfig(enabled: enabled, modifiers: Self.eventFlags(from: modifiers))
         refresh()
+        if justEnabled, !Permissions.hasAccessibility {
+            didGuideAccessibility = true
+            Permissions.showAlert(.accessibility)
+        }
     }
 
     func stop() {
@@ -43,6 +52,7 @@ final class ClickTrigger {
     /// 按「是否启用」和当前权限决定用 tap、旁观监听，还是什么都不装。
     private func refresh() {
         guard isRunning, enabled else {
+            waitingForAccessibility = false
             removeTap()
             removeFallbackMonitor()
             maintenanceTimer?.invalidate()
@@ -54,9 +64,15 @@ final class ClickTrigger {
             if tap == nil { installTap() }
             if tap != nil {
                 removeFallbackMonitor()
+                if waitingForAccessibility, !didAnnounceAccessibility {
+                    didAnnounceAccessibility = true
+                    Feedback.show("辅助功能已授权，\(KeyCodeNames.symbols(for: modifiers)) + 双击可以用了")
+                }
+                waitingForAccessibility = false
                 return
             }
         } else {
+            waitingForAccessibility = true
             removeTap()
         }
         installFallbackMonitor()
@@ -168,7 +184,12 @@ final class ClickTrigger {
         let pressed = flags.intersection([.control, .option, .shift, .command])
         guard clickCount == 2, enabled, pressed == modifiers else { return }
         guard Permissions.hasAccessibility else {
-            Permissions.showAlert(.accessibility)
+            if didGuideAccessibility {
+                Feedback.show("\(KeyCodeNames.symbols(for: modifiers)) + 双击需要「辅助功能」权限，请在系统设置中打开")
+            } else {
+                didGuideAccessibility = true
+                Permissions.showAlert(.accessibility)
+            }
             return
         }
         onTrigger?(Geometry.mouseLocationTopLeft)

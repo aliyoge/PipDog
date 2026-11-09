@@ -6,7 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let clickTrigger = ClickTrigger()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Permissions.requestIfNeeded()
+        _ = Permissions.hadScreenRecordingAtLaunch
 
         let settings = ShortcutSettings.shared
         settings.performAction = { [pipManager] action in
