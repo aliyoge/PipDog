@@ -48,9 +48,19 @@ enum Permissions {
         return !captureSucceeded && (!hadScreenRecordingAtLaunch || !CGPreflightScreenCaptureAccess())
     }
 
-    static func showAlert(_ kind: Kind) {
+    /// afterFailure：由 PiP 失败触发（而不是用户点菜单）。
+    static func showAlert(_ kind: Kind, afterFailure: Bool = false) {
         switch kind {
-        case .screenRecording: showScreenRecordingAlert()
+        case .screenRecording:
+            // 本次运行第一次因未授权失败：只发起系统请求（登记到列表，系统框自带「打开系统设置」），
+            // 配一条浮层说明，不弹自己的 NSAlert，避免和系统框（或 ScreenCaptureKit 自己弹的框）叠在一起。
+            if afterFailure, !requestedScreenRecording, screenRecordingState == .notAuthorized {
+                requestedScreenRecording = true
+                _ = CGRequestScreenCaptureAccess()
+                Feedback.show("请在「系统设置 › 隐私与安全性 › \(screenRecordingName)」里打开 PipDog，然后重新启动 PipDog（再试一次 PiP 或点菜单里的权限状态）")
+                return
+            }
+            showScreenRecordingAlert()
         case .accessibility:
             guard ShortcutSettings.shared.config.clickEnabled, !hasAccessibility else { return }
             // 只用系统授权框：登记到「辅助功能」列表，不再叠加自定义 NSAlert。

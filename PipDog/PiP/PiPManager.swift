@@ -136,7 +136,7 @@ final class PiPManager {
     private func report(_ error: any Error) {
         NSLog("PipDog: 启动 PiP 失败：\(error.localizedDescription)")
         if Permissions.isScreenRecordingError(error) {
-            Permissions.showAlert(.screenRecording)
+            Permissions.showAlert(.screenRecording, afterFailure: true)
         } else {
             Feedback.show("启动 PiP 失败：\(error.localizedDescription)")
         }

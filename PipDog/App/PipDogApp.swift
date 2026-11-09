@@ -27,6 +27,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.autoenablesItems = false
         menu.delegate = self
+        menuNeedsUpdate(menu) // 先填一次，不依赖空菜单也会触发回调
         statusItem.menu = menu
     }
 
