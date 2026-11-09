@@ -1,6 +1,6 @@
 import AppKit
 
-/// PiP 面板右下角的缩放手柄：按面板的 contentAspectRatio 等比缩放，左上角固定。
+/// PiP 面板右下角的缩放手柄：按面板的 contentAspectRatio 等比缩放，左上角固定，不会超出所在屏幕的可见区域。
 /// 无边框窗口在系统层面的边缘缩放不可靠，所以自己处理拖动。
 final class ResizeHandle: NSView {
     static let size: CGFloat = 18
@@ -34,13 +34,18 @@ final class ResizeHandle: NSView {
         // 向右或向下拖都算放大，取变化更大的那个方向
         let widthFromX = startFrame.width + (mouse.x - startMouse.x)
         let widthFromY = (startFrame.height + (startMouse.y - mouse.y)) / ratio
-        let width = max(minimumWidth, max(widthFromX, widthFromY))
+        var width = max(minimumWidth, max(widthFromX, widthFromY))
+        // 左上角固定：右边不超过屏幕可见区域的右边，底边不低于可见区域的底边
+        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
+            let maxWidth = min(visible.maxX - startFrame.minX, (startFrame.maxY - visible.minY) / ratio)
+            width = min(width, max(maxWidth, minimumWidth))
+        }
         let height = width * ratio
         window.setFrame(NSRect(x: startFrame.minX, y: startFrame.maxY - height, width: width, height: height), display: true)
     }
 
     override func mouseUp(with event: NSEvent) {
-        window?.invalidateShadow()
+        if let panel = window as? PiPPanel { panel.contentSizeDidSettle() } else { window?.invalidateShadow() }
     }
 
     override func draw(_ dirtyRect: NSRect) {

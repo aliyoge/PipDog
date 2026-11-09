@@ -4,7 +4,7 @@ import ScreenCaptureKit
 
 /// 一个置顶、跨 Space 的浮动面板，实时显示某个窗口（或其中一块区域）的画面。
 @MainActor
-final class PiPPanel: NSPanel {
+final class PiPPanel: NSPanel, NSWindowDelegate {
     private let capture: WindowCapture
     private let imageLayer = CALayer()
     /// 正在显示的帧；保留到下一帧到来，避免它的 IOSurface 被复用
@@ -39,6 +39,7 @@ final class PiPPanel: NSPanel {
         backgroundColor = .clear // 透明窗口 + 圆角图层，四角才不会露出黑色方角
         isReleasedWhenClosed = false
         contentAspectRatio = size
+        delegate = self // 自己接收缩放结束、换屏等通知
 
         let view = NSView(frame: NSRect(origin: .zero, size: size))
         view.wantsLayer = true
@@ -59,6 +60,7 @@ final class PiPPanel: NSPanel {
         capture.onFrame = { [weak self] frame in self?.show(frame) }
         capture.onSourceSizeChange = { [weak self] size in self?.adaptAspect(to: size) }
         capture.onStop = { [weak self] reason in self?.captureEnded(reason) }
+        capture.setOutputLimit(pixelSize)
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -80,12 +82,24 @@ final class PiPPanel: NSPanel {
 
     /// 把新的帧率应用到正在运行的抓取。
     func setFrameRate(_ fps: Int) {
-        Task {
-            do { try await capture.setFrameRate(fps) } catch {
-                NSLog("PipDog: 修改帧率失败：\(error.localizedDescription)")
-            }
-        }
+        capture.setFrameRate(fps)
     }
+
+    /// 面板缩放结束（手柄、系统边缘缩放、跟随源宽高比）或换到像素比例不同的屏幕后调用：
+    /// 抓取分辨率跟着面板的像素尺寸走，不按源窗口的原生分辨率抓。
+    func contentSizeDidSettle() {
+        guard !isClosing else { return }
+        capture.setOutputLimit(pixelSize)
+        invalidateShadow()
+    }
+
+    private var pixelSize: CGSize {
+        let points = contentView?.bounds.size ?? frame.size
+        return CGSize(width: points.width * backingScaleFactor, height: points.height * backingScaleFactor)
+    }
+
+    func windowDidEndLiveResize(_ notification: Notification) { contentSizeDidSettle() }
+    func windowDidChangeBackingProperties(_ notification: Notification) { contentSizeDidSettle() }
 
     override var canBecomeKey: Bool { true }
 
@@ -137,7 +151,7 @@ final class PiPPanel: NSPanel {
         rect.size = NSSize(width: width, height: height)
         rect.origin.y = top - height
         setFrame(rect, display: true)
-        invalidateShadow()
+        contentSizeDidSettle()
     }
 
     private func captureEnded(_ reason: WindowCapture.StopReason) {

@@ -18,6 +18,8 @@ struct PiPKey: Hashable {
 final class PiPManager {
     private var panels: [PiPKey: PiPPanel] = [:]
     private var pending: Set<PiPKey> = []
+    /// 每次「关闭所有」加一：之前还在查找窗口的打开请求作废，不再弹出小窗
+    private var closeGeneration = 0
     private let regionSelector = RegionSelector()
     private let minimumRegion: CGFloat = 20
     private let fallbackRegionSize = CGSize(width: 480, height: 300)
@@ -70,6 +72,7 @@ final class PiPManager {
     }
 
     func closeAll() {
+        closeGeneration += 1
         regionSelector.cancel()
         panels.values.forEach { $0.close() }
         panels.removeAll()
@@ -97,24 +100,32 @@ final class PiPManager {
         guard !pending.contains(key) else { return }
         pending.insert(key)
         defer { pending.remove(key) }
+        let generation = closeGeneration
 
+        let scWindow: SCWindow
         do {
-            guard let scWindow = try await WindowLocator.shareableWindow(for: window.id) else {
+            guard let found = try await WindowLocator.shareableWindow(for: window.id) else {
                 Feedback.show("无法抓取「\(window.ownerName)」的这个窗口")
                 return
             }
-            let panel = PiPPanel(window: scWindow, region: region, sourceBounds: window.bounds, cascadeIndex: panels.count)
-            panel.onClose = { [weak self] in self?.panels[key] = nil }
-            panel.onEnded = { message in Feedback.show(message) }
-            panels[key] = panel
-            do {
-                try await panel.start()
-            } catch {
-                panel.close()
-                throw error
-            }
+            scWindow = found
         } catch {
             report(error)
+            return
+        }
+        guard generation == closeGeneration else { return } // 查找期间按了「关闭所有」
+
+        let panel = PiPPanel(window: scWindow, region: region, sourceBounds: window.bounds, cascadeIndex: panels.count)
+        panel.onClose = { [weak self] in self?.panels[key] = nil }
+        panel.onEnded = { message in Feedback.show(message) }
+        panels[key] = panel
+        do {
+            try await panel.start()
+        } catch {
+            // 启动期间用户已经关掉了这个小窗（或按了「关闭所有」）：静默结束，不弹错误
+            let stillOpen = panels[key] === panel
+            panel.close()
+            if stillOpen { report(error) }
         }
     }
 
