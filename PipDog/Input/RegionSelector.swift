@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 
 /// 在每块屏幕上盖一层半透明遮罩，让用户拖出一个矩形。
 /// 回调里的矩形是 Cocoa 全局坐标（左下角原点）；取消时为 nil。
@@ -102,7 +103,7 @@ private final class SelectionView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { onFinish?(nil) } // Esc 取消
+        if Int(event.keyCode) == kVK_Escape { onFinish?(nil) } // Esc 取消
         else { super.keyDown(with: event) }
     }
 

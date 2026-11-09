@@ -1,27 +1,32 @@
 import ApplicationServices
 import CoreGraphics
+import Foundation
 
 /// 用辅助功能接口找到鼠标下方一个合适的「容器」元素，返回它的范围（左上角原点的全局坐标）。
-@MainActor
+/// 不绑定主线程：AX 调用在目标 app 卡住时会阻塞，调用方应放在后台执行。
 enum AXRegionFinder {
     static let containerRoles: Set<String> = [
         "AXScrollArea", "AXTextArea", "AXWebArea", "AXGroup", "AXTable", "AXList", "AXOutline",
     ]
     static let minimumSize = CGSize(width: 120, height: 60)
+    /// 单次 AX 消息的超时，以及整次查找的总时间上限
+    static let messagingTimeout: Float = 0.25
+    static let totalTimeLimit: TimeInterval = 0.3
 
     /// - Parameters:
     ///   - point: 鼠标位置
     ///   - window: 鼠标下方的窗口；元素必须属于这个窗口的进程，且不能几乎占满整个窗口
     static func containerFrame(at point: CGPoint, in window: WindowInfo) -> CGRect? {
+        let deadline = Date().addingTimeInterval(totalTimeLimit)
         let systemWide = AXUIElementCreateSystemWide()
-        AXUIElementSetMessagingTimeout(systemWide, 0.5)
+        AXUIElementSetMessagingTimeout(systemWide, messagingTimeout) // 对系统级元素设置即为全局超时
         var hit: AXUIElement?
         guard AXUIElementCopyElementAtPosition(systemWide, Float(point.x), Float(point.y), &hit) == .success,
               var element = hit else { return nil }
         var pid: pid_t = 0
         guard AXUIElementGetPid(element, &pid) == .success, pid == window.pid else { return nil }
 
-        for _ in 0..<25 {
+        for _ in 0..<25 where Date() < deadline {
             let role = string(of: element, "AXRole")
             if role == "AXWindow" || role == "AXApplication" { break }
             if let role, containerRoles.contains(role), let frame = frame(of: element), isSensible(frame, in: window.bounds) {
