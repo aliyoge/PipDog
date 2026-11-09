@@ -5,14 +5,6 @@ import Carbon.HIToolbox
 final class HotKeys {
     static let shared = HotKeys()
 
-    /// Carbon 修饰键掩码
-    enum Modifier {
-        static let control = UInt32(controlKey)
-        static let option = UInt32(optionKey)
-        static let shift = UInt32(shiftKey)
-        static let command = UInt32(cmdKey)
-    }
-
     private var actions: [UInt32: () -> Void] = [:]
     private var refs: [EventHotKeyRef] = []
     private var handlerRef: EventHandlerRef?

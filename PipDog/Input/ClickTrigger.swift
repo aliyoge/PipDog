@@ -4,9 +4,6 @@ import AppKit
 /// 注意：全局监听只能旁观事件，双击本身仍会传给目标 app。
 @MainActor
 final class ClickTrigger {
-    /// 触发修饰键（精确匹配，忽略 Caps Lock / fn）。
-    static let modifiers: NSEvent.ModifierFlags = [.control, .option]
-
     var onTrigger: ((CGPoint) -> Void)?
     private var monitor: Any?
 
@@ -26,7 +23,9 @@ final class ClickTrigger {
 
     private func handle(clickCount: Int, flags: NSEvent.ModifierFlags) {
         let pressed = flags.intersection(.deviceIndependentFlagsMask).subtracting([.capsLock, .function, .numericPad])
-        guard clickCount == 2, pressed == Self.modifiers else { return }
+        let config = ShortcutSettings.shared.config
+        // 修饰键精确匹配设置里的组合（忽略 Caps Lock / fn）
+        guard config.clickEnabled, clickCount == 2, pressed == config.clickModifiers else { return }
         guard Permissions.hasAccessibility else {
             Permissions.requestAccessibility()
             return
