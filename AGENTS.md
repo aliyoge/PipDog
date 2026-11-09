@@ -6,9 +6,9 @@
 - 代码与注释可用中文；UI 文案目前为中文。
 - 非沙盒 app，最低系统 macOS 14。屏幕录制用于 PiP，辅助功能仅在修饰键 + 双击开启时需要。
 - 权限按需引导，启动不弹框，只读取一次屏幕录制 preflight 快照；不在 PiP 前用 preflight 拦截。抓取成功后相信实际结果（明确 `userDeclined` 时清除成功记录）；否则按当前 preflight 和启动快照区分未授权、已授权、已授权需重启。失败为 `userDeclined`，或尚无成功记录且启动无权限/当前 preflight 为 false 时，走权限引导，其余走通用错误反馈。
-- 屏幕录制引导提供重启：`NSWorkspace.openApplication` 设置 `createsNewApplicationInstance = true`，新实例成功启动才退出旧实例，失败用 Feedback。即使 preflight 过时仍可选重启。打开系统设置前先关闭自定义弹窗，再用 `CGRequestScreenCaptureAccess` 登记（每次运行最多一次）。macOS 15+ 页面名用「屏幕与系统录音」，macOS 14 用「屏幕录制」。
+- 屏幕录制引导提供重启：`NSWorkspace.openApplication` 设置 `createsNewApplicationInstance = true`，新实例成功启动才退出旧实例，失败用 Feedback。即使 preflight 过时仍可选重启。`CGRequestScreenCaptureAccess` 每次运行最多调用一次，且不和自定义弹窗同时出现：本次运行第一次因未授权导致 PiP 失败时，只调用它并用 Feedback 说明（不弹 NSAlert，因为系统框或 ScreenCaptureKit 自己的框可能正在显示）；之后的失败和菜单点击才弹 NSAlert，点「打开系统设置」时若还没请求过，在弹窗关闭后再请求。macOS 15+ 页面名用「屏幕与系统录音」，macOS 14 用「屏幕录制」。
 - 辅助功能引导只用带 prompt 的 `AXIsProcessTrustedWithOptions` 系统框，负责登记到「辅助功能」列表，不再叠加自定义弹窗。设置由关到开且缺权限时引导；已开启时本次运行首次缺权限手势引导，后续手势只用 Feedback。运行中获得权限并切到 tap 时，用实际修饰键符号提示一次。
-- 菜单用 AppKit `NSMenuDelegate.menuNeedsUpdate` 在每次显示前同步重读权限和设置；已授权项禁用，未授权项引导，需重启项确认重启，双击关闭时辅助功能标注不需要。成功抓取记录优先于可能过时的 preflight，因此撤权后的屏幕录制状态可能要等下一次明确拒绝才更新。
+- 菜单栏用 AppKit `NSStatusItem` + `NSMenuDelegate.menuNeedsUpdate`（不用 SwiftUI `MenuBarExtra`，它不会在打开时重读非 Observable 的权限状态），每次显示前同步重读权限和设置；设置窗口由 `SettingsActivation.open()` 自己创建（AppKit 菜单里拿不到 `openSettings`）。已授权项禁用，未授权项引导，需重启项确认重启，双击关闭时辅助功能标注不需要。成功抓取记录优先于可能过时的 preflight，因此撤权后的屏幕录制状态可能要等下一次明确拒绝才更新。
 - 并发约定（Swift 6 严格并发）：
   - UI、设置和抓取状态都是 `@MainActor`。`WindowCapture` 也是 `@MainActor`，只有 SCStream 的帧回调和停止回调是 `nonisolated`，它们只能碰线程安全的 `FrameMailbox`，再用 `DispatchQueue.main.async` 切回主线程；不要每帧创建 Task。
   - `WindowCapture` 的配置只通过 `setNeedsUpdate()` 串行更新，每次用 `makeConfiguration()` 新建 `SCStreamConfiguration`，不要修改正在更新中的配置对象。输出尺寸以面板像素尺寸为上限（长边 ≤ 4096），面板缩放结束时调用 `PiPPanel.contentSizeDidSettle()`。
