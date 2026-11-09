@@ -13,11 +13,20 @@ final class HotKeys {
     private var nextID: UInt32 = 1
     private let signature: OSType = 0x5044_6F67 // "PDog"
 
+    /// 注册结果：区分「快捷键处理器装不上」（所有快捷键都用不了）和「这一个组合注册失败」。
+    enum Registration: Equatable {
+        case registered
+        /// 全局快捷键事件处理器安装失败
+        case handlerUnavailable(OSStatus)
+        /// RegisterEventHotKey 失败；eventHotKeyExistsErr 表示组合已被占用
+        case failed(OSStatus)
+    }
+
     private init() {}
 
-    /// 注册一个快捷键。keyCode 用 kVK_* 常量。失败时返回 false（通常是被别的 app 占用）。
-    func register(keyCode: Int, modifiers: UInt32, action: @escaping () -> Void) -> Bool {
-        guard installHandlerIfNeeded() else { return false }
+    /// 注册一个快捷键。keyCode 用 kVK_* 常量。
+    func register(keyCode: Int, modifiers: UInt32, action: @escaping () -> Void) -> Registration {
+        if let status = installHandlerIfNeeded() { return .handlerUnavailable(status) }
         let id = nextID
         nextID += 1
         var ref: EventHotKeyRef?
@@ -25,11 +34,11 @@ final class HotKeys {
                                          GetApplicationEventTarget(), 0, &ref)
         guard status == noErr, let ref else {
             NSLog("PipDog: 注册快捷键失败（keyCode=\(keyCode)，status=\(status)）")
-            return false
+            return .failed(status == noErr ? OSStatus(paramErr) : status)
         }
         refs.append(ref)
         actions[id] = action
-        return true
+        return .registered
     }
 
     func unregisterAll() {
@@ -42,9 +51,9 @@ final class HotKeys {
         actions[id]?()
     }
 
-    /// 安装快捷键事件处理器；失败时记日志并提示一次（之后每次注册都会重试安装）。
-    private func installHandlerIfNeeded() -> Bool {
-        guard handlerRef == nil else { return true }
+    /// 安装快捷键事件处理器；成功（或已安装）返回 nil，失败返回错误码，并记日志、提示一次（之后每次注册都会重试安装）。
+    private func installHandlerIfNeeded() -> OSStatus? {
+        guard handlerRef == nil else { return nil }
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
             var hotKeyID = EventHotKeyID()
@@ -63,8 +72,8 @@ final class HotKeys {
                 reportedHandlerFailure = true
                 Feedback.show("全局快捷键初始化失败（错误 \(status)），暂时只能从菜单使用")
             }
-            return false
+            return status == noErr ? OSStatus(paramErr) : status
         }
-        return true
+        return nil
     }
 }

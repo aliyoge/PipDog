@@ -27,7 +27,7 @@ final class ShortcutSettings {
 
     /// 启动时注册已保存的快捷键。
     func activate() {
-        for action in register(config) { errors[action] = occupiedMessage(config.hotKeys[action]) }
+        for (action, failure) in register(config) { errors[action] = failureMessage(failure, config.hotKeys[action]) }
     }
 
     func combo(for action: ShortcutAction) -> KeyCombo? { config.hotKeys[action] }
@@ -37,8 +37,8 @@ final class ShortcutSettings {
     /// 设置（或清除，combo 为 nil）一个动作的快捷键。冲突时保留原值并显示错误。
     func assign(_ combo: KeyCombo?, to action: ShortcutAction) {
         errors[action] = nil
-        if let combo, !combo.isValidHotKey {
-            errors[action] = "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
+        if let combo, let error = combo.validationError {
+            errors[action] = error
             register(config)
             return
         }
@@ -49,8 +49,8 @@ final class ShortcutSettings {
         }
         var updated = config
         updated.hotKeys[action] = combo
-        if register(updated).contains(action) {
-            errors[action] = occupiedMessage(combo)
+        if let failure = register(updated)[action] {
+            errors[action] = failureMessage(failure, combo)
             register(config)
             return
         }
@@ -80,7 +80,7 @@ final class ShortcutSettings {
         cancelRecording()
         errors = [:]
         let defaults = ShortcutConfig.default
-        for action in register(defaults) { errors[action] = occupiedMessage(defaults.hotKeys[action]) }
+        for (action, failure) in register(defaults) { errors[action] = failureMessage(failure, defaults.hotKeys[action]) }
         save(defaults)
     }
 
@@ -132,30 +132,45 @@ final class ShortcutSettings {
             errors[action] = "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
             return true
         }
+        let combo = KeyCombo(keyCode: UInt32(keyCode), modifiers: KeyCodeNames.carbonModifiers(from: mods))
+        if let error = combo.validationError {
+            errors[action] = error // 继续录制，等用户换一个组合
+            return true
+        }
         stopRecording()
-        assign(KeyCombo(keyCode: UInt32(keyCode), modifiers: KeyCodeNames.carbonModifiers(from: mods)), to: action)
+        assign(combo, to: action)
         return true
     }
 
     // MARK: 注册与存储
 
-    /// 先注销全部，再按 config 注册；返回注册失败的动作。
+    /// 先注销全部，再按 config 注册；返回注册失败的动作和原因。
     @discardableResult
-    private func register(_ config: ShortcutConfig) -> Set<ShortcutAction> {
+    private func register(_ config: ShortcutConfig) -> [ShortcutAction: HotKeys.Registration] {
         HotKeys.shared.unregisterAll()
-        var failed: Set<ShortcutAction> = []
+        var failed: [ShortcutAction: HotKeys.Registration] = [:]
         for action in ShortcutAction.allCases {
             guard let combo = config.hotKeys[action] else { continue }
-            let ok = HotKeys.shared.register(keyCode: Int(combo.keyCode), modifiers: combo.modifiers) { [weak self] in
+            let result = HotKeys.shared.register(keyCode: Int(combo.keyCode), modifiers: combo.modifiers) { [weak self] in
                 self?.performAction?(action)
             }
-            if !ok { failed.insert(action) }
+            if result != .registered { failed[action] = result }
         }
         return failed
     }
 
-    private func occupiedMessage(_ combo: KeyCombo?) -> String {
-        "\(combo?.display ?? "该快捷键") 已被其他 app 或系统占用，未生效"
+    private func failureMessage(_ failure: HotKeys.Registration, _ combo: KeyCombo?) -> String {
+        let name = combo?.display ?? "该快捷键"
+        switch failure {
+        case .registered:
+            return ""
+        case .handlerUnavailable(let status):
+            return "全局快捷键初始化失败（错误 \(status)），\(name) 暂时只能从菜单使用"
+        case .failed(let status) where status == OSStatus(eventHotKeyExistsErr):
+            return "\(name) 已被其他 app 占用，未生效"
+        case .failed(let status):
+            return "\(name) 注册失败（错误 \(status)），未生效"
+        }
     }
 
     private func save(_ updated: ShortcutConfig) {
