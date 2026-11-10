@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// 小窗外观：不透明度和悬停自动隐藏，各存一个 UserDefaults 键；没有保存过时用 100%、开启。
+/// 小窗外观：不透明度和悬停自动隐藏，各存一个 UserDefaults 键；没有保存过时用 100%、关闭。
 /// 改了立即应用到已打开的小窗。不透明度最低 30%，不允许 0%（小窗看不见就没法再找回来）。
 @MainActor
 @Observable
@@ -9,12 +9,12 @@ final class PiPAppearanceSettings {
     static let shared = PiPAppearanceSettings()
     static let defaultOpacity = 1.0
     static let minimumOpacity = 0.3
-    static let defaultHoverAutoHide = true
+    static let defaultHoverAutoHide = false
 
-    /// 不透明度 0.3…1.0（用 NSWindow.alphaValue 应用）
-    var opacity: Double {
+    /// 不透明度 0.3…1.0（用 NSWindow.alphaValue 应用）。只能通过 setOpacity 改：
+    /// @Observable 会把属性改写成计算属性，在 didSet 里给自己赋值会无限递归。
+    private(set) var opacity: Double {
         didSet {
-            opacity = Self.clamped(opacity)
             guard opacity != oldValue else { return }
             UserDefaults.standard.set(opacity, forKey: Self.opacityKey)
             onChange?()
@@ -41,8 +41,15 @@ final class PiPAppearanceSettings {
         hoverAutoHide = defaults.object(forKey: Self.hoverAutoHideKey) as? Bool ?? Self.defaultHoverAutoHide
     }
 
+    /// 先限制到 0.3…1.0 再保存
+    func setOpacity(_ value: Double) {
+        let clamped = Self.clamped(value)
+        guard clamped != opacity else { return }
+        opacity = clamped
+    }
+
     func restoreDefaults() {
-        opacity = Self.defaultOpacity
+        setOpacity(Self.defaultOpacity)
         hoverAutoHide = Self.defaultHoverAutoHide
     }
 

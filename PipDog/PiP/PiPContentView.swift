@@ -6,7 +6,8 @@ import AppKit
 /// 切回原窗口用单击还是双击看 WindowClickSettings（默认双击）；⌥ + 单击总是快速查看。
 /// 缩放手柄和关闭按钮是子视图，点在它们上面的事件不会到这里。
 /// 滚轮 / 触控板滚动、捏合放大缩小画面（1…8 倍，以鼠标处为中心），不改小窗大小；放大后拖动是平移画面，
-/// 缩回 1 倍才是拖动小窗。缩放和平移只改画面图层的 frame，暂停提示、×、缩放手柄不跟着缩放。
+/// 缩回 1 倍才是拖动小窗；⌘ + 单击一步恢复 1 倍。放大时左下角显示倍数。
+/// 缩放和平移只改画面图层的 frame，暂停提示、×、缩放手柄、倍数提示不跟着缩放。
 final class PiPContentView: NSView {
     /// 单击和拖动的分界（点）
     static let clickThreshold: CGFloat = 4
@@ -30,6 +31,7 @@ final class PiPContentView: NSView {
     private(set) var zoom: CGFloat = 1
 
     private let closeButton = CloseButton()
+    private let zoomBadge = ZoomBadge()
     private var mouseDownEvent: NSEvent?
     private var mouseDownLocation = NSPoint.zero
     private var isDragging = false
@@ -51,6 +53,8 @@ final class PiPContentView: NSView {
         closeButton.action = #selector(closeClicked)
         closeButton.isHidden = true
         addSubview(closeButton)
+        zoomBadge.isHidden = true
+        addSubview(zoomBadge)
         // inVisibleRect：区域跟着视图大小自动更新，不用重建；面板不在前台时也要能悬停
         addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
                                        owner: self, userInfo: nil))
@@ -107,6 +111,20 @@ final class PiPContentView: NSView {
         panOffset = CGPoint(x: a.x - (a.x - panOffset.x) * newZoom / zoom, y: a.y - (a.y - panOffset.y) * newZoom / zoom)
         zoom = newZoom
         updateImageFrame()
+        zoomDidChange()
+    }
+
+    /// ⌘ + 单击：恢复 1 倍
+    private func resetZoom() {
+        guard zoom != 1 else { return }
+        zoom = 1
+        panOffset = .zero
+        updateImageFrame()
+        zoomDidChange()
+    }
+
+    private func zoomDidChange() {
+        zoomBadge.show(zoom: zoom, in: bounds)
         zoomSettleTimer?.invalidate()
         zoomSettleTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -134,6 +152,7 @@ final class PiPContentView: NSView {
         imageLayer.frame = CGRect(x: panOffset.x * bounds.width, y: panOffset.y * bounds.height,
                                   width: bounds.width * zoom, height: bounds.height * zoom)
         CATransaction.commit()
+        zoomBadge.show(zoom: zoom, in: bounds)
     }
 
     // MARK: - 单击和拖动
@@ -176,6 +195,11 @@ final class PiPContentView: NSView {
         }
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let option = modifiers.contains(.option)
+        if modifiers.contains(.command), !option { // ⌘ + 单击只恢复 1 倍，不切换原窗口，也不算进连点
+            seriesOption = nil
+            resetZoom()
+            return
+        }
         // 系统的 clickCount 不分修饰键：⌥ 和不带 ⌥ 换着点时，从换的那一下重新数
         if event.clickCount <= 1 || seriesOption != option {
             seriesOption = option
@@ -197,6 +221,37 @@ final class PiPContentView: NSView {
     }
 
     @objc private func closeClicked() { onCloseButton?() }
+}
+
+/// 画面放大时左下角的倍数提示（如「2.5×」），1 倍时隐藏。不接收鼠标。
+private final class ZoomBadge: NSTextField {
+    init() {
+        super.init(frame: .zero)
+        isEditable = false
+        isSelectable = false
+        isBordered = false
+        drawsBackground = false
+        font = .monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+        textColor = .white
+        alignment = .center
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
+        layer?.cornerRadius = 4
+        toolTip = "⌘ + 单击恢复原大小"
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    func show(zoom: CGFloat, in bounds: NSRect) {
+        isHidden = zoom <= 1
+        guard !isHidden else { return }
+        stringValue = String(format: "%.1f×", zoom)
+        let size = NSSize(width: 44, height: 18)
+        frame = NSRect(x: 6, y: 6, width: size.width, height: size.height)
+    }
 }
 
 /// 左上角的 × 按钮：深色圆底、白色叉，面板不在前台时第一次点击也生效。

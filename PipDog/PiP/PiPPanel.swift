@@ -158,6 +158,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         if hoverHider?.isHidden != true { alphaValue = settings.opacity }
     }
 
+    /// 悬停隐藏中就恢复（再次 PiP 同一窗口时）
+    func revealIfHidden() { hoverHider?.revealIfHidden() }
+
     func start() async throws {
         orderFrontRegardless()
         hoverHider?.setEnabled(PiPAppearanceSettings.shared.hoverAutoHide)

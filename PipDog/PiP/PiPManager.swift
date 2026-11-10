@@ -104,6 +104,7 @@ final class PiPManager {
     private func open(_ window: WindowInfo, region: CGRect?) async {
         let key = PiPKey(windowID: window.id, region: region)
         if let existing = panels[key] {
+            existing.revealIfHidden() // 悬停隐藏中：不然看起来像没反应
             existing.orderFrontRegardless()
             return
         }
