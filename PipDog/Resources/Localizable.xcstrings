@@ -181,6 +181,16 @@
         }
       }
     },
+    "Brings the source window to the front; again while it's in front parks it at the screen edge.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把原窗口切到前面；原窗口已在最前时再点一次，把它移到屏幕边上。"
+          }
+        }
+      }
+    },
     "Can't capture this window of “%@”": {
       "localizations": {
         "zh-Hans": {
@@ -221,26 +231,6 @@
         }
       }
     },
-    "Changes apply to open PiPs right away. Higher frame rates are smoother but use more CPU; 5–10 fps is plenty for watching logs or progress bars.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "修改后立即应用到已打开的 PiP。帧率越高画面越流畅，但 CPU 占用也越高；盯日志、进度条用 5–10 fps 就够了。"
-          }
-        }
-      }
-    },
-    "Choose at least one modifier; the default is ⌥⇧. PipDog intercepts the second click so it doesn't reach the app, while the first click goes through as usual. Intercepting needs Accessibility permission; without it PipDog only observes, and the double-click still reaches the app.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "至少选一个修饰键，默认 ⌥⇧。触发用的第二次点击会被 PipDog 拦下，不会传给目标 app，第一次单击仍会照常传过去。拦截需要辅助功能权限；没有权限时只能旁观，双击仍会传给目标 app。"
-          }
-        }
-      }
-    },
     "Clear Shortcut": {
       "localizations": {
         "zh-Hans": {
@@ -261,22 +251,12 @@
         }
       }
     },
-    "Click a button, then press the new combination. It must include ⌘, ⌃ or ⌥; ⌘ or ⌘⇧ with a regular key (like ⌘C or ⌘Q) isn't allowed because it would take over common shortcuts. A cleared action has no shortcut but is still in the menu. Switching to another app cancels recording.": {
+    "Click a shortcut, then press a new combination with ⌘, ⌃ or ⌥. Cleared actions stay in the menu.": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "点击按钮后按下新的组合键，至少包含 ⌘、⌃ 或 ⌥；只用 ⌘ 或 ⌘⇧ 加普通键（如 ⌘C、⌘Q）会抢走常用快捷键，不允许。清除后该动作没有快捷键，仍可从菜单使用。切到别的 app 会自动取消录制。"
-          }
-        }
-      }
-    },
-    "Click or double-click a PiP to bring its source window to the front; if the source is already in front, it moves to the screen edge. Double-click is the default, so dragging or a stray click won't trigger it. ⌥-click is always Quick Look.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在小窗上单击或双击，把原窗口切到前面；原窗口已在最前时，把它移到屏幕边上。默认双击，拖动或随手点一下不会误触发。⌥ + 单击仍是快速查看。"
+            "value": "点击快捷键后按下新的组合，需包含 ⌘、⌃ 或 ⌥。清除后仍可从菜单使用。"
           }
         }
       }
@@ -561,6 +541,16 @@
         }
       }
     },
+    "General": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通用"
+          }
+        }
+      }
+    },
     "Get Started": {
       "localizations": {
         "zh-Hans": {
@@ -627,6 +617,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "悬停时自动隐藏"
+          }
+        }
+      }
+    },
+    "Higher is smoother but uses more CPU; 5–10 fps is plenty for logs and progress bars.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "越高越流畅，也越费 CPU；盯日志、进度条用 5–10 fps 就够了。"
           }
         }
       }
@@ -727,16 +727,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "不透明度"
-          }
-        }
-      }
-    },
-    "Opacity goes down to 30%. Hide on Hover is off by default; when on, a PiP fades out after the pointer rests on it for about 1.5 s, and clicks go straight through to the window below. It comes back when the pointer leaves its area, or right away when you press ⌥ alone (without clicking); ⌥-clicks still go through to the app below. It doesn't hide after you click, drag or scroll on it, or while you hold ⌥ or point at × or the resize handle. Scroll or pinch to zoom in; when zoomed, dragging pans. ⌘-click a PiP to reset the zoom.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不透明度最低 30%。悬停隐藏默认关闭；打开后，鼠标在小窗上停约 1.5 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗的范围就恢复，隐藏时单独按一下 ⌥（不点鼠标）也会立即恢复；按住 ⌥ 点击下面的 app 照常穿透。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移；⌘ + 单击小窗恢复原大小。"
           }
         }
       }
@@ -867,16 +857,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "PipDog 设置"
-          }
-        }
-      }
-    },
-    "PipDog asks to relaunch after you change the language. Follow System uses Simplified Chinese on Chinese systems and English otherwise.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "修改后会提示重新启动 PipDog。跟随系统时，中文系统显示简体中文，其他系统显示英文。"
           }
         }
       }
@@ -1181,16 +1161,6 @@
         }
       }
     },
-    "Startup": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启动"
-          }
-        }
-      }
-    },
     "Switch Back / Park": {
       "localizations": {
         "zh-Hans": {
@@ -1241,6 +1211,16 @@
         }
       }
     },
+    "The second click is kept from the app. Needs Accessibility; without it, PipDog only observes.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发用的第二次点击不会传给目标 app。需要辅助功能权限，没有时只能旁观。"
+          }
+        }
+      }
+    },
     "The source window was closed, so the PiP ended": {
       "localizations": {
         "zh-Hans": {
@@ -1287,16 +1267,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "选区下方没有可以 PiP 的窗口"
-          }
-        }
-      }
-    },
-    "This is a macOS login item, so Restore Defaults doesn't change it.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这是系统的登录项，不受「恢复默认」影响。"
           }
         }
       }

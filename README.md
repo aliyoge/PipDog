@@ -20,7 +20,7 @@ PipDog lives in the menu bar and turns any window, or any region of a window, in
 - **Native and private.** Swift, AppKit and ScreenCaptureKit, public APIs only. No account and no network access: nothing leaves your Mac.
 - **Free and open source** under the Apache-2.0 license.
 
-> PipDog is available in English and Simplified Chinese. It follows your macOS language by default; you can change it in **Settings… › Language**.
+> PipDog is available in English and Simplified Chinese. It follows your macOS language by default; you can change it in **Settings… › General › Language**.
 
 ## Getting started
 

@@ -1,7 +1,13 @@
 import SwiftUI
 
-/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、小窗点击方式和外观、开机时启动。
+/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、小窗点击方式和外观、语言和开机时启动。
+/// 内容比窗口高时由 Form 自己滚动（窗口高度见 SettingsActivation），「恢复默认」固定在底部。
 struct SettingsView: View {
+    /// 窗口内容的宽度和默认高度；高度还会受屏幕可用高度限制
+    static let width: CGFloat = 480
+    static let idealHeight: CGFloat = 600
+    static let minHeight: CGFloat = 320
+
     private var settings: ShortcutSettings { .shared }
     private var capture: CaptureSettings { .shared }
     private var windowClick: WindowClickSettings { .shared }
@@ -10,6 +16,29 @@ struct SettingsView: View {
     private var language: LanguageSettings { .shared }
 
     var body: some View {
+        VStack(spacing: 0) {
+            form
+            Divider()
+            HStack {
+                Spacer()
+                Button("Restore Defaults") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
+                    settings.restoreDefaults()
+                    capture.restoreDefaults()
+                    windowClick.restoreDefaults()
+                    appearance.restoreDefaults()
+                    language.restoreDefaults() // 有变化时会提示重新启动
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+        }
+        .frame(width: Self.width)
+        .frame(minHeight: Self.minHeight, idealHeight: Self.idealHeight, maxHeight: .infinity)
+        .onAppear { launchAtLogin.refresh() } // 用户可能在系统设置里改过
+        .onDisappear { settings.cancelRecording() }
+    }
+
+    private var form: some View {
         Form {
             Section("Global Shortcuts") {
                 ForEach(ShortcutAction.allCases) { action in
@@ -20,7 +49,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text("Click a button, then press the new combination. It must include ⌘, ⌃ or ⌥; ⌘ or ⌘⇧ with a regular key (like ⌘C or ⌘Q) isn't allowed because it would take over common shortcuts. A cleared action has no shortcut but is still in the menu. Switching to another app cancels recording.")
+                Text("Click a shortcut, then press a new combination with ⌘, ⌃ or ⌥. Cleared actions stay in the menu.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -38,7 +67,7 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(!settings.config.clickEnabled)
-                Text("Choose at least one modifier; the default is ⌥⇧. PipDog intercepts the second click so it doesn't reach the app, while the first click goes through as usual. Intercepting needs Accessibility permission; without it PipDog only observes, and the double-click still reaches the app.")
+                Text("The second click is kept from the app. Needs Accessibility; without it, PipDog only observes.")
                     .font(.caption).foregroundStyle(.secondary)
                 if settings.config.clickModifiers.contains(.control) {
                     Text("Tip: macOS treats a ⌃-click as a right-click, so the app may show its shortcut menu on the first click.")
@@ -50,7 +79,7 @@ struct SettingsView: View {
                 Picker("Frame Rate", selection: Binding(get: { capture.frameRate }, set: { capture.frameRate = $0 })) {
                     ForEach(CaptureSettings.frameRateOptions, id: \.self) { Text(verbatim: "\($0) fps").tag($0) }
                 }
-                Text("Changes apply to open PiPs right away. Higher frame rates are smoother but use more CPU; 5–10 fps is plenty for watching logs or progress bars.")
+                Text("Higher is smoother but uses more CPU; 5–10 fps is plenty for logs and progress bars.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -59,7 +88,7 @@ struct SettingsView: View {
                     ForEach(WindowClickMode.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                Text("Click or double-click a PiP to bring its source window to the front; if the source is already in front, it moves to the screen edge. Double-click is the default, so dragging or a stray click won't trigger it. ⌥-click is always Quick Look.")
+                Text("Brings the source window to the front; again while it's in front parks it at the screen edge.")
                     .font(.caption).foregroundStyle(.secondary)
                 LabeledContent("Opacity") {
                     HStack {
@@ -72,11 +101,16 @@ struct SettingsView: View {
                 }
                 Toggle("Hide on Hover", isOn: Binding(get: { appearance.hoverAutoHide },
                                                  set: { appearance.hoverAutoHide = $0 }))
-                Text("Opacity goes down to 30%. Hide on Hover is off by default; when on, a PiP fades out after the pointer rests on it for about 1.5 s, and clicks go straight through to the window below. It comes back when the pointer leaves its area, or right away when you press ⌥ alone (without clicking); ⌥-clicks still go through to the app below. It doesn't hide after you click, drag or scroll on it, or while you hold ⌥ or point at × or the resize handle. Scroll or pinch to zoom in; when zoomed, dragging pans. ⌘-click a PiP to reset the zoom.")
-                    .font(.caption).foregroundStyle(.secondary)
+                if appearance.hoverAutoHide {
+                    Text("Rest the pointer on a PiP for about 1.5 s to fade it out; press ⌥ alone to bring it back")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
 
-            Section("Startup") {
+            Section("General") {
+                Picker("Language", selection: Binding(get: { language.language }, set: { language.setLanguage($0) })) {
+                    ForEach(AppLanguage.allCases) { Text(verbatim: $0.title).tag($0) }
+                }
                 Toggle("Open at Login", isOn: Binding(get: { launchAtLogin.isEnabled },
                                               set: { launchAtLogin.setEnabled($0) }))
                 if launchAtLogin.requiresApproval {
@@ -84,33 +118,8 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.orange)
                     Button("Open Login Items Settings") { launchAtLogin.openLoginItemsSettings() }
                 }
-                Text("This is a macOS login item, so Restore Defaults doesn't change it.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            Section("Language") {
-                Picker("Language", selection: Binding(get: { language.language }, set: { language.setLanguage($0) })) {
-                    ForEach(AppLanguage.allCases) { Text(verbatim: $0.title).tag($0) }
-                }
-                Text("PipDog asks to relaunch after you change the language. Follow System uses Simplified Chinese on Chinese systems and English otherwise.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            HStack {
-                Spacer()
-                Button("Restore Defaults") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
-                    settings.restoreDefaults()
-                    capture.restoreDefaults()
-                    windowClick.restoreDefaults()
-                    appearance.restoreDefaults()
-                    language.restoreDefaults() // 有变化时会提示重新启动
-                }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480)
-        .fixedSize(horizontal: false, vertical: true)
-        .onAppear { launchAtLogin.refresh() } // 用户可能在系统设置里改过
-        .onDisappear { settings.cancelRecording() }
     }
 }

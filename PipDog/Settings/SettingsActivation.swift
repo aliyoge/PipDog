@@ -20,6 +20,12 @@ final class SettingsActivation {
 
     private init() {}
 
+    /// 默认高度，但不超过当前屏幕的可用高度（留出边距和标题栏），13 寸屏也放得下
+    private static var initialHeight: CGFloat {
+        let screen = NSScreen.main?.visibleFrame.height ?? 800
+        return max(SettingsView.minHeight, min(SettingsView.idealHeight, screen - 100))
+    }
+
     /// 设置窗口正开着（使用说明关掉时据此决定要不要交还前台）
     var isShowing: Bool { window?.isVisible == true }
 
@@ -32,10 +38,14 @@ final class SettingsActivation {
             show(window)
             return
         }
-        let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
+        let hosting = NSHostingController(rootView: SettingsView())
+        // 只取 SwiftUI 的最小 / 最大尺寸，不按内容的理想高度撑开窗口：内容比窗口高时由 Form 滚动
+        hosting.sizingOptions = [.minSize, .maxSize]
+        let window = NSWindow(contentViewController: hosting)
         window.title = String(localized: "PipDog Settings")
-        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable] // 宽度固定，只能改高度
         window.isReleasedWhenClosed = false
+        window.setContentSize(NSSize(width: SettingsView.width, height: Self.initialHeight))
         window.center()
         attach(window)
         show(window)
