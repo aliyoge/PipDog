@@ -93,8 +93,10 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         }
     }
 
+    /// 隐藏时显示暂停提示（画面停在最后一帧，小窗不关）；取消隐藏时去掉提示并重新开始抓取。
     private func setSourceHidden(_ hidden: Bool) {
         pauseOverlay.isHidden = !hidden
+        if !hidden { Task { await capture.resumeAfterUnhide() } }
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -251,6 +253,12 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     }
 
     private func captureEnded(_ reason: WindowCapture.StopReason) {
+        // 保险：原 app 只是被隐藏时不关小窗，暂停等它回来
+        if let app = NSRunningApplication(processIdentifier: source.pid), !app.isTerminated, app.isHidden {
+            setSourceHidden(true)
+            capture.pauseUntilShown()
+            return
+        }
         let ended = onEnded
         close()
         switch reason {

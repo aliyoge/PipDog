@@ -9,6 +9,10 @@ import ScreenCaptureKit
 ///
 /// 配置更新只有一条串行路径（setNeedsUpdate）：每次都用当前状态新建一个 SCStreamConfiguration 交给
 /// updateConfiguration，不会在更新进行中修改同一个配置对象；更新期间又有变化时，结束后再更新一次。
+///
+/// 原 app 被隐藏（⌘H、Dock、单击小窗）时 ScreenCaptureKit 会停掉这条流，窗口也可能从窗口列表里消失。
+/// 这不算结束：进入 paused（保留最近一帧和回调，不调用 onStop），原 app 取消隐藏后 resumeAfterUnhide()
+/// 重新找到窗口、重新开始抓取。只有 app 退出、或 app 没隐藏但窗口不见了，才当作原窗口已关闭。
 @MainActor
 final class WindowCapture: NSObject {
     enum StopReason {
@@ -16,14 +20,19 @@ final class WindowCapture: NSObject {
         case failed(any Error)
     }
 
-    private enum State { case idle, starting, running, stopped }
+    private enum State { case idle, starting, running, paused, stopped }
 
     /// 输出画面长边的上限（像素），防止超大面板或超大窗口占用过多内存
     static let maximumOutputDimension: CGFloat = 4096
     /// 不依赖帧到达、定期检查原窗口是否还在（画面静止时 ScreenCaptureKit 不发完整帧）
     private static let sourceCheckInterval: TimeInterval = 1.5
 
-    private let window: SCWindow
+    /// 取消隐藏后重新开始抓取时会换成新找到的 SCWindow（同一个窗口 ID）
+    private var window: SCWindow
+    /// 原窗口所属 app 的进程，用来区分「被隐藏」和「真的关了 / 退出了」
+    private let sourcePID: pid_t?
+    /// 正在重新开始抓取（防止取消隐藏通知和单击同时触发两次）
+    private var isResuming = false
     /// 用户要的区域（窗口内坐标，点，左上角原点）；nil 表示整个窗口。窗口变小时实际抓取的区域会被裁剪。
     private let requestedRegion: CGRect?
     private var state: State = .idle
@@ -61,11 +70,12 @@ final class WindowCapture: NSObject {
     var onFrame: ((CapturedFrame) -> Void)?
     /// 源尺寸（点）变化时调用，用来调整面板宽高比
     var onSourceSizeChange: ((CGSize) -> Void)?
-    /// 抓取意外结束（原窗口关闭、出错）时调用；收到后应走正常的关闭流程（stop）
+    /// 抓取意外结束（原窗口关闭、app 退出、出错）时调用；收到后应走正常的关闭流程（stop）。原 app 被隐藏不会调用
     var onStop: ((StopReason) -> Void)?
 
     init(window: SCWindow, region: CGRect?) {
         self.window = window
+        sourcePID = window.owningApplication?.processID
         requestedRegion = region
         sourceRect = region
         sourceSize = region?.size ?? window.frame.size
@@ -135,7 +145,7 @@ final class WindowCapture: NSObject {
         lastFrame = nil
         failFrameWaiter(SnapshotError.notCapturing)
         resumeUpdateWaiters()
-        guard previous == .running, let stream else { return }
+        guard previous == .running, let stream else { return } // paused 时流已经拆掉了
         try? await stream.stopCapture()
         detach(stream)
     }
@@ -145,6 +155,7 @@ final class WindowCapture: NSObject {
     /// 区域 PiP 仍是那块区域），等到下一帧这个尺寸的完整帧，复制成 CGImage，再恢复原来的配置。
     func snapshot() async throws -> CGImage {
         guard !isTakingSnapshot else { throw SnapshotError.busy }
+        if state == .paused, let lastFrame { return try Self.copyImage(lastFrame) } // 原 app 隐藏中：用停住的画面
         guard WindowLocator.bounds(of: window.windowID) != nil else { throw SnapshotError.windowClosed }
         guard state == .running, stream != nil else { throw SnapshotError.notCapturing }
         let pixels = nativePixelSize()
@@ -302,10 +313,84 @@ final class WindowCapture: NSObject {
     private var isActive: Bool { state == .starting || state == .running }
 
     private func end(_ reason: StopReason) {
-        guard isActive else { return }
+        guard isActive || state == .paused else { return }
         sourceTimer?.invalidate()
         sourceTimer = nil
         if let onStop { onStop(reason) } else { Task { await stop() } }
+    }
+
+    /// 原窗口所属 app 还在运行（没退出）
+    private var sourceApp: NSRunningApplication? {
+        guard let sourcePID, let app = NSRunningApplication(processIdentifier: sourcePID), !app.isTerminated else { return nil }
+        return app
+    }
+
+    /// 原 app 被隐藏：停掉这条流，保留最近一帧和回调，等取消隐藏后 resumeAfterUnhide()。不调用 onStop。
+    func pauseUntilShown() {
+        guard isActive else { return }
+        state = .paused
+        sourceTimer?.invalidate()
+        sourceTimer = nil
+        _ = mailbox.take()
+        failFrameWaiter(SnapshotError.timedOut) // 进行中的截图退回到最近一帧
+        resumeUpdateWaiters()
+        guard let stream else { return }
+        detach(stream)
+        Task { try? await stream.stopCapture() } // 流可能已经被系统停了，失败不要紧
+    }
+
+    /// 原 app 取消隐藏后重新开始抓取。不是 paused 时什么都不做。
+    /// 窗口刚显示时 ScreenCaptureKit 可能还没列出它，约 1 秒内重试几次。
+    func resumeAfterUnhide() async {
+        guard state == .paused, !isResuming else { return }
+        isResuming = true
+        defer { isResuming = false }
+        for attempt in 0..<8 {
+            if attempt > 0 { try? await Task.sleep(for: .milliseconds(150)) }
+            guard state == .paused else { return } // 期间被关掉了
+            guard let app = sourceApp else { return end(.windowClosed) }
+            if app.isHidden { return } // 又被隐藏了，等下一次取消隐藏
+            guard let found = try? await WindowLocator.shareableWindow(for: window.windowID) else { continue }
+            guard state == .paused else { return }
+            window = found
+            state = .idle
+            do {
+                try await start(fps: fps)
+            } catch {
+                NSLog("PipDog: 取消隐藏后重新抓取失败：\(error.localizedDescription)")
+                state = .paused
+                end(.failed(error))
+            }
+            return
+        }
+        // 一直找不到：窗口真的不见了就结束；否则保持暂停，下次单击小窗再试
+        if state == .paused, sourceApp?.isHidden == false, WindowLocator.bounds(of: window.windowID) == nil {
+            end(.windowClosed)
+        }
+    }
+
+    /// 流停了或窗口不在窗口列表里了：app 退出就结束；否则先暂停，稍等再判断
+    /// （隐藏时 isHidden 可能晚一点才更新）：被隐藏就保持暂停；窗口不见了算关闭；
+    /// 窗口还在但流出错（如撤销了屏幕录制权限）按错误结束；窗口还在且没出错就重新开始抓取。
+    private func sourceMayHaveGone(error: (any Error)?) {
+        guard isActive else { return }
+        guard sourceApp != nil else { return end(.windowClosed) }
+        pauseUntilShown()
+        Task {
+            try? await Task.sleep(for: .milliseconds(600))
+            guard state == .paused, !isResuming, let app = sourceApp else {
+                if state == .paused, !isResuming { end(.windowClosed) }
+                return
+            }
+            if app.isHidden { return }
+            if WindowLocator.bounds(of: window.windowID) == nil {
+                end(.windowClosed)
+            } else if let error {
+                end(.failed(error))
+            } else {
+                await resumeAfterUnhide()
+            }
+        }
     }
 
     fileprivate func deliverLatestFrame() {
@@ -318,7 +403,7 @@ final class WindowCapture: NSObject {
 
     fileprivate func streamDidStop(with error: any Error) {
         NSLog("PipDog: 抓取已停止：\(error.localizedDescription)")
-        end(WindowLocator.bounds(of: window.windowID) == nil ? .windowClosed : .failed(error))
+        sourceMayHaveGone(error: error)
     }
 
     /// 帧信息（contentRect / contentScale / scaleFactor）变化时立即检查原窗口，否则最多每秒检查一次。
@@ -334,7 +419,7 @@ final class WindowCapture: NSObject {
     private func checkSource(scaleFactor: CGFloat?) {
         guard state == .running else { return }
         guard let bounds = WindowLocator.bounds(of: window.windowID) else {
-            end(.windowClosed)
+            sourceMayHaveGone(error: nil)
             return
         }
         let newScale = scaleFactor ?? scale
