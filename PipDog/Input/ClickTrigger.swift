@@ -156,6 +156,7 @@ final class ClickTrigger {
         windowObservers = [
             NSWindow.didMoveNotification, NSWindow.didResizeNotification, NSWindow.didChangeOcclusionStateNotification,
             NSWindow.willCloseNotification, NSWindow.didBecomeKeyNotification,
+            HoverHider.clickThroughDidChange, // 悬停隐藏的小窗点击穿透，不算 PipDog 自己的窗口
         ].map { center.addObserver(forName: $0, object: nil, queue: .main, using: refresh) }
     }
 

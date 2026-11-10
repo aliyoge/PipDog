@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、小窗点击方式、开机时启动。
+/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、小窗点击方式和外观、开机时启动。
 struct SettingsView: View {
     private var settings: ShortcutSettings { .shared }
     private var capture: CaptureSettings { .shared }
     private var windowClick: WindowClickSettings { .shared }
+    private var appearance: PiPAppearanceSettings { .shared }
     private var launchAtLogin: LaunchAtLogin { .shared }
 
     var body: some View {
@@ -59,6 +60,19 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 Text("在小窗上单击或双击，把原窗口切到前面；原窗口已在最前时，把它移到屏幕边上。默认双击，拖动或随手点一下不会误触发。⌥ + 单击仍是快速查看。")
                     .font(.caption).foregroundStyle(.secondary)
+                LabeledContent("不透明度") {
+                    HStack {
+                        Slider(value: Binding(get: { appearance.opacity }, set: { appearance.opacity = $0 }),
+                               in: PiPAppearanceSettings.minimumOpacity...1, step: 0.05)
+                        Text("\(Int((appearance.opacity * 100).rounded()))%")
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+                Toggle("悬停时自动隐藏", isOn: Binding(get: { appearance.hoverAutoHide },
+                                                 set: { appearance.hoverAutoHide = $0 }))
+                Text("不透明度最低 30%。打开悬停隐藏后，鼠标在小窗上停约 0.6 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗原来的范围就恢复。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移，缩回原大小才能拖动小窗。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("启动") {
@@ -79,6 +93,7 @@ struct SettingsView: View {
                     settings.restoreDefaults()
                     capture.restoreDefaults()
                     windowClick.restoreDefaults()
+                    appearance.restoreDefaults()
                 }
             }
         }

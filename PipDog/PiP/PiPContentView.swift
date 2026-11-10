@@ -1,19 +1,33 @@
 import AppKit
 
 /// PiP 面板的内容视图：区分单击和拖动，鼠标悬停时在左上角显示关闭按钮。
-/// 按下后移动不到 clickThreshold 点就松开算单击；超过就交给系统拖动窗口，松开时不再算单击。
+/// 按下后移动不到 clickThreshold 点就松开算单击；超过就交给系统拖动窗口（画面放大时是平移画面），松开时不再算单击。
 /// 叠在画面上的暂停提示不接收鼠标（hitTest 返回 nil），点在上面也算单击。
 /// 切回原窗口用单击还是双击看 WindowClickSettings（默认双击）；⌥ + 单击总是快速查看。
 /// 缩放手柄和关闭按钮是子视图，点在它们上面的事件不会到这里。
+/// 滚轮 / 触控板滚动、捏合放大缩小画面（1…8 倍，以鼠标处为中心），不改小窗大小；放大后拖动是平移画面，
+/// 缩回 1 倍才是拖动小窗。缩放和平移只改画面图层的 frame，暂停提示、×、缩放手柄不跟着缩放。
 final class PiPContentView: NSView {
     /// 单击和拖动的分界（点）
     static let clickThreshold: CGFloat = 4
+    static let maximumZoom: CGFloat = 8
     private static let buttonSize: CGFloat = 20
     private static let buttonInset: CGFloat = 6
 
     /// 单击（松开时调用），参数是松开时的修饰键
     var onClick: ((NSEvent.ModifierFlags) -> Void)?
     var onCloseButton: (() -> Void)?
+    /// 缩放停下约 0.3 秒后调用（参数是缩放倍数），PiPPanel 用来调整抓取分辨率
+    var onZoomSettled: ((CGFloat) -> Void)?
+    /// 鼠标进入 / 离开（悬停自动隐藏用）
+    var onPointerEntered: (() -> Void)?
+    var onPointerExited: (() -> Void)?
+    /// 画面图层（PiPPanel 创建）；缩放平移时改它的 frame
+    var imageLayer: CALayer? {
+        didSet { updateImageFrame() }
+    }
+    /// 画面缩放倍数，1…maximumZoom
+    private(set) var zoom: CGFloat = 1
 
     private let closeButton = CloseButton()
     private var mouseDownEvent: NSEvent?
@@ -22,6 +36,11 @@ final class PiPContentView: NSView {
     /// 这一串连点是不是 ⌥ 点击（nil：还没开始或被拖动打断），以及它从系统 clickCount 的第几下开始
     private var seriesOption: Bool?
     private var seriesStart = 0
+    /// 画面图层左下角相对视图的偏移，按视图宽高归一化（1 - zoom…0）；缩放小窗时保持不变
+    private var panOffset = CGPoint.zero
+    private var isPanning = false
+    private var lastPanLocation = NSPoint.zero
+    private var zoomSettleTimer: Timer?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -43,27 +62,114 @@ final class PiPContentView: NSView {
     override var mouseDownCanMoveWindow: Bool { false } // 拖动由 mouseDragged 自己发起
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    override func mouseEntered(with event: NSEvent) { closeButton.isHidden = false }
-    override func mouseExited(with event: NSEvent) { closeButton.isHidden = true }
+    override func mouseEntered(with event: NSEvent) {
+        closeButton.isHidden = false
+        onPointerEntered?()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        closeButton.isHidden = true
+        onPointerExited?()
+    }
+
+    /// 屏幕坐标的点是不是在 × 或缩放手柄（子视图）上
+    func isOverChrome(screenPoint: NSPoint) -> Bool {
+        guard let window, let superview else { return false }
+        let point = superview.convert(window.convertPoint(fromScreen: screenPoint), from: nil)
+        guard let hit = hitTest(point) else { return false }
+        return hit !== self
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        updateImageFrame() // 小窗缩放后保持缩放倍数和平移位置
+    }
+
+    // MARK: - 缩放和平移
+
+    override func scrollWheel(with event: NSEvent) {
+        guard event.momentumPhase.isEmpty else { return } // 惯性滚动不算，松手就停
+        // 触控板是像素级的滚动量，鼠标滚轮按行算
+        let delta = event.scrollingDeltaY * (event.hasPreciseScrollingDeltas ? 0.01 : 0.1)
+        guard delta != 0 else { return }
+        setZoom(zoom * exp(delta), anchor: convert(event.locationInWindow, from: nil))
+    }
+
+    override func magnify(with event: NSEvent) {
+        setZoom(zoom * (1 + event.magnification), anchor: convert(event.locationInWindow, from: nil))
+    }
+
+    /// 以 anchor（视图坐标）为中心缩放：缩放前后鼠标下面是画面里的同一点。
+    private func setZoom(_ value: CGFloat, anchor: NSPoint) {
+        let newZoom = min(max(value, 1), Self.maximumZoom)
+        guard newZoom != zoom, bounds.width > 0, bounds.height > 0 else { return }
+        let a = CGPoint(x: anchor.x / bounds.width, y: anchor.y / bounds.height)
+        panOffset = CGPoint(x: a.x - (a.x - panOffset.x) * newZoom / zoom, y: a.y - (a.y - panOffset.y) * newZoom / zoom)
+        zoom = newZoom
+        updateImageFrame()
+        zoomSettleTimer?.invalidate()
+        zoomSettleTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.onZoomSettled?(self.zoom)
+            }
+        }
+    }
+
+    /// 平移画面（屏幕点数）
+    private func pan(by delta: CGPoint) {
+        guard bounds.width > 0, bounds.height > 0 else { return }
+        panOffset.x += delta.x / bounds.width
+        panOffset.y += delta.y / bounds.height
+        updateImageFrame()
+    }
+
+    /// 限制平移范围（画面不露出空白），再设画面图层的 frame。
+    private func updateImageFrame() {
+        let low = 1 - zoom
+        panOffset = CGPoint(x: min(max(panOffset.x, low), 0), y: min(max(panOffset.y, low), 0))
+        guard let imageLayer else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true) // 不要隐式动画，跟手
+        imageLayer.frame = CGRect(x: panOffset.x * bounds.width, y: panOffset.y * bounds.height,
+                                  width: bounds.width * zoom, height: bounds.height * zoom)
+        CATransaction.commit()
+    }
+
+    // MARK: - 单击和拖动
 
     override func mouseDown(with event: NSEvent) {
         mouseDownEvent = event
         mouseDownLocation = NSEvent.mouseLocation
         isDragging = false
+        isPanning = false
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let down = mouseDownEvent, !isDragging else { return }
+        guard let down = mouseDownEvent else { return }
         let mouse = NSEvent.mouseLocation
-        guard hypot(mouse.x - mouseDownLocation.x, mouse.y - mouseDownLocation.y) >= Self.clickThreshold else { return }
+        if isPanning {
+            pan(by: CGPoint(x: mouse.x - lastPanLocation.x, y: mouse.y - lastPanLocation.y))
+            lastPanLocation = mouse
+            return
+        }
+        guard !isDragging,
+              hypot(mouse.x - mouseDownLocation.x, mouse.y - mouseDownLocation.y) >= Self.clickThreshold else { return }
         isDragging = true
-        window?.performDrag(with: down) // 用按下时的事件，窗口和鼠标保持按下时的相对位置
+        if zoom > 1 { // 放大后拖动是平移画面，从按下的位置算起
+            isPanning = true
+            pan(by: CGPoint(x: mouse.x - mouseDownLocation.x, y: mouse.y - mouseDownLocation.y))
+            lastPanLocation = mouse
+        } else {
+            window?.performDrag(with: down) // 用按下时的事件，窗口和鼠标保持按下时的相对位置
+        }
     }
 
     override func mouseUp(with event: NSEvent) {
         let wasClick = mouseDownEvent != nil && !isDragging
         mouseDownEvent = nil
         isDragging = false
+        isPanning = false
         guard wasClick else {
             seriesOption = nil // 拖动打断连点
             return

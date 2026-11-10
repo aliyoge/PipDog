@@ -31,6 +31,9 @@ final class PiPManager {
         WindowClickSettings.shared.onModeChange = { [weak self] mode in
             self?.panels.values.forEach { $0.clickModeDidChange(mode) }
         }
+        PiPAppearanceSettings.shared.onChange = { [weak self] in
+            self?.panels.values.forEach { $0.appearanceDidChange() }
+        }
     }
 
     /// PiP 最前面 app 的窗口。最前面的 app 没有可 PiP 的窗口时只提示，不去抓别的 app 的窗口。

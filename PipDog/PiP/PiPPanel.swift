@@ -15,6 +15,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     /// 原 app 被隐藏时盖在画面上的暂停提示（隐藏后 ScreenCaptureKit 不再发完整帧，画面会停住）
     private let pauseOverlay = PauseOverlay()
     private var workspaceObservers: [NSObjectProtocol] = []
+    private var hoverHider: HoverHider?
+    /// 画面缩放倍数（PiPContentView 缩放停下后告诉这里）：抓取分辨率跟着放大
+    private var zoom: CGFloat = 1
     var onClose: (() -> Void)?
     /// 抓取意外结束（原窗口关闭等）时调用，参数是给用户看的说明
     var onEnded: ((String) -> Void)?
@@ -53,9 +56,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         view.layer?.cornerRadius = 12
         view.layer?.masksToBounds = true
         imageLayer.contentsGravity = .resizeAspect
-        imageLayer.frame = view.bounds
-        imageLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
         view.layer?.addSublayer(imageLayer)
+        view.imageLayer = imageLayer // frame 由内容视图管（缩放、平移、跟着小窗大小）
         // 无边框窗口的边缘缩放不可靠，右下角放一个缩放手柄
         let handleSize = ResizeHandle.size
         let handle = ResizeHandle(frame: NSRect(x: size.width - handleSize, y: 0, width: handleSize, height: handleSize))
@@ -66,7 +68,17 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         view.addSubview(pauseOverlay) // 不接收鼠标，单击、拖动、×、缩放手柄照常可用
         view.onClick = { [weak self] modifiers in self?.clicked(modifiers: modifiers) }
         view.onCloseButton = { [weak self] in self?.close() }
+        view.onZoomSettled = { [weak self] zoom in
+            guard let self else { return }
+            self.zoom = zoom
+            contentSizeDidSettle()
+        }
         contentView = view
+        alphaValue = PiPAppearanceSettings.shared.opacity
+        let hider = HoverHider(panel: self) { [weak view] point in view?.isOverChrome(screenPoint: point) ?? false }
+        view.onPointerEntered = { [weak hider] in hider?.pointerEntered() }
+        view.onPointerExited = { [weak hider] in hider?.pointerExited() }
+        hoverHider = hider
 
         capture.onFrame = { [weak self] frame in self?.show(frame) }
         capture.onSourceSizeChange = { [weak self] size in self?.adaptAspect(to: size) }
@@ -139,8 +151,16 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         return NSSize(width: width, height: height)
     }
 
+    /// 设置里改了不透明度或悬停自动隐藏。隐藏期间不改 alphaValue，恢复时再用新的不透明度。
+    func appearanceDidChange() {
+        let settings = PiPAppearanceSettings.shared
+        hoverHider?.setEnabled(settings.hoverAutoHide)
+        if hoverHider?.isHidden != true { alphaValue = settings.opacity }
+    }
+
     func start() async throws {
         orderFrontRegardless()
+        hoverHider?.setEnabled(PiPAppearanceSettings.shared.hoverAutoHide)
         try await capture.start(fps: CaptureSettings.shared.frameRate)
     }
 
@@ -157,9 +177,11 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         invalidateShadow()
     }
 
+    /// 抓取用的像素尺寸：面板像素尺寸乘画面缩放倍数（WindowCapture 不会超过原生分辨率和 4096）
     private var pixelSize: CGSize {
         let points = contentView?.bounds.size ?? frame.size
-        return CGSize(width: points.width * backingScaleFactor, height: points.height * backingScaleFactor)
+        let factor = backingScaleFactor * zoom
+        return CGSize(width: points.width * factor, height: points.height * factor)
     }
 
     func windowDidEndLiveResize(_ notification: Notification) { contentSizeDidSettle() }
@@ -180,6 +202,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         Task { await capture.stop() }
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers = []
+        hoverHider?.stop()
+        hoverHider = nil
         imageLayer.contents = nil
         currentFrame = nil
         super.close()
