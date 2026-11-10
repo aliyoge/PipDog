@@ -20,7 +20,7 @@ PipDog lives in the menu bar and turns any window, or any region of a window, in
 - **Native and private.** Swift, AppKit and ScreenCaptureKit, public APIs only. No account and no network access: nothing leaves your Mac.
 - **Free and open source** under the Apache-2.0 license.
 
-> PipDog's interface is currently in Simplified Chinese. Menu and button names below are given in Chinese with an English gloss.
+> PipDog is available in English and Simplified Chinese. It follows your macOS language by default; you can change it in **Settings… › Language**.
 
 ## Getting started
 
@@ -64,20 +64,20 @@ PipDog asks for nothing at launch. Each permission is requested the first time y
 
 | Permission | Needed for |
 | --- | --- |
-| **Screen Recording** (called **Screen & System Audio Recording** on macOS 15 and later) | Required. Shows the live content of the window in the PiP. Requested on your first PiP. After granting it, restart PipDog: it offers a **重新启动 PipDog** (Relaunch PipDog) button. |
+| **Screen Recording** (called **Screen & System Audio Recording** on macOS 15 and later) | Required. Shows the live content of the window in the PiP. Requested on your first PiP. After granting it, restart PipDog: it offers a **Relaunch PipDog** button. |
 | **Accessibility** | Optional. Modifier + double-click, raising the exact source window (not just its app), moving the source window to the screen edge, and telling when a source window is minimized. Requested when you first use one of these. |
 
 The menu-bar menu always shows the current state of both permissions; click one that is missing to fix it.
 
 ### 3. Try it
 
-Focus any window and press **⌃⌥P**. A welcome window on first launch lists your shortcuts and gestures; you can reopen it from the menu at any time (**使用说明…**, Guide).
+Focus any window and press **⌃⌥P**. A welcome window on first launch lists your shortcuts and gestures; you can reopen it from the menu at any time (**Welcome Guide…**).
 
 ## Usage
 
 ### Shortcuts
 
-Defaults; change them in Settings (menu bar › **设置…**, or ⌘,). Every action is also in the menu.
+Defaults; change them in Settings (menu bar › **Settings…**, or ⌘,). Every action is also in the menu.
 
 | Shortcut | Action |
 | --- | --- |
@@ -110,8 +110,9 @@ Defaults; change them in Settings (menu bar › **设置…**, or ⌘,). Every a
 - **Modifier + double-click:** turn it on or off and pick the modifiers (default ⌥⇧).
 - **Frame rate:** 5, 10, 15, 24, 30 or 60 fps (default 10). Higher is smoother and uses more CPU.
 - **PiP window:** single- or double-click to switch back (default double), opacity 30–100%, and hover to hide.
-- **Launch at login** (开机时启动): uses macOS Login Items; also in the menu bar menu.
-- **恢复默认** (Restore Defaults) resets everything above except launch at login.
+- **Open at Login:** uses macOS Login Items; also in the menu bar menu.
+- **Language:** Follow System (default), English or 简体中文. PipDog offers to relaunch to apply the change. Follow System uses Simplified Chinese on a Chinese system and English otherwise.
+- **Restore Defaults** resets everything above except Open at Login.
 
 ## FAQ
 
@@ -124,7 +125,7 @@ PipDog isn't notarized yet, so Gatekeeper blocks it. Run `xattr -cr /Application
 <details>
 <summary><b>I granted Screen Recording, but PiP still doesn't work.</b></summary>
 
-macOS applies this permission only after the app restarts. Choose **重新启动 PipDog** (Relaunch PipDog) when asked, or quit and reopen it. The menu shows 「已授权，需重新启动」 (granted, restart required) in this case.
+macOS applies this permission only after the app restarts. Choose **Relaunch PipDog** when asked, or quit and reopen it. The menu shows **Granted, Relaunch Required** in this case.
 </details>
 
 <details>

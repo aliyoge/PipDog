@@ -12,6 +12,7 @@
 - Quick Look（`QLPreviewPanel`）：⌥ + 单击 PiP 看原尺寸截图（从正在运行的抓取流里取一帧原生分辨率画面，不另开截图会话）
 - 只用公开 API（CGWindowList、ScreenCaptureKit、AXUIElement、CGEventTap、QuickLookUI）
 - 工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 从 `project.yml` 生成，`.xcodeproj` 不手改
+- 界面文字用 String Catalog：`PipDog/Resources/Localizable.xcstrings`（代码里的文字）和 `InfoPlist.xcstrings`（Info.plist 里的权限说明）。源语言英文，另有简体中文（zh-Hans）
 
 ## 开发
 ```sh
@@ -27,6 +28,19 @@ open build/Build/Products/Debug/PipDog.app
 - **菜单**里显示两项权限的当前状态（每次打开菜单都会重新读取）：屏幕录制（macOS 15+ 显示为「屏幕与系统录音」）「已授权 / 未授权 / 已授权，需重新启动」，辅助功能「已授权 / 未授权（移到屏幕边上、修饰键 + 双击需要）」。点未授权的项会弹出对应引导，点「需重新启动」会确认后重启。屏幕录制在本次运行成功抓取过以后就显示已授权；如果运行中撤销了权限，要等下一次 PiP 失败后才会变回未授权。
 
 现在用固定的开发者证书签名，重新构建后这些权限一般会保留（之前签过 ad-hoc 版的话，可能需要在权限列表里删掉旧条目重新授权一次）。
+
+## 本地化
+
+所有界面文字（菜单、设置、欢迎窗口、弹框、提示浮层、暂停提示、权限说明、关于、Info.plist 的权限用途说明）都走 String Catalog，**英文和简体中文都要有**，不能在代码里写死中文。
+
+- 代码里写英文源文本：AppKit / 普通 `String` 用 `String(localized: "…")`；SwiftUI 的 `Text("…")`、`Button("…")`、`Section("…")`、`Toggle("…")`、`.help("…")` 等字面量本身就是 `LocalizedStringKey`。传 `String` 变量给 `Text` 不会翻译，所以变量要先用 `String(localized:)` 取好；不用翻译的（数字、fps、快捷键符号）用 `Text(verbatim:)`。
+- 在 `Localizable.xcstrings` 里给每个键补 zh-Hans。插值在键里写成 `%@`（String）、`%lld`（Int）；多个参数时中文用 `%1$@`、`%2$@`，可以调整顺序。
+- 不要拼句子：不同说法（单击 / 双击、打开 / 关闭）各写一整句，或者只插入完整的词（例如 `Couldn't %@ Open at Login` 里的 turn on / turn off，中文为 打开 / 关闭）。列表分隔符用 `list.separator`（英文 `, `，中文 `、`）。
+- 菜单里的权限名用 `Permissions.screenRecordingName`（英文 Screen Recording / Screen & System Audio Recording，中文 屏幕录制 / 屏幕与系统录音）。系统设置路径用系统里的叫法：英文 System Settings › Privacy & Security › Accessibility，中文「系统设置 › 隐私与安全性 › 辅助功能」。
+- 需要跨启动保存的提示（上次退出留下的窗口）存原因，启动时再按当时的语言取文字。
+- NSLog 只写英文，不翻译；代码注释可以是中文。
+- 检查：构建时 `SWIFT_EMIT_LOC_STRINGS=YES` 会在 `build/Build/Intermediates.noindex/.../*.stringsdata` 里列出代码用到的键，和 `Localizable.xcstrings` 的键应该一一对应；`build/Build/Products/Debug/PipDog.app/Contents/Resources/` 里应有 `en.lproj` 和 `zh-Hans.lproj`。在 Swift 源码里搜汉字（`grep -rn '[一-龥]' PipDog`），除了注释和语言选择器里的「简体中文」不应再有。
+- 用 `-AppleLanguages '(zh-Hans)'` / `'(en)'` 启动可以临时切换语言。
 
 ## 应用图标
 - 原图在 `Design/AppIcon-1024.png`（1024×1024 透明 PNG，图标主体约 824×824，符合 macOS 图标网格）：浅灰底、石墨色大窗口描边，右下小窗里一只垂耳小狗。由 `Design/AppIcon.swift` 画出来，改配色或形状后运行 `swift Design/AppIcon.swift Design/AppIcon-1024.png` 重新生成原图。
@@ -118,8 +132,9 @@ open build/Build/Products/Debug/PipDog.app
 - **小窗点击**：设置窗口「小窗」一栏选「单击」或「双击」切回原窗口 / 移到屏幕边上，默认双击（拖动或随手点一下不会误触发）。改了立即对已打开的小窗生效。⌥ + 单击快速查看不受影响。保存在 UserDefaults 的 `PipDog.windowClickMode`（`single` / `double`）。
 - **不透明度 / 悬停时自动隐藏**：同在「小窗」一栏，改了立即对已打开的小窗生效。不透明度存在 `PipDog.windowOpacity`（0.3–1.0，没有保存过时 1.0），悬停隐藏存在 `PipDog.hoverAutoHide`（没有保存过时关闭）。悬停隐藏只是临时淡出，不改保存的不透明度。
 - **开机时启动**：设置窗口「启动」一栏和菜单栏里的「开机时启动」都可以开关，用的是系统登录项（`SMAppService.mainApp`），状态以「系统设置 › 通用 › 登录项与扩展」为准，PipDog 不另外保存；你在系统设置里改过后，回到 PipDog（或打开设置窗口、菜单）时会重新读取。启动时不会自动登记。系统要求你先允许时，设置窗口会显示说明和「打开登录项设置」按钮，从菜单打开时直接打开那个页面。PipDog 需要装在「应用程序」文件夹里（从临时构建目录运行时可能提示找不到可登记的应用）。
-- **恢复默认**：恢复上面表格里的默认快捷键、双击设置、帧率（10 fps）、小窗点击方式（双击）、不透明度（100%）和悬停时自动隐藏（关闭）；不改开机时启动。
-- 设置保存在 UserDefaults（`com.hwj.PipDog` 的 `PipDog.shortcutConfig`、`PipDog.captureFrameRate`、`PipDog.windowClickMode`、`PipDog.windowOpacity` 和 `PipDog.hoverAutoHide`），启动时读取；没有保存过时用默认值。读取是宽容的：缺少的字段用默认值，单个坏掉的快捷键（或不带修饰键的快捷键）只丢掉那一项。
+- **语言**：设置窗口「语言」一栏选跟随系统 / English / 简体中文（语言名用各自的语言显示）。写的是 app 自己域里的 `AppleLanguages`（`["en"]` 或 `["zh-Hans"]`；跟随系统时删掉这个键），读取时只看 app 自己的域（`persistentDomain(forName:)`），不看全局的系统语言列表。macOS 在启动时读取语言，所以改了以后弹框提示「立即重新启动」，重新启动用的是屏幕录制授权后同一个 `Permissions.relaunch()`。跟随系统时由系统按首选语言列表在 en / zh-Hans 里挑：列表里先遇到简体中文就用中文，否则用英文（繁体中文也用英文）。
+- **恢复默认**：恢复上面表格里的默认快捷键、双击设置、帧率（10 fps）、小窗点击方式（双击）、不透明度（100%）、悬停时自动隐藏（关闭）和语言（跟随系统，有变化时提示重新启动）；不改开机时启动。
+- 设置保存在 UserDefaults（`com.hwj.PipDog` 的 `PipDog.shortcutConfig`、`PipDog.captureFrameRate`、`PipDog.windowClickMode`、`PipDog.windowOpacity`、`PipDog.hoverAutoHide`，以及语言用的 `AppleLanguages`），启动时读取；没有保存过时用默认值。读取是宽容的：缺少的字段用默认值，单个坏掉的快捷键（或不带修饰键的快捷键）只丢掉那一项。
 - 设置窗口打开期间 PipDog 会临时显示 Dock 图标，这样窗口能稳定地出现在最前面；关闭设置窗口后 Dock 图标消失。从菜单或 ⌘, 打开（包括再次打开、窗口被最小化过）时，设置窗口总会出现在其他 app 的窗口上面，不用再点 Dock 图标；设置窗口始终只有一个。关掉设置窗口后，前台还给打开设置前的那个 app（它已退出时 PipDog 只让出前台）。
 
 ## 目录
@@ -129,7 +144,8 @@ open build/Build/Products/Debug/PipDog.app
 - `scripts`：打包脚本
 - `PipDog/App`：入口、菜单栏、权限检查和提示
 - `PipDog/PiP`：PiP 管理、浮窗面板和内容视图（单击 / 拖动、缩放平移、悬停 ×）、悬停自动隐藏、缩放手柄、窗口抓取（支持区域 `sourceRect`、跟随窗口尺寸）、切回原窗口、快速查看截图
-- `PipDog/Settings`：快捷键设置（存储、注册、录制）、设置界面和设置窗口激活
+- `PipDog/Settings`：快捷键设置（存储、注册、录制）、语言设置、设置界面和设置窗口激活
+- `PipDog/Resources`：Info.plist（生成）、entitlements、图标、String Catalog（`Localizable.xcstrings`、`InfoPlist.xcstrings`）
 - `PipDog/Input`：全局快捷键、框选遮罩、修饰键 + 双击（CGEventTap）、AX 元素查找
 - `PipDog/Support`：坐标系换算（左上角 ↔ 左下角原点）、窗口定位、提示浮层
 
