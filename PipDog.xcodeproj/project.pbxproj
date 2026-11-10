@@ -28,6 +28,7 @@
 		C2B5DF9C7BE8F6AB94F51DD5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57A089021CE6A958FE9A0EF8 /* Assets.xcassets */; };
 		C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */; };
 		C6D2C7C7605BD961DFD14312 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DB25E6799937CAC283C08D /* SettingsView.swift */; };
+		CA612C37B6F56C601F342269 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */; };
 		CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */; };
 		E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */; };
 		ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187CF608B7735238BD5EC646 /* CaptureSettings.swift */; };
@@ -37,6 +38,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelector.swift; sourceTree = "<group>"; };
 		17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTap.swift; sourceTree = "<group>"; };
 		187CF608B7735238BD5EC646 /* CaptureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSettings.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				187CF608B7735238BD5EC646 /* CaptureSettings.swift */,
+				0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */,
 				F1454D76B7C93A30D308785A /* SettingsActivation.swift */,
 				C9DB25E6799937CAC283C08D /* SettingsView.swift */,
 				6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */,
@@ -261,6 +264,7 @@
 				24FA5EB2BA942AB7EAD58C7B /* Geometry.swift in Sources */,
 				2DB16C3B5EA24CFD369A3EFD /* HotKeys.swift in Sources */,
 				5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */,
+				CA612C37B6F56C601F342269 /* LaunchAtLogin.swift in Sources */,
 				F547B4B118C9E44DC266FF85 /* Permissions.swift in Sources */,
 				60287A9E87198FC4C0CD8224 /* PiPContentView.swift in Sources */,
 				13CC6602DC53FA1B62AECD0A /* PiPManager.swift in Sources */,

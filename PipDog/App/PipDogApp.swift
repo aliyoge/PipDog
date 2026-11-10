@@ -54,6 +54,10 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let settingsItem = add("设置…", action: #selector(openSettings), to: menu)
         settingsItem.keyEquivalent = ","
         settingsItem.keyEquivalentModifierMask = .command
+        let launchAtLogin = LaunchAtLogin.shared
+        launchAtLogin.refresh() // 每次打开菜单都读系统的登录项状态
+        let launchItem = add("开机时启动", action: #selector(toggleLaunchAtLogin), to: menu)
+        launchItem.state = launchAtLogin.isEnabled ? .on : .off
 
         let screenRecording = Permissions.screenRecordingState
         add("屏幕录制：\(screenRecording.rawValue)", action: #selector(screenRecordingGuide),
@@ -85,4 +89,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     @objc private func screenRecordingGuide() { Permissions.showAlert(.screenRecording) }
     @objc private func accessibilityGuide() { Permissions.showAlert(.accessibility) }
     @objc private func terminate() { NSApp.terminate(nil) }
+    @objc private func toggleLaunchAtLogin() {
+        let launchAtLogin = LaunchAtLogin.shared
+        launchAtLogin.setEnabled(!launchAtLogin.isEnabled, openSettingsIfNeeded: true)
+    }
 }

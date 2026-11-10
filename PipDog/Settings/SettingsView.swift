@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率。
+/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、开机时启动。
 struct SettingsView: View {
     private var settings: ShortcutSettings { .shared }
     private var capture: CaptureSettings { .shared }
+    private var launchAtLogin: LaunchAtLogin { .shared }
 
     var body: some View {
         Form {
@@ -50,9 +51,21 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            Section("启动") {
+                Toggle("开机时启动", isOn: Binding(get: { launchAtLogin.isEnabled },
+                                              set: { launchAtLogin.setEnabled($0) }))
+                if launchAtLogin.requiresApproval {
+                    Text("已登记，还需要在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动。")
+                        .font(.caption).foregroundStyle(.orange)
+                    Button("打开登录项设置") { launchAtLogin.openLoginItemsSettings() }
+                }
+                Text("这是系统的登录项，不受「恢复默认」影响。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             HStack {
                 Spacer()
-                Button("恢复默认") {
+                Button("恢复默认") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
                     settings.restoreDefaults()
                     capture.restoreDefaults()
                 }
@@ -62,6 +75,7 @@ struct SettingsView: View {
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
         .background(WindowAccessor { SettingsActivation.shared.attach($0) })
+        .onAppear { launchAtLogin.refresh() } // 用户可能在系统设置里改过
         .onDisappear { settings.cancelRecording() }
     }
 }
