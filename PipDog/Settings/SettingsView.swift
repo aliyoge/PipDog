@@ -71,7 +71,7 @@ struct SettingsView: View {
                 }
                 Toggle("悬停时自动隐藏", isOn: Binding(get: { appearance.hoverAutoHide },
                                                  set: { appearance.hoverAutoHide = $0 }))
-                Text("不透明度最低 30%。悬停隐藏默认关闭；打开后，鼠标在小窗上停约 1.5 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗的范围就恢复，隐藏时按一下 ⌥ 也会立即恢复。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移；⌘ + 单击小窗恢复原大小。")
+                Text("不透明度最低 30%。悬停隐藏默认关闭；打开后，鼠标在小窗上停约 1.5 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗的范围就恢复，隐藏时单独按一下 ⌥（不点鼠标）也会立即恢复；按住 ⌥ 点击下面的 app 照常穿透。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移；⌘ + 单击小窗恢复原大小。")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -100,7 +100,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
-        .background(WindowAccessor { SettingsActivation.shared.attach($0) })
         .onAppear { launchAtLogin.refresh() } // 用户可能在系统设置里改过
         .onDisappear { settings.cancelRecording() }
     }

@@ -23,9 +23,18 @@ final class PiPContentView: NSView {
     /// 鼠标进入 / 离开（悬停自动隐藏用）
     var onPointerEntered: (() -> Void)?
     var onPointerExited: (() -> Void)?
-    /// 画面图层（PiPPanel 创建）；缩放平移时改它的 frame
+    /// 画面图层（PiPPanel 创建）；缩放平移时改它的 frame。zPosition 设成 -1，明确排在所有子视图（×、倍数、手柄、暂停提示）下面
     var imageLayer: CALayer? {
-        didSet { updateImageFrame() }
+        didSet {
+            imageLayer?.zPosition = -1
+            updateImageFrame()
+        }
+    }
+
+    /// 把 × 和倍数提示移到子视图最上面（PiPPanel 加完暂停提示后调用，免得被它压暗）
+    func bringChromeToFront() {
+        addSubview(closeButton)
+        addSubview(zoomBadge)
     }
     /// 画面缩放倍数，1…maximumZoom
     private(set) var zoom: CGFloat = 1
@@ -237,7 +246,6 @@ private final class ZoomBadge: NSTextField {
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
         layer?.cornerRadius = 4
-        toolTip = "⌘ + 单击恢复原大小"
     }
 
     @available(*, unavailable)

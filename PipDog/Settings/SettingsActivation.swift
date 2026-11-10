@@ -6,15 +6,17 @@ import SwiftUI
 /// macOS 14+ 的 `NSApp.activate()` 只是请求，前台 app 没让出时会被拒；切换激活策略也是异步生效的。
 /// 所以每次显示都先 `orderFrontRegardless()`（不依赖激活，也会盖在别的 app 的窗口上面），再请求激活并成为 key，
 /// 下一轮主循环再请求一次（只补这一次，不循环重试）。
-/// AppKit 菜单和 ⌘, 共用此处持有的窗口；WindowAccessor 同步窗口生命周期，不依赖私有标识。
+/// AppKit 菜单和 ⌘, 共用此处持有的唯一窗口；关窗后把前台还给打开前的 app。不依赖私有标识。
 @MainActor
 final class SettingsActivation {
     static let shared = SettingsActivation()
 
     private var window: NSWindow?
     private var closeObserver: NSObjectProtocol?
-    /// 已经排了下一轮主循环的补一次激活：同一轮里 open() 和 attach() 都显示窗口时只排一次
+    /// 已经排了下一轮主循环的补一次激活：短时间里连续显示时只排一次
     private var retryScheduled = false
+    /// 打开设置前在前台的 app：关掉设置窗口后把前台还给它
+    private var previousApp: NSRunningApplication?
 
     private init() {}
 
@@ -34,9 +36,19 @@ final class SettingsActivation {
         show(window)
     }
 
-    /// 设置界面被放进窗口时调用（WindowAccessor，以及 open() 新建窗口时）：只记下窗口、监听关闭。
-    /// 不在这里显示：新建窗口时它在 NSWindow 初始化期间就会被调用，那时还没摆好位置；显示统一由 open() 做。
-    func attach(_ window: NSWindow) {
+    /// SwiftUI 的 Settings 场景（只为保留 ⌘, 菜单命令）万一被系统的 showSettingsWindow: 打开：
+    /// 立刻收起、关掉那个窗口，改为打开这里的设置窗口，保证只有一个设置窗口。
+    func redirect(from other: NSWindow) {
+        guard other !== window else { return }
+        other.orderOut(nil)
+        Task { @MainActor in
+            other.close()
+            SettingsActivation.shared.open()
+        }
+    }
+
+    /// open() 新建窗口时调用：只记下窗口、监听关闭；显示统一由 open() 做（这时窗口已经摆好位置）。
+    private func attach(_ window: NSWindow) {
         if self.window !== window {
             if let closeObserver { NotificationCenter.default.removeObserver(closeObserver) }
             self.window = window
@@ -49,6 +61,10 @@ final class SettingsActivation {
     }
 
     private func show(_ window: NSWindow) {
+        if !window.isVisible || window.isMiniaturized { // 刚要出现：记下当前前台的 app，关窗后还给它
+            let front = NSWorkspace.shared.frontmostApplication
+            if let front, front != NSRunningApplication.current { previousApp = front }
+        }
         if NSApp.activationPolicy() != .regular { NSApp.setActivationPolicy(.regular) }
         if window.isMiniaturized { window.deminiaturize(nil) }
         window.orderFrontRegardless() // 激活被拒时也在最上面，不用点 Dock 图标
@@ -72,6 +88,25 @@ final class SettingsActivation {
     private func didClose() {
         ShortcutSettings.shared.cancelRecording()
         NSApp.setActivationPolicy(.accessory)
+        // 把前台还给打开设置前的 app（协作激活：先让出再由它激活）；它已退出或 PipDog 本来就不在前台时不动
+        let app = previousApp
+        previousApp = nil
+        guard NSApp.isActive else { return }
+        if let app, !app.isTerminated {
+            NSApp.yieldActivation(to: app)
+            _ = app.activate(from: .current)
+        } else {
+            NSApp.deactivate() // 没有可还的 app：至少别让没有窗口的 PipDog 留在前台吞掉按键
+        }
+    }
+}
+
+/// SwiftUI Settings 场景的内容：被放进窗口时转到 SettingsActivation 的设置窗口，自己的窗口关掉。
+struct SettingsRedirect: View {
+    var body: some View {
+        Color.clear
+            .frame(width: 1, height: 1)
+            .background(WindowAccessor { SettingsActivation.shared.redirect(from: $0) })
     }
 }
 

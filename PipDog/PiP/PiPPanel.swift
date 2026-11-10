@@ -58,14 +58,16 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         imageLayer.contentsGravity = .resizeAspect
         view.layer?.addSublayer(imageLayer)
         view.imageLayer = imageLayer // frame 由内容视图管（缩放、平移、跟着小窗大小）
+        // 子视图从下到上：暂停提示、缩放手柄、×、倍数提示（画面图层 zPosition -1，在它们下面）
+        pauseOverlay.frame = view.bounds
+        pauseOverlay.autoresizingMask = [.width, .height]
+        view.addSubview(pauseOverlay) // 不接收鼠标，单击、拖动、×、缩放手柄照常可用
         // 无边框窗口的边缘缩放不可靠，右下角放一个缩放手柄
         let handleSize = ResizeHandle.size
         let handle = ResizeHandle(frame: NSRect(x: size.width - handleSize, y: 0, width: handleSize, height: handleSize))
         handle.autoresizingMask = [.minXMargin, .maxYMargin]
         view.addSubview(handle)
-        pauseOverlay.frame = view.bounds
-        pauseOverlay.autoresizingMask = [.width, .height]
-        view.addSubview(pauseOverlay) // 不接收鼠标，单击、拖动、×、缩放手柄照常可用
+        view.bringChromeToFront()
         view.onClick = { [weak self] modifiers in self?.clicked(modifiers: modifiers) }
         view.onCloseButton = { [weak self] in self?.close() }
         view.onZoomSettled = { [weak self] zoom in

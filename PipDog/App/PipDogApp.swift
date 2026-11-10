@@ -5,8 +5,9 @@ struct PipDogApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
+        // 设置窗口由 SettingsActivation 自己管；这个场景只为挂 ⌘, 菜单命令，内容万一被打开就转到那个窗口
         Settings {
-            SettingsView()
+            SettingsRedirect()
         }
         .commands {
             CommandGroup(replacing: .appSettings) {

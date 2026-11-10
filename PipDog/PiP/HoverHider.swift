@@ -1,11 +1,13 @@
 import AppKit
 
 /// 悬停自动隐藏（默认关闭）：鼠标在小窗上停留约 1.5 秒后，小窗淡出并让点击穿透到下面的窗口；
-/// 鼠标离开小窗的范围，或按下 ⌥，就淡入恢复。
+/// 鼠标离开小窗的范围，或单独按一下 ⌥（按下又松开，不超过 0.5 秒，期间没有点鼠标、没有按别的键或修饰键），就淡入恢复。
+/// ⌥ + 点击下面的 app（终端移光标、浏览器下载链接等）照常穿透，不会让小窗恢复。
 /// 进入用内容视图的跟踪区域和本 app 的鼠标事件发现；隐藏后小窗不接收鼠标，离开只看全局 / 本 app 的监听和
-/// `NSEvent.mouseLocation`，不靠跟踪区域的 mouseExited（隐藏本身就会触发它，会来回闪）。隐藏期间另有 0.1 秒一次的
-/// 检查：鼠标移到叠在一起的另一个小窗上（本 app 的不是 key 的面板未必收到 mouseMoved），或没有权限收不到全局 ⌥ 时也能恢复。
-/// 「这次悬停不再隐藏，直到鼠标离开」（suppressed）的情况：在小窗上按下、滚动、捏合；按 ⌥ 或再次 PiP 同一窗口让它恢复；
+/// `NSEvent.mouseLocation`，不靠跟踪区域的 mouseExited（隐藏本身就会触发它，会来回闪）。隐藏期间另有 0.05 秒一次的
+/// 检查（读 `NSEvent.modifierFlags` / `pressedMouseButtons`，不需要权限）：鼠标移到叠在一起的另一个小窗上
+/// （本 app 的不是 key 的面板未必收到 mouseMoved），或没有权限收不到全局 flagsChanged 时也能恢复。
+/// 「这次悬停不再隐藏，直到鼠标离开」（suppressed）的情况：在小窗上按下、滚动、捏合；按一下 ⌥ 或再次 PiP 同一窗口让它恢复；
 /// 小窗出现时鼠标已经在它上面；按着鼠标经过（拖文件等）。按住 ⌥、指着 × 或缩放手柄时也先不隐藏。
 /// 只改窗口的 alphaValue，不改保存的不透明度：恢复时用当时设置里的不透明度。
 @MainActor
@@ -14,7 +16,9 @@ final class HoverHider {
     /// 隐藏 / 恢复后发出：ClickTrigger 据此重新读 PipDog 自己窗口的范围（穿透的小窗不算）
     static let clickThroughDidChange = Notification.Name("PipDog.PiPClickThroughDidChange")
     private static let fadeDuration: TimeInterval = 0.15
-    private static let hiddenPollInterval: TimeInterval = 0.1
+    private static let hiddenPollInterval: TimeInterval = 0.05
+    /// 单独按一下 ⌥ 的最长时间
+    private static let optionTapLimit: TimeInterval = 0.5
 
     private weak var panel: NSPanel?
     /// 屏幕坐标的点是不是在 × 或缩放手柄上
@@ -27,6 +31,9 @@ final class HoverHider {
     private(set) var isHidden = false
     /// 这次悬停不再隐藏，直到鼠标离开小窗
     private var suppressed = false
+    /// 隐藏期间 ⌥ 按下的时间（nil：没按着）；按着期间点了鼠标、按了别的键或修饰键就作废（optionTapSpoiled）
+    private var optionPressedAt: Date?
+    private var optionTapSpoiled = false
 
     init(panel: NSPanel, isOverChrome: @escaping (NSPoint) -> Bool) {
         self.panel = panel
@@ -82,20 +89,29 @@ final class HoverHider {
 
     private func installMonitors() {
         let moves: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged]
-        // 鼠标在别的 app 上（包括隐藏后穿透下去的那个）。全局的 ⌥ 可能因为没有权限收不到，隐藏期间另有定时检查
-        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: moves.union(.flagsChanged), handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.pointerMoved() }
+        let downs: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        // 鼠标在别的 app 上（包括隐藏后穿透下去的那个）。点击用来作废 ⌥ 单按（⌥ + 点击要穿透给下面的 app）；
+        // 全局的 flagsChanged / keyDown 没有辅助功能权限时可能收不到，隐藏期间另有定时检查
+        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: moves.union(downs).union([.flagsChanged, .keyDown]),
+                                                           handler: { [weak self] event in
+            let spoils = event.type != .flagsChanged && !moves.contains(NSEvent.EventTypeMask(type: event.type))
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if spoils { self.spoilOptionTap() }
+                self.pointerMoved()
+            }
         }) {
             monitors.append(monitor)
         }
         // PipDog 自己的窗口（这个小窗、别的小窗、设置窗口）
-        let mask = moves.union([.flagsChanged, .mouseEntered, .mouseExited,
-                                .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel, .magnify])
+        let mask = moves.union(downs).union([.flagsChanged, .keyDown, .mouseEntered, .mouseExited, .scrollWheel, .magnify])
         if let monitor = NSEvent.addLocalMonitorForEvents(matching: mask, handler: { [weak self] event in
             let interacted = [.leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel, .magnify].contains(event.type)
+            let spoils = [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown].contains(event.type)
             let window = event.window
             MainActor.assumeIsolated {
                 guard let self else { return }
+                if spoils { self.spoilOptionTap() }
                 if interacted, let window, window === self.panel {
                     self.suppress()
                 } else {
@@ -118,6 +134,33 @@ final class HoverHider {
         cancelTimer()
     }
 
+    /// ⌥ 按着期间点了鼠标或按了别的键：这次不算单按。还没发现 ⌥ 按下（收不到全局 flagsChanged、定时检查还没轮到）
+    /// 但现在按着时，也从这里开始记，并直接作废。
+    private func spoilOptionTap() {
+        guard optionPressedAt != nil || NSEvent.modifierFlags.contains(.option) else { return }
+        if optionPressedAt == nil { optionPressedAt = Date() }
+        optionTapSpoiled = true
+    }
+
+    /// 隐藏期间跟踪 ⌥ 的按下 → 松开；单独按一下（没作废、不超过 0.5 秒）返回 true。
+    private func optionTapped() -> Bool {
+        let flags = NSEvent.modifierFlags.intersection([.option, .command, .control, .shift, .function])
+        guard flags.contains(.option) else {
+            defer { optionPressedAt = nil }
+            guard let start = optionPressedAt else { return false }
+            return !optionTapSpoiled && Date().timeIntervalSince(start) <= Self.optionTapLimit
+        }
+        // 和别的修饰键一起按、按着鼠标（定时检查兜底：全局 mouseDown 漏掉时）都作废
+        let clean = flags == .option && NSEvent.pressedMouseButtons == 0
+        if optionPressedAt == nil {
+            optionPressedAt = Date()
+            optionTapSpoiled = !clean
+        } else if !clean {
+            optionTapSpoiled = true
+        }
+        return false
+    }
+
     /// 鼠标移动、修饰键变化、定时检查都走这里。
     private func pointerMoved() {
         guard enabled else { return }
@@ -125,7 +168,7 @@ final class HoverHider {
         if isHidden {
             if !inside {
                 reveal()
-            } else if NSEvent.modifierFlags.contains(.option) { // 隐藏时按 ⌥：马上回来，这次悬停不再隐藏
+            } else if optionTapped() { // 隐藏时单独按一下 ⌥：马上回来，这次悬停不再隐藏
                 reveal()
                 suppressed = true
             }
@@ -173,6 +216,8 @@ final class HoverHider {
     private func hide() {
         guard let panel else { return }
         isHidden = true
+        optionPressedAt = nil // 隐藏前就按着的 ⌥ 不算
+        optionTapSpoiled = false
         panel.ignoresMouseEvents = true
         fade(panel, to: 0)
         startHiddenPoll()
