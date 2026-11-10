@@ -150,6 +150,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         isClosing = true
         let capture = capture
         Task { await capture.stop() }
+        SourceWindowActivator.restoreIfStashed(pid: source.pid, windowID: source.id) // 原窗口还停在屏幕边上就放回去
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers = []
         imageLayer.contents = nil
