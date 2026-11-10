@@ -54,7 +54,8 @@ enum WindowLocator {
     }
 
     /// 某个窗口当前的位置和大小（包括最小化或在别的 Space 上的窗口）；窗口已关闭时为 nil。
-    static func bounds(of id: CGWindowID) -> CGRect? {
+    /// 不绑定主线程：移动窗口后在后台确认原窗口是否到位。
+    nonisolated static func bounds(of id: CGWindowID) -> CGRect? {
         guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
               let dict = list.first(where: { ($0["kCGWindowNumber"] as? CGWindowID) == id })
         else { return nil }
@@ -75,7 +76,7 @@ enum WindowLocator {
         return content.windows.first { $0.windowID == id }
     }
 
-    private static func bounds(from dict: [String: Any]) -> CGRect? {
+    private nonisolated static func bounds(from dict: [String: Any]) -> CGRect? {
         guard let boundsDict = dict["kCGWindowBounds"] as? NSDictionary else { return nil }
         return CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
     }

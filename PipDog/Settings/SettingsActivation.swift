@@ -15,6 +15,7 @@ final class SettingsActivation {
 
     /// 菜单和 ⌘, 共用一个设置窗口。
     func open() {
+        LaunchAtLogin.shared.refresh() // 窗口会复用：每次打开都重读登录项状态
         willOpen()
         if window == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
