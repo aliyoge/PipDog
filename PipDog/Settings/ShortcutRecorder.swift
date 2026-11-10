@@ -12,7 +12,7 @@ struct ShortcutRecorder: View {
             Button {
                 if isRecording { settings.cancelRecording() } else { settings.startRecording(action) }
             } label: {
-                Text(isRecording ? "请按快捷键…（Esc 取消）" : (combo?.display ?? "点击录制"))
+                Text(isRecording ? String(localized: "Press a Shortcut… (Esc to Cancel)") : (combo?.display ?? String(localized: "Click to Record")))
                     .foregroundStyle(isRecording ? Color.accentColor : (combo == nil ? Color.secondary : Color.primary))
                     .frame(minWidth: 150)
             }
@@ -22,7 +22,7 @@ struct ShortcutRecorder: View {
                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .help("清除快捷键")
+            .help("Clear Shortcut")
             .opacity(combo == nil ? 0 : 1)
             .disabled(combo == nil)
         }

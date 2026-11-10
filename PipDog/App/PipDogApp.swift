@@ -11,7 +11,7 @@ struct PipDogApp: App {
         }
         .commands {
             CommandGroup(replacing: .appSettings) {
-                Button("设置…") { SettingsActivation.shared.open() }.keyboardShortcut(",")
+                Button("Settings…") { SettingsActivation.shared.open() }.keyboardShortcut(",")
             }
         }
     }
@@ -59,27 +59,29 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         }
         if settings.config.clickEnabled {
             menu.addItem(.separator())
-            add("\(KeyCodeNames.symbols(for: settings.config.clickModifiers)) + 双击：PiP 鼠标下方的区域", to: menu)
+            add(String(localized: "\(KeyCodeNames.symbols(for: settings.config.clickModifiers)) + Double-Click: PiP Area Under Pointer"), to: menu)
         }
         menu.addItem(.separator())
-        let settingsItem = add("设置…", action: #selector(openSettings), to: menu)
+        let settingsItem = add(String(localized: "Settings…"), action: #selector(openSettings), to: menu)
         settingsItem.keyEquivalent = ","
         settingsItem.keyEquivalentModifierMask = .command
         let launchAtLogin = LaunchAtLogin.shared
         launchAtLogin.refresh() // 每次打开菜单都读系统的登录项状态
-        let launchItem = add("开机时启动", action: #selector(toggleLaunchAtLogin), to: menu)
+        let launchItem = add(String(localized: "Open at Login"), action: #selector(toggleLaunchAtLogin), to: menu)
         launchItem.state = launchAtLogin.isEnabled ? .on : .off
 
         let screenRecording = Permissions.screenRecordingState
-        add("\(Permissions.screenRecordingName)：\(screenRecording.rawValue)", action: #selector(screenRecordingGuide),
+        add(String(localized: "\(Permissions.screenRecordingName): \(screenRecording.title)"), action: #selector(screenRecordingGuide),
             enabled: screenRecording != .authorized, to: menu)
         let accessibility = Permissions.hasAccessibility
-        let accessibilityTitle = accessibility ? "辅助功能：已授权" : "辅助功能：未授权（移到屏幕边上、修饰键 + 双击需要）"
+        let accessibilityTitle = accessibility
+            ? String(localized: "Accessibility: Granted")
+            : String(localized: "Accessibility: Not Granted (needed for edge parking and modifier + double-click)")
         add(accessibilityTitle, action: #selector(accessibilityGuide), enabled: !accessibility, to: menu)
         menu.addItem(.separator())
-        add("使用说明…", action: #selector(showGuide), to: menu)
-        add("关于 PipDog", action: #selector(showAbout), to: menu)
-        let quit = add("退出 PipDog", action: #selector(terminate), to: menu)
+        add(String(localized: "Welcome Guide…"), action: #selector(showGuide), to: menu)
+        add(String(localized: "About PipDog"), action: #selector(showAbout), to: menu)
+        let quit = add(String(localized: "Quit PipDog"), action: #selector(terminate), to: menu)
         quit.keyEquivalent = "q"
         quit.keyEquivalentModifierMask = .command
     }

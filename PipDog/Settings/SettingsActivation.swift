@@ -33,7 +33,7 @@ final class SettingsActivation {
             return
         }
         let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
-        window.title = "PipDog 设置"
+        window.title = String(localized: "PipDog Settings")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.center()

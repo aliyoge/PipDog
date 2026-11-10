@@ -1,0 +1,1562 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ (%@)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@（%2$@）"
+          }
+        }
+      }
+    },
+    "%@ (%@, used by another app)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@（%2$@，已被其他 app 占用）"
+          }
+        }
+      }
+    },
+    "%@ + Double-Click: PiP Area Under Pointer": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ + 双击：PiP 鼠标下方的区域"
+          }
+        }
+      }
+    },
+    "%@ + double-click needs Accessibility permission. Turn it on in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ + 双击需要「辅助功能」权限，请在系统设置中打开"
+          }
+        }
+      }
+    },
+    "%@ again when in front": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原窗口在前时再%@"
+          }
+        }
+      }
+    },
+    "%@ couldn't be registered and isn't active. Choose another combination or relaunch PipDog.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 注册失败，未生效；请换一个组合或重新启动 PipDog"
+          }
+        }
+      }
+    },
+    "%@ is already used for “%@”": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 已经用于「%2$@」"
+          }
+        }
+      }
+    },
+    "%@ is granted. Relaunch PipDog for it to take effect.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已授权，需要重新启动 PipDog 才能生效"
+          }
+        }
+      }
+    },
+    "%@ is used by another app and isn't active": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已被其他 app 占用，未生效"
+          }
+        }
+      }
+    },
+    "%@: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@：%2$@"
+          }
+        }
+      }
+    },
+    "About PipDog": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关于 PipDog"
+          }
+        }
+      }
+    },
+    "Accessibility": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能"
+          }
+        }
+      }
+    },
+    "Accessibility granted. %@ + double-click is ready.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能已授权，%@ + 双击可以用了"
+          }
+        }
+      }
+    },
+    "Accessibility was turned off. %@ + double-click now only observes, and the second click goes through to the app. Turn PipDog back on in System Settings › Privacy & Security › Accessibility to restore it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能权限已关闭，%@ + 双击暂时只能旁观，第二次点击会照常传给目标 app。在「系统设置 › 隐私与安全性 › 辅助功能」里重新打开 PipDog 即可恢复"
+          }
+        }
+      }
+    },
+    "Accessibility: Granted": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能：已授权"
+          }
+        }
+      }
+    },
+    "Accessibility: Not Granted (needed for edge parking and modifier + double-click)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能：未授权（移到屏幕边上、修饰键 + 双击需要）"
+          }
+        }
+      }
+    },
+    "After relaunching, PipDog can capture window content.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新启动后即可抓取窗口画面。"
+          }
+        }
+      }
+    },
+    "Allow PipDog in System Settings › General › Login Items & Extensions so it opens at login": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动"
+          }
+        }
+      }
+    },
+    "Can't capture this window of “%@”": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法抓取「%@」的这个窗口"
+          }
+        }
+      }
+    },
+    "Can't move the window of “%@” (it's full screen, or the app doesn't allow it). Exit full screen and try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法移动「%@」的窗口（全屏窗口或这个 app 不允许移动窗口），可以先退出全屏再试"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        }
+      }
+    },
+    "Capture": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面"
+          }
+        }
+      }
+    },
+    "Changes apply to open PiPs right away. Higher frame rates are smoother but use more CPU; 5–10 fps is plenty for watching logs or progress bars.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修改后立即应用到已打开的 PiP。帧率越高画面越流畅，但 CPU 占用也越高；盯日志、进度条用 5–10 fps 就够了。"
+          }
+        }
+      }
+    },
+    "Choose at least one modifier; the default is ⌥⇧. PipDog intercepts the second click so it doesn't reach the app, while the first click goes through as usual. Intercepting needs Accessibility permission; without it PipDog only observes, and the double-click still reaches the app.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "至少选一个修饰键，默认 ⌥⇧。触发用的第二次点击会被 PipDog 拦下，不会传给目标 app，第一次单击仍会照常传过去。拦截需要辅助功能权限；没有权限时只能旁观，双击仍会传给目标 app。"
+          }
+        }
+      }
+    },
+    "Clear Shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除快捷键"
+          }
+        }
+      }
+    },
+    "Click": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "单击"
+          }
+        }
+      }
+    },
+    "Click a button, then press the new combination. It must include ⌘, ⌃ or ⌥; ⌘ or ⌘⇧ with a regular key (like ⌘C or ⌘Q) isn't allowed because it would take over common shortcuts. A cleared action has no shortcut but is still in the menu. Switching to another app cancels recording.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击按钮后按下新的组合键，至少包含 ⌘、⌃ 或 ⌥；只用 ⌘ 或 ⌘⇧ 加普通键（如 ⌘C、⌘Q）会抢走常用快捷键，不允许。清除后该动作没有快捷键，仍可从菜单使用。切到别的 app 会自动取消录制。"
+          }
+        }
+      }
+    },
+    "Click or double-click a PiP to bring its source window to the front; if the source is already in front, it moves to the screen edge. Double-click is the default, so dragging or a stray click won't trigger it. ⌥-click is always Quick Look.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在小窗上单击或双击，把原窗口切到前面；原窗口已在最前时，把它移到屏幕边上。默认双击，拖动或随手点一下不会误触发。⌥ + 单击仍是快速查看。"
+          }
+        }
+      }
+    },
+    "Click to Record": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击录制"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "Close All PiPs": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭所有 PiP"
+          }
+        }
+      }
+    },
+    "Close PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭小窗"
+          }
+        }
+      }
+    },
+    "Close This PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭这个 PiP"
+          }
+        }
+      }
+    },
+    "Couldn't %@ Open at Login. Try again later, or set it in System Settings › General › Login Items & Extensions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法%@开机时启动，请稍后再试，或在「系统设置 › 通用 › 登录项与扩展」里手动设置"
+          }
+        }
+      }
+    },
+    "Couldn't %@ Open at Login: PipDog's signature is invalid. Use an officially installed copy.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法%@开机时启动：PipDog 的签名无效，请使用正式安装的版本"
+          }
+        }
+      }
+    },
+    "Couldn't %@ Open at Login: macOS denied it. Allow PipDog in System Settings › General › Login Items & Extensions.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法%@开机时启动：被系统拒绝，请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog"
+          }
+        }
+      }
+    },
+    "Couldn't %@ Open at Login: no permission to change login items.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法%@开机时启动：没有修改登录项的权限"
+          }
+        }
+      }
+    },
+    "Couldn't %@ Open at Login: the login items service isn't available right now. Try again later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法%@开机时启动：登录项服务暂时不可用，请稍后再试"
+          }
+        }
+      }
+    },
+    "Couldn't find an app to register. Move PipDog to the Applications folder and open it again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到可登记的应用，请先把 PipDog 装到「应用程序」文件夹再打开"
+          }
+        }
+      }
+    },
+    "Couldn't move the window of “%@” back. Click the PiP to try again, or drag the window back yourself.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法把「%@」的窗口移回原位，可以再单击小窗重试，或手动把窗口拖回来"
+          }
+        }
+      }
+    },
+    "Couldn't move the window of “%@” back. Double-click the PiP to try again, or drag the window back yourself.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法把「%@」的窗口移回原位，可以再双击小窗重试，或手动把窗口拖回来"
+          }
+        }
+      }
+    },
+    "Couldn't open System Settings. Go to Privacy & Security › %@ manually.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开系统设置，请手动前往「隐私与安全性 › %@」"
+          }
+        }
+      }
+    },
+    "Couldn't relaunch PipDog. Quit PipDog from the menu and open it again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新启动 PipDog 失败，请从菜单退出 PipDog 后再手动打开"
+          }
+        }
+      }
+    },
+    "Couldn't resume “%@”. Click the PiP to try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法恢复「%@」的画面，请再单击小窗重试"
+          }
+        }
+      }
+    },
+    "Couldn't resume “%@”. Double-click the PiP to try again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法恢复「%@」的画面，请再双击小窗重试"
+          }
+        }
+      }
+    },
+    "Couldn't save the snapshot": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存截图"
+          }
+        }
+      }
+    },
+    "Couldn't show “%@”": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法显示「%@」"
+          }
+        }
+      }
+    },
+    "Couldn't start PiP: this window can't be captured right now. Try again later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动 PiP 失败：暂时无法抓取这个窗口，请稍后再试"
+          }
+        }
+      }
+    },
+    "Double-click": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击"
+          }
+        }
+      }
+    },
+    "Drag": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动"
+          }
+        }
+      }
+    },
+    "Drag bottom-right corner": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖右下角"
+          }
+        }
+      }
+    },
+    "Drag to select a region to PiP. Press Esc or right-click to cancel.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动选择要 PiP 的区域，Esc 或右键取消"
+          }
+        }
+      }
+    },
+    "Enabled": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用"
+          }
+        }
+      }
+    },
+    "Follow System": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        }
+      }
+    },
+    "For edge parking and modifier + double-click; requested when needed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把原窗口移到屏幕边上、修饰键 + 双击，用到时再引导"
+          }
+        }
+      }
+    },
+    "Frame Rate": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帧率"
+          }
+        }
+      }
+    },
+    "Get Started": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始使用"
+          }
+        }
+      }
+    },
+    "Global Shortcuts": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全局快捷键"
+          }
+        }
+      }
+    },
+    "Global shortcuts aren't available right now; use the menu bar menu instead. Try relaunching PipDog.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全局快捷键暂时不可用，只能从菜单栏的 PiP 菜单使用；请重新启动 PipDog"
+          }
+        }
+      }
+    },
+    "Global shortcuts failed to start, so %@ only works from the menu for now. Try relaunching PipDog.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全局快捷键初始化失败，%@ 暂时只能从菜单使用；请重新启动 PipDog"
+          }
+        }
+      }
+    },
+    "Granted": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已授权"
+          }
+        }
+      }
+    },
+    "Granted, Relaunch Required": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已授权，需重新启动"
+          }
+        }
+      }
+    },
+    "Hide on Hover": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬停时自动隐藏"
+          }
+        }
+      }
+    },
+    "Hold": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要按住"
+          }
+        }
+      }
+    },
+    "Include at least one of ⌘, ⌃ or ⌥ (⇧ alone isn't enough)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
+          }
+        }
+      }
+    },
+    "Language": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "Later": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍后"
+          }
+        }
+      }
+    },
+    "Modifier + Double-Click: PiP Area Under Pointer": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修饰键 + 双击：PiP 鼠标下方的区域"
+          }
+        }
+      }
+    },
+    "Move / pan": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移动 / 平移"
+          }
+        }
+      }
+    },
+    "Not Granted": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未授权"
+          }
+        }
+      }
+    },
+    "Not Set": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未设置"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好"
+          }
+        }
+      }
+    },
+    "Opacity": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度"
+          }
+        }
+      }
+    },
+    "Opacity goes down to 30%. Hide on Hover is off by default; when on, a PiP fades out after the pointer rests on it for about 1.5 s, and clicks go straight through to the window below. It comes back when the pointer leaves its area, or right away when you press ⌥ alone (without clicking); ⌥-clicks still go through to the app below. It doesn't hide after you click, drag or scroll on it, or while you hold ⌥ or point at × or the resize handle. Scroll or pinch to zoom in; when zoomed, dragging pans. ⌘-click a PiP to reset the zoom.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度最低 30%。悬停隐藏默认关闭；打开后，鼠标在小窗上停约 1.5 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗的范围就恢复，隐藏时单独按一下 ⌥（不点鼠标）也会立即恢复；按住 ⌥ 点击下面的 app 照常穿透。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移；⌘ + 单击小窗恢复原大小。"
+          }
+        }
+      }
+    },
+    "Open Login Items Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开登录项设置"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统设置"
+          }
+        }
+      }
+    },
+    "Open at Login": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开机时启动"
+          }
+        }
+      }
+    },
+    "Park at edge / bring back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停到屏幕边 / 移回"
+          }
+        }
+      }
+    },
+    "Permissions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "权限"
+          }
+        }
+      }
+    },
+    "PiP Area Under Pointer": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PiP 鼠标下方的区域"
+          }
+        }
+      }
+    },
+    "PiP Current Window": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PiP 当前窗口"
+          }
+        }
+      }
+    },
+    "PiP Gestures": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗操作"
+          }
+        }
+      }
+    },
+    "PiP Window": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗"
+          }
+        }
+      }
+    },
+    "PiP ended: capture stopped unexpectedly. You can PiP this window again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PiP 已结束：画面抓取意外停止，可以再 PiP 一次这个窗口"
+          }
+        }
+      }
+    },
+    "PiP ended: macOS stopped capturing because the source window isn't on the current desktop (it's minimized or on another desktop). Restore it and PiP it again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PiP 已结束：原窗口不在当前桌面（最小化或在其他桌面）时系统停止了抓取，恢复原窗口后再 PiP 一次"
+          }
+        }
+      }
+    },
+    "PipDog Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog 设置"
+          }
+        }
+      }
+    },
+    "PipDog asks to relaunch after you change the language. Follow System uses Simplified Chinese on Chinese systems and English otherwise.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修改后会提示重新启动 PipDog。跟随系统时，中文系统显示简体中文，其他系统显示英文。"
+          }
+        }
+      }
+    },
+    "PipDog needs %@ permission": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog 需要「%@」权限"
+          }
+        }
+      }
+    },
+    "PipDog runs in the menu bar. Click the menu bar icon %@ or use a shortcut to start.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog 在菜单栏运行，点击菜单栏图标 %@ 或使用快捷键开始"
+          }
+        }
+      }
+    },
+    "Press a Shortcut… (Esc to Cancel)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请按快捷键…（Esc 取消）"
+          }
+        }
+      }
+    },
+    "Quick Look": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看"
+          }
+        }
+      }
+    },
+    "Quick Look failed: %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看失败：%@"
+          }
+        }
+      }
+    },
+    "Quick Look failed: the source window can't be captured right now. Try again later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快速查看失败：原窗口暂时无法截图，请稍后再试"
+          }
+        }
+      }
+    },
+    "Quit PipDog": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 PipDog"
+          }
+        }
+      }
+    },
+    "Registered. Allow PipDog in System Settings › General › Login Items & Extensions so it opens at login.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已登记，还需要在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动。"
+          }
+        }
+      }
+    },
+    "Relaunch Now": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即重新启动"
+          }
+        }
+      }
+    },
+    "Relaunch PipDog": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新启动 PipDog"
+          }
+        }
+      }
+    },
+    "Relaunch PipDog to use the new language?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新启动 PipDog 以使用新的语言？"
+          }
+        }
+      }
+    },
+    "Relaunch Required": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需重新启动"
+          }
+        }
+      }
+    },
+    "Reopen anytime from Welcome Guide… in the menu.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以后可以从菜单「使用说明…」再看"
+          }
+        }
+      }
+    },
+    "Reset zoom": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复原大小"
+          }
+        }
+      }
+    },
+    "Resize": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调整大小"
+          }
+        }
+      }
+    },
+    "Rest the pointer on a PiP for about 1.5 s to fade it out; press ⌥ alone to bring it back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鼠标停在小窗上约 1.5 秒会淡出，单独按一下 ⌥ 恢复"
+          }
+        }
+      }
+    },
+    "Restore Defaults": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复默认"
+          }
+        }
+      }
+    },
+    "Screen & System Audio Recording": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕与系统录音"
+          }
+        }
+      }
+    },
+    "Screen Recording": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕录制"
+          }
+        }
+      }
+    },
+    "Scroll / pinch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滚动 / 捏合"
+          }
+        }
+      }
+    },
+    "Select Region to PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "框选区域"
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置…"
+          }
+        }
+      }
+    },
+    "Shortcuts": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键"
+          }
+        }
+      }
+    },
+    "Shows live content; requested on your first PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时显示画面，第一次 PiP 时请求"
+          }
+        }
+      }
+    },
+    "Some shortcuts aren't working: %@. Choose another combination in PipDog Settings, or use the menu for now.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键没有生效：%@。请在 PipDog 设置里换一个组合，或先从菜单使用"
+          }
+        }
+      }
+    },
+    "Some windows couldn't be moved back when PipDog last quit and may still be at the screen edge.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次退出时有窗口没能移回原位，可能还在屏幕边上"
+          }
+        }
+      }
+    },
+    "Some windows were still at the screen edge when PipDog last quit. Moving them back needs Accessibility permission.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次退出时有窗口还在屏幕边上，移回需要辅助功能权限"
+          }
+        }
+      }
+    },
+    "Source app is hidden; picture paused\nClick the PiP to resume": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原 app 已隐藏，画面暂停\n单击小窗恢复"
+          }
+        }
+      }
+    },
+    "Source app is hidden; picture paused\nDouble-click the PiP to resume": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原 app 已隐藏，画面暂停\n双击小窗恢复"
+          }
+        }
+      }
+    },
+    "Source window is minimized; picture paused\nRestore it from the Dock to continue": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原窗口已最小化，画面暂停\n从程序坞恢复原窗口后继续"
+          }
+        }
+      }
+    },
+    "Startup": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动"
+          }
+        }
+      }
+    },
+    "Switch Back / Park": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切回 / 移到旁边"
+          }
+        }
+      }
+    },
+    "Switch to source window": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切回原窗口"
+          }
+        }
+      }
+    },
+    "The frontmost app": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最前面的 app"
+          }
+        }
+      }
+    },
+    "The language changes after PipDog relaunches.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新启动 PipDog 后才会切换语言。"
+          }
+        }
+      }
+    },
+    "The region is too small (at least %lld×%lld), so no PiP was opened": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "区域太小（至少 %1$lld×%2$lld），没有打开 PiP"
+          }
+        }
+      }
+    },
+    "The source window was closed, so the PiP ended": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原窗口已关闭，PiP 已结束"
+          }
+        }
+      }
+    },
+    "The window of “%@” is at the screen edge. To move it back, turn on PipDog in System Settings › Privacy & Security › Accessibility": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」的窗口在屏幕边上，移回需要在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog"
+          }
+        }
+      }
+    },
+    "There's no window on screen to PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕上没有可以 PiP 的窗口"
+          }
+        }
+      }
+    },
+    "There's no window under the pointer to PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鼠标下方没有可以 PiP 的窗口"
+          }
+        }
+      }
+    },
+    "There's no window under the selection to PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选区下方没有可以 PiP 的窗口"
+          }
+        }
+      }
+    },
+    "This is a macOS login item, so Restore Defaults doesn't change it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是系统的登录项，不受「恢复默认」影响。"
+          }
+        }
+      }
+    },
+    "This shortcut": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该快捷键"
+          }
+        }
+      }
+    },
+    "Tip: macOS treats a ⌃-click as a right-click, so the app may show its shortcut menu on the first click.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示：按住 ⌃ 点击时 macOS 会把第一次点击当成右键，目标 app 可能弹出右键菜单。"
+          }
+        }
+      }
+    },
+    "To move “%@” to the screen edge and keep its picture updating, turn on PipDog in System Settings › Privacy & Security › Accessibility": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要把「%@」移到屏幕旁边并保持画面更新，需要在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog"
+          }
+        }
+      }
+    },
+    "Turn on PipDog in System Settings › Privacy & Security › %@, then click “Relaunch PipDog”. The permission status may take a moment to update; you can relaunch even if it still shows as not granted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在「系统设置 › 隐私与安全性 › %@」里打开 PipDog，再点「重新启动 PipDog」。授权状态可能延迟刷新；即使仍显示未授权，也可以重新启动。"
+          }
+        }
+      }
+    },
+    "Turn on PipDog in System Settings › Privacy & Security › %@, then relaunch PipDog (try PiP again or click the permission status in the menu)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在「系统设置 › 隐私与安全性 › %@」里打开 PipDog，然后重新启动 PipDog（再试一次 PiP 或点菜单里的权限状态）"
+          }
+        }
+      }
+    },
+    "Turn on PipDog in System Settings › Privacy & Security › Accessibility": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog"
+          }
+        }
+      }
+    },
+    "Version %@ (%@)\nTurn any window, or part of one, into a live floating window that stays on top.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 %1$@（%2$@）\n把任意窗口或其中一块区域变成置顶的实时小窗。"
+          }
+        }
+      }
+    },
+    "Welcome Guide…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用说明…"
+          }
+        }
+      }
+    },
+    "Welcome to PipDog": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎使用 PipDog"
+          }
+        }
+      }
+    },
+    "Zoom in": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放大画面"
+          }
+        }
+      }
+    },
+    "couldn't create the snapshot": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法生成截图"
+          }
+        }
+      }
+    },
+    "list.separator": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", "
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "、"
+          }
+        }
+      }
+    },
+    "the previous snapshot isn't finished yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一张截图还没完成"
+          }
+        }
+      }
+    },
+    "the source window can't be captured right now (it may be minimized or hidden). Try again later.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原窗口暂时无法截图（可能已最小化或被隐藏），请稍后再试"
+          }
+        }
+      }
+    },
+    "the source window is closed or not visible": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原窗口已关闭或不可见"
+          }
+        }
+      }
+    },
+    "this PiP has no picture yet": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个小窗还没有画面，暂时无法截图"
+          }
+        }
+      }
+    },
+    "turn off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "turn on": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开"
+          }
+        }
+      }
+    },
+    "× at top left": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左上角 ×"
+          }
+        }
+      }
+    },
+    "“%@” has no window to PiP": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」没有可以 PiP 的窗口"
+          }
+        }
+      }
+    },
+    "“%@” has quit": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已经退出"
+          }
+        }
+      }
+    },
+    "“%@” is already in front. To switch to this window, give PipDog Accessibility permission in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已在前台；要切到这个窗口，需要在系统设置里给 PipDog 辅助功能权限"
+          }
+        }
+      }
+    },
+    "⌘ or ⌘⇧ with a regular key would take over common shortcuts like ⌘C, ⌘Q and ⌘W. Add ⌃ or ⌥ (F1–F20 are fine).": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只用 ⌘ 或 ⌘⇧ 加普通按键会抢走 ⌘C、⌘Q、⌘W 这类常用快捷键，请再加上 ⌃ 或 ⌥（F1–F20 除外）"
+          }
+        }
+      }
+    },
+    "⌘-click": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘ 单击"
+          }
+        }
+      }
+    },
+    "⌥-click": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥ 单击"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

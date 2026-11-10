@@ -25,6 +25,6 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>PipDog 需要屏幕录制（macOS 15 起叫「屏幕与系统录音」）权限来实时显示窗口画面。</string>
+	<string>PipDog needs Screen Recording permission (called Screen &amp; System Audio Recording on macOS 15 and later) to show live window content.</string>
 </dict>
 </plist>

@@ -41,18 +41,19 @@ final class ShortcutSettings {
         launchFailures = [:]
         guard !failures.isEmpty else { return }
         if failures.values.contains(where: { if case .handlerUnavailable = $0 { true } else { false } }) {
-            Feedback.show("全局快捷键暂时不可用，只能从菜单栏的 PiP 菜单使用；请重新启动 PipDog")
+            Feedback.show(String(localized: "Global shortcuts aren't available right now; use the menu bar menu instead. Try relaunching PipDog."))
             return
         }
         let items = ShortcutAction.allCases.compactMap { action -> String? in
             guard let failure = failures[action] else { return nil }
             let name = config.hotKeys[action]?.display ?? action.title
             if case .failed(let status) = failure, status == OSStatus(eventHotKeyExistsErr) {
-                return "\(name)（\(action.title)，已被其他 app 占用）"
+                return String(localized: "\(name) (\(action.title), used by another app)")
             }
-            return "\(name)（\(action.title)）"
+            return String(localized: "\(name) (\(action.title))")
         }
-        Feedback.show("快捷键没有生效：\(items.joined(separator: "、"))。请在 PipDog 设置里换一个组合，或先从菜单使用")
+        let list = items.joined(separator: String(localized: "list.separator", defaultValue: ", ", comment: "Separator between items in a list"))
+        Feedback.show(String(localized: "Some shortcuts aren't working: \(list). Choose another combination in PipDog Settings, or use the menu for now."))
     }
 
     func combo(for action: ShortcutAction) -> KeyCombo? { config.hotKeys[action] }
@@ -68,7 +69,7 @@ final class ShortcutSettings {
             return
         }
         if let combo, let other = ShortcutAction.allCases.first(where: { $0 != action && config.hotKeys[$0] == combo }) {
-            errors[action] = "\(combo.display) 已经用于「\(other.title)」"
+            errors[action] = String(localized: "\(combo.display) is already used for “\(other.title)”")
             register(config)
             return
         }
@@ -154,7 +155,7 @@ final class ShortcutSettings {
             return true
         }
         guard !mods.isDisjoint(with: [.control, .option, .command]) else {
-            errors[action] = "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
+            errors[action] = String(localized: "Include at least one of ⌘, ⌃ or ⌥ (⇧ alone isn't enough)")
             return true
         }
         let combo = KeyCombo(keyCode: UInt32(keyCode), modifiers: KeyCodeNames.carbonModifiers(from: mods))
@@ -185,16 +186,16 @@ final class ShortcutSettings {
     }
 
     private func failureMessage(_ failure: HotKeys.Registration, _ combo: KeyCombo?) -> String {
-        let name = combo?.display ?? "该快捷键"
+        let name = combo?.display ?? String(localized: "This shortcut")
         switch failure {
         case .registered:
             return ""
         case .handlerUnavailable:
-            return "全局快捷键初始化失败，\(name) 暂时只能从菜单使用；请重新启动 PipDog"
+            return String(localized: "Global shortcuts failed to start, so \(name) only works from the menu for now. Try relaunching PipDog.")
         case .failed(let status) where status == OSStatus(eventHotKeyExistsErr):
-            return "\(name) 已被其他 app 占用，未生效"
+            return String(localized: "\(name) is used by another app and isn't active")
         case .failed:
-            return "\(name) 注册失败，未生效；请换一个组合或重新启动 PipDog" // 错误码只写日志（HotKeys）
+            return String(localized: "\(name) couldn't be registered and isn't active. Choose another combination or relaunch PipDog.") // 错误码只写日志（HotKeys）
         }
     }
 

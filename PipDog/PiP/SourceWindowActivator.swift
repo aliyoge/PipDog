@@ -67,7 +67,7 @@ enum SourceWindowActivator {
     static func toggle(pid: pid_t, windowID: CGWindowID, appName: String) -> Bool? {
         guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else {
             stashed[windowID] = nil
-            Feedback.show("「\(appName)」已经退出")
+            Feedback.show(String(localized: "“\(appName)” has quit"))
             return nil
         }
         guard !moving.contains(windowID) else { return app.isHidden } // 上一次移动还没完成
@@ -90,7 +90,7 @@ enum SourceWindowActivator {
             return bringToFront(pid: pid, windowID: windowID, appName: appName) ? false : nil
         }
         guard Permissions.hasAccessibility else {
-            askForAccessibility("要把「\(appName)」移到屏幕旁边并保持画面更新，需要在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
+            askForAccessibility(String(localized: "To move “\(appName)” to the screen edge and keep its picture updating, turn on PipDog in System Settings › Privacy & Security › Accessibility"))
             return false
         }
         park(pid: pid, windowID: windowID, appName: appName, bounds: bounds)
@@ -131,7 +131,7 @@ enum SourceWindowActivator {
             let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
             guard let result else {
                 stashed[windowID] = nil
-                Feedback.show("无法移动「\(appName)」的窗口（全屏窗口或这个 app 不允许移动窗口），可以先退出全屏再试")
+                Feedback.show(String(localized: "Can't move the window of “\(appName)” (it's full screen, or the app doesn't allow it). Exit full screen and try again."))
                 return
             }
             stashed[windowID]?.parkedX = result.x
@@ -150,7 +150,7 @@ enum SourceWindowActivator {
     private static func moveBack(pid: pid_t, windowID: CGWindowID, appName: String, from bounds: CGRect, to origin: CGPoint,
                                  window: AXWindowRef?) {
         guard Permissions.hasAccessibility else {
-            askForAccessibility("「\(appName)」的窗口在屏幕边上，移回需要在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
+            askForAccessibility(String(localized: "The window of “\(appName)” is at the screen edge. To move it back, turn on PipDog in System Settings › Privacy & Security › Accessibility"))
             return
         }
         let title = WindowLocator.title(of: windowID)
@@ -163,7 +163,9 @@ enum SourceWindowActivator {
             moving.remove(windowID)
             let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
             guard let result else {
-                Feedback.show("无法把「\(appName)」的窗口移回原位，可以再\(WindowClickSettings.shared.mode.title)小窗重试，或手动把窗口拖回来")
+                Feedback.show(WindowClickSettings.shared.mode == .single
+                    ? String(localized: "Couldn't move the window of “\(appName)” back. Click the PiP to try again, or drag the window back yourself.")
+                    : String(localized: "Couldn't move the window of “\(appName)” back. Double-click the PiP to try again, or drag the window back yourself."))
                 if closedMeanwhile { restoreIfStashed(windowID: windowID) } // 期间 PiP 关了：再试一次放回
                 return
             }
@@ -194,7 +196,7 @@ enum SourceWindowActivator {
                 && !$0.isHidden && !$0.isTerminated
         }
         guard let fallback, !fallback.isTerminated else {
-            NSLog("PipDog: 停放后没有可以接手前台的 app")
+            NSLog("PipDog: no app can take over the foreground after parking")
             return
         }
         handOver(to: fallback)
@@ -280,11 +282,9 @@ enum SourceWindowActivator {
             if !restored { stuck.append("\(windowID)（pid \(stash.pid)）") }
         }
         guard !stuck.isEmpty else { return }
-        NSLog("PipDog: 退出时这些窗口没能移回原位：\(stuck.joined(separator: "、"))")
-        let notice = hasAccessibility
-            ? "上次退出时有窗口没能移回原位，可能还在屏幕边上"
-            : "上次退出时有窗口还在屏幕边上，移回需要辅助功能权限"
-        UserDefaults.standard.set(notice, forKey: leftoverNoticeKey)
+        NSLog("PipDog: these windows couldn't be moved back on quit: \(stuck.joined(separator: ", "))")
+        // 存原因而不是文字：下次启动时按那时的语言显示
+        UserDefaults.standard.set(hasAccessibility ? "moveFailed" : "needsAccessibility", forKey: leftoverNoticeKey)
     }
 
     /// 启动时：上次退出留下没放回的窗口，就提示一次并清掉记录。
@@ -292,9 +292,11 @@ enum SourceWindowActivator {
     /// 返回是否显示了提示。
     @discardableResult
     static func showLeftoverNoticeIfNeeded() -> Bool {
-        guard let notice = UserDefaults.standard.string(forKey: leftoverNoticeKey) else { return false }
+        guard let reason = UserDefaults.standard.string(forKey: leftoverNoticeKey) else { return false }
         UserDefaults.standard.removeObject(forKey: leftoverNoticeKey)
-        Feedback.show(notice)
+        Feedback.show(reason == "needsAccessibility"
+            ? String(localized: "Some windows were still at the screen edge when PipDog last quit. Moving them back needs Accessibility permission.")
+            : String(localized: "Some windows couldn't be moved back when PipDog last quit and may still be at the screen edge."))
         return true
     }
 
@@ -342,17 +344,17 @@ enum SourceWindowActivator {
     static func bringToFront(pid: pid_t, windowID: CGWindowID, appName: String,
                              knownFrame: CGRect? = nil, knownWindow: AXWindowRef? = nil) -> Bool {
         guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else {
-            Feedback.show("「\(appName)」已经退出")
+            Feedback.show(String(localized: "“\(appName)” has quit"))
             return false
         }
         // 被隐藏（用户按了 ⌘H 等）时先取消隐藏，不依赖 activate 的副作用
-        if app.isHidden, !app.unhide() { Feedback.show("无法显示「\(appName)」") }
+        if app.isHidden, !app.unhide() { Feedback.show(String(localized: "Couldn't show “\(appName)”")) }
         let hasAccessibility = Permissions.hasAccessibility
         if NSApp.isActive || !app.isActive {
             handOver(to: app)
         } else if !hasAccessibility {
             // 原 app 已在前台（用户在它的另一个窗口里）：没有辅助功能就提不起指定窗口，只提示，不请求权限
-            Feedback.show("「\(appName)」已在前台；要切到这个窗口，需要在系统设置里给 PipDog 辅助功能权限")
+            Feedback.show(String(localized: "“\(appName)” is already in front. To switch to this window, give PipDog Accessibility permission in System Settings."))
         }
         guard hasAccessibility, let bounds = knownFrame ?? WindowLocator.bounds(of: windowID) else { return true }
         let title = WindowLocator.title(of: windowID)

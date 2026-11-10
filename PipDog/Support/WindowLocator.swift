@@ -45,7 +45,7 @@ enum WindowLocator {
             return windows.first.map(FocusedWindow.found) ?? .nothing
         }
         if let window = windows.first(where: { $0.pid == app.processIdentifier }) { return .found(window) }
-        return .noWindow(appName: app.localizedName ?? "最前面的 app")
+        return .noWindow(appName: app.localizedName ?? String(localized: "The frontmost app"))
     }
 
     /// 包含某点（左上角原点的全局坐标）的最上层普通窗口。

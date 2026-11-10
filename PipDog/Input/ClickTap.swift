@@ -82,7 +82,7 @@ final class ClickTap: @unchecked Sendable {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque())
         else {
-            NSLog("PipDog: 创建鼠标事件 tap 失败")
+            NSLog("PipDog: failed to create the mouse event tap")
             ready.signal()
             return
         }

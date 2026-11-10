@@ -7,7 +7,7 @@ enum WindowClickMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
     /// 界面上的叫法，也用在「双击小窗恢复」这类提示里
-    var title: String { self == .single ? "单击" : "双击" }
+    var title: String { self == .single ? String(localized: "Click") : String(localized: "Double-click") }
 }
 
 /// 小窗点击设置，单独存一个 UserDefaults 键；没有保存过时用双击。每次点击时实时读取，改了立即生效。

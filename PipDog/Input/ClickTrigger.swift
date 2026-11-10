@@ -67,7 +67,7 @@ final class ClickTrigger {
                 removeFallbackMonitor()
                 if waitingForAccessibility, !didAnnounceAccessibility {
                     didAnnounceAccessibility = true
-                    Feedback.show("辅助功能已授权，\(KeyCodeNames.symbols(for: modifiers)) + 双击可以用了")
+                    Feedback.show(String(localized: "Accessibility granted. \(KeyCodeNames.symbols(for: modifiers)) + double-click is ready."))
                 }
                 waitingForAccessibility = false
                 return
@@ -108,7 +108,7 @@ final class ClickTrigger {
         tap.setConfig(enabled: enabled, modifiers: Self.eventFlags(from: modifiers))
         tap.setOwnWindowRects(ownWindowRects())
         guard tap.start() else {
-            NSLog("PipDog: 无法建立鼠标事件 tap，改用只能旁观的全局监听")
+            NSLog("PipDog: couldn't create the mouse event tap; falling back to a listen-only global monitor")
             return
         }
         self.tap = tap
@@ -122,7 +122,7 @@ final class ClickTrigger {
     }
 
     private func tapLost() {
-        NSLog("PipDog: 鼠标事件 tap 已失效（可能是辅助功能权限被撤销），重新检查")
+        NSLog("PipDog: mouse event tap was invalidated (Accessibility may have been revoked); checking again")
         if !Permissions.hasAccessibility { announceRevoked() }
         removeTap()
         refresh()
@@ -132,7 +132,7 @@ final class ClickTrigger {
     private func announceRevoked() {
         guard !didAnnounceRevoked else { return }
         didAnnounceRevoked = true
-        Feedback.show("辅助功能权限已关闭，\(KeyCodeNames.symbols(for: modifiers)) + 双击暂时只能旁观，第二次点击会照常传给目标 app。在「系统设置 › 隐私与安全性 › 辅助功能」里重新打开 PipDog 即可恢复")
+        Feedback.show(String(localized: "Accessibility was turned off. \(KeyCodeNames.symbols(for: modifiers)) + double-click now only observes, and the second click goes through to the app. Turn PipDog back on in System Settings › Privacy & Security › Accessibility to restore it."))
     }
 
     // MARK: - PipDog 自己的窗口（点在上面时不拦截）
@@ -196,7 +196,7 @@ final class ClickTrigger {
         guard clickCount == 2, enabled, pressed == modifiers else { return }
         guard Permissions.hasAccessibility else {
             if didGuideAccessibility {
-                Feedback.show("\(KeyCodeNames.symbols(for: modifiers)) + 双击需要「辅助功能」权限，请在系统设置中打开")
+                Feedback.show(String(localized: "\(KeyCodeNames.symbols(for: modifiers)) + double-click needs Accessibility permission. Turn it on in System Settings."))
             } else {
                 didGuideAccessibility = true
                 Permissions.showAlert(.accessibility)

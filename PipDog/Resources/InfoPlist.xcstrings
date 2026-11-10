@@ -1,0 +1,22 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSScreenCaptureUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog needs Screen Recording permission (called Screen & System Audio Recording on macOS 15 and later) to show live window content."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog 需要屏幕录制（macOS 15 起叫「屏幕与系统录音」）权限来实时显示窗口画面。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

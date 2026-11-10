@@ -120,7 +120,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                 guard let self, pid == self.source.pid, !self.isClosing else { return }
                 let ended = self.onEnded
                 self.close()
-                ended?("原窗口已关闭，PiP 已结束")
+                ended?(String(localized: "The source window was closed, so the PiP ended"))
             }
         })
     }
@@ -139,7 +139,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                 showsHiddenPause = false
                 updatePauseOverlay()
             } else {
-                Feedback.show("无法恢复「\(source.ownerName)」的画面，请再\(WindowClickSettings.shared.mode.title)小窗重试")
+                Feedback.show(WindowClickSettings.shared.mode == .single
+                    ? String(localized: "Couldn't resume “\(source.ownerName)”. Click the PiP to try again.")
+                    : String(localized: "Couldn't resume “\(source.ownerName)”. Double-click the PiP to try again."))
             }
         }
     }
@@ -152,9 +154,11 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     private func updatePauseOverlay() {
         let mode = WindowClickSettings.shared.mode
         if showsHiddenPause {
-            pauseOverlay.update(text: "原 app 已隐藏，画面暂停\n\(mode.title)小窗恢复")
+            pauseOverlay.update(text: mode == .single
+                ? String(localized: "Source app is hidden; picture paused\nClick the PiP to resume")
+                : String(localized: "Source app is hidden; picture paused\nDouble-click the PiP to resume"))
         } else if showsMinimizedPause {
-            pauseOverlay.update(text: "原窗口已最小化，画面暂停\n从程序坞恢复原窗口后继续")
+            pauseOverlay.update(text: String(localized: "Source window is minimized; picture paused\nRestore it from the Dock to continue"))
         }
         pauseOverlay.isHidden = !(showsHiddenPause || showsMinimizedPause)
     }
@@ -289,21 +293,21 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                 }
                 try await SnapshotPreview.shared.present(image, name: source.ownerName, from: self)
             } catch WindowCapture.SnapshotError.busy {
-                Feedback.show("快速查看失败：\(WindowCapture.SnapshotError.busy.localizedDescription)") // 上一次还在进行，前台由它负责
+                Feedback.show(String(localized: "Quick Look failed: \(WindowCapture.SnapshotError.busy.localizedDescription)")) // 上一次还在进行，前台由它负责
             } catch let error as WindowCapture.SnapshotError {
                 SnapshotPreview.shared.restoreIfClosed()
-                Feedback.show("快速查看失败：\(error.localizedDescription)")
+                Feedback.show(String(localized: "Quick Look failed: \(error.localizedDescription)"))
             } catch let error as SnapshotPreview.WriteError {
                 SnapshotPreview.shared.restoreIfClosed()
-                Feedback.show("快速查看失败：\(error.localizedDescription)")
+                Feedback.show(String(localized: "Quick Look failed: \(error.localizedDescription)"))
             } catch {
                 SnapshotPreview.shared.restoreIfClosed()
                 // ScreenCaptureKit 的原始错误（英文）不直接给用户看；明确是屏幕录制被拒才走权限引导
-                NSLog("PipDog: 快速查看截图失败：\(error.localizedDescription)")
+                NSLog("PipDog: Quick Look snapshot failed: \(error.localizedDescription)")
                 if Permissions.isScreenRecordingError(error) {
                     Permissions.showAlert(.screenRecording, afterFailure: true)
                 } else {
-                    Feedback.show("快速查看失败：原窗口暂时无法截图，请稍后再试")
+                    Feedback.show(String(localized: "Quick Look failed: the source window can't be captured right now. Try again later."))
                 }
             }
         }
@@ -365,16 +369,16 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         close()
         switch reason {
         case .windowClosed:
-            ended?("原窗口已关闭，PiP 已结束")
+            ended?(String(localized: "The source window was closed, so the PiP ended"))
         case .failed(let error):
             // ScreenCaptureKit 的原始错误（英文）只写日志；屏幕录制被拒或运行中被撤销才走权限引导
-            NSLog("PipDog: PiP 抓取中途停止：\(error.localizedDescription)")
+            NSLog("PipDog: PiP capture stopped: \(error.localizedDescription)")
             if Permissions.isScreenRecordingLost(error) {
                 Permissions.showAlert(.screenRecording, afterFailure: true)
             } else if WindowLocator.isOnScreen(source.id) == false {
-                ended?("PiP 已结束：原窗口不在当前桌面（最小化或在其他桌面）时系统停止了抓取，恢复原窗口后再 PiP 一次")
+                ended?(String(localized: "PiP ended: macOS stopped capturing because the source window isn't on the current desktop (it's minimized or on another desktop). Restore it and PiP it again."))
             } else {
-                ended?("PiP 已结束：画面抓取意外停止，可以再 PiP 一次这个窗口")
+                ended?(String(localized: "PiP ended: capture stopped unexpectedly. You can PiP this window again."))
             }
         }
     }

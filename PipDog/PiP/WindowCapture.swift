@@ -183,7 +183,7 @@ final class WindowCapture: NSObject {
         } catch SnapshotError.timedOut {
             // 画面不动的窗口（或原 app 被隐藏）不一定再发新帧：退回到当前画面（可能小于原尺寸）
             guard let lastFrame else { throw SnapshotError.timedOut }
-            NSLog("PipDog: 等不到原尺寸新帧，快速查看使用当前画面")
+            NSLog("PipDog: no full-size frame arrived in time; Quick Look uses the current frame")
             return try Self.copyImage(lastFrame)
         }
     }
@@ -207,11 +207,11 @@ final class WindowCapture: NSObject {
         case windowClosed, notCapturing, busy, timedOut, conversionFailed
         var errorDescription: String? {
             switch self {
-            case .windowClosed: "原窗口已关闭或不可见"
-            case .notCapturing: "这个小窗还没有画面，暂时无法截图"
-            case .busy: "上一张截图还没完成"
-            case .timedOut: "原窗口暂时无法截图（可能已最小化或被隐藏），请稍后再试"
-            case .conversionFailed: "无法生成截图"
+            case .windowClosed: String(localized: "the source window is closed or not visible")
+            case .notCapturing: String(localized: "this PiP has no picture yet")
+            case .busy: String(localized: "the previous snapshot isn't finished yet")
+            case .timedOut: String(localized: "the source window can't be captured right now (it may be minimized or hidden). Try again later.")
+            case .conversionFailed: String(localized: "couldn't create the snapshot")
             }
         }
     }
@@ -292,7 +292,7 @@ final class WindowCapture: NSObject {
             while needsUpdate, state == .running {
                 needsUpdate = false
                 do { try await stream.updateConfiguration(makeConfiguration()) } catch {
-                    NSLog("PipDog: 更新抓取配置失败：\(error.localizedDescription)")
+                    NSLog("PipDog: failed to update the capture configuration: \(error.localizedDescription)")
                 }
             }
             isUpdating = false
@@ -363,7 +363,7 @@ final class WindowCapture: NSObject {
                 try await start(fps: fps)
                 return isActive
             } catch {
-                NSLog("PipDog: 取消隐藏后重新抓取失败：\(error.localizedDescription)")
+                NSLog("PipDog: failed to restart capture after unhide: \(error.localizedDescription)")
                 state = .paused
                 end(.failed(error))
                 return nil
@@ -410,7 +410,7 @@ final class WindowCapture: NSObject {
     }
 
     fileprivate func streamDidStop(with error: any Error) {
-        NSLog("PipDog: 抓取已停止：\(error.localizedDescription)")
+        NSLog("PipDog: capture stopped: \(error.localizedDescription)")
         sourceMayHaveGone(error: error)
     }
 

@@ -32,9 +32,11 @@ final class LaunchAtLogin {
         if current != status { status = current }
     }
 
-    private static let notFoundMessage = "找不到可登记的应用，请先把 PipDog 装到「应用程序」文件夹再打开"
+    private static var notFoundMessage: String {
+        String(localized: "Couldn't find an app to register. Move PipDog to the Applications folder and open it again.")
+    }
 
-    /// 打开或关闭开机时启动；已经是想要的状态时什么都不做。失败时用提示浮层说明原因（中文），原始错误写日志。
+    /// 打开或关闭开机时启动；已经是想要的状态时什么都不做。失败时用提示浮层说明原因（本地化文字），原始错误写日志。
     /// openSettingsIfNeeded：需要用户允许时直接打开登录项设置（菜单里用；设置窗口里有按钮，不自动打开）。
     func setEnabled(_ enabled: Bool, openSettingsIfNeeded: Bool = false) {
         refresh()
@@ -49,42 +51,44 @@ final class LaunchAtLogin {
         } catch {
             refresh()
             guard isEnabled != enabled else { return } // 其实已经是想要的状态（例如已在系统设置里删掉）
-            NSLog("PipDog: \(enabled ? "登记" : "取消")登录项失败：\(error.localizedDescription)")
+            NSLog("PipDog: failed to \(enabled ? "register" : "unregister") the login item: \(error.localizedDescription)")
             Feedback.show(service.status == .notFound ? Self.notFoundMessage : Self.message(for: error, enabling: enabled))
             return
         }
         refresh()
         if enabled, status == .notRegistered || status == .notFound { // 没报错却没登记上
-            NSLog("PipDog: 登记登录项后状态仍为 \(status.rawValue)")
+            NSLog("PipDog: login item status is still \(status.rawValue) after registering")
             Feedback.show(Self.notFoundMessage)
             return
         }
         guard enabled, requiresApproval else { return }
-        Feedback.show("请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动")
+        Feedback.show(String(localized: "Allow PipDog in System Settings › General › Login Items & Extensions so it opens at login"))
         if openSettingsIfNeeded { openLoginItemsSettings() }
     }
 
     func openLoginItemsSettings() { SMAppService.openSystemSettingsLoginItems() }
 
-    /// 把 ServiceManagement 的常见错误换成中文说明；别的错误用通用说明。
+    /// 把 ServiceManagement 的常见错误换成本地化的说明；别的错误用通用说明。
     private static func message(for error: any Error, enabling: Bool) -> String {
-        let action = enabling ? "打开" : "关闭"
+        let action = enabling
+            ? String(localized: "turn on", comment: "Inserted into “Couldn't … Open at Login”")
+            : String(localized: "turn off", comment: "Inserted into “Couldn't … Open at Login”")
         let nsError = error as NSError
-        let generic = "无法\(action)开机时启动，请稍后再试，或在「系统设置 › 通用 › 登录项与扩展」里手动设置"
+        let generic = String(localized: "Couldn't \(action) Open at Login. Try again later, or set it in System Settings › General › Login Items & Extensions.")
         // 只认 ServiceManagement 的错误域：其他来源的错误即使错误码相同，也不套用下面的说明。
         // SMAppServiceErrorDomain 常量 macOS 15 才公开、kSMErrorDomainFramework 已弃用，所以直接比字符串
         guard ["SMAppServiceErrorDomain", "kSMErrorDomainFramework"].contains(nsError.domain) else { return generic }
         switch nsError.code {
         case kSMErrorLaunchDeniedByUser:
-            return "无法\(action)开机时启动：被系统拒绝，请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog"
+            return String(localized: "Couldn't \(action) Open at Login: macOS denied it. Allow PipDog in System Settings › General › Login Items & Extensions.")
         case kSMErrorInvalidSignature:
-            return "无法\(action)开机时启动：PipDog 的签名无效，请使用正式安装的版本"
+            return String(localized: "Couldn't \(action) Open at Login: PipDog's signature is invalid. Use an officially installed copy.")
         case kSMErrorAuthorizationFailure:
-            return "无法\(action)开机时启动：没有修改登录项的权限"
+            return String(localized: "Couldn't \(action) Open at Login: no permission to change login items.")
         case kSMErrorJobNotFound, kSMErrorJobPlistNotFound, kSMErrorToolNotValid:
             return notFoundMessage
         case kSMErrorServiceUnavailable:
-            return "无法\(action)开机时启动：登录项服务暂时不可用，请稍后再试"
+            return String(localized: "Couldn't \(action) Open at Login: the login items service isn't available right now. Try again later.")
         default:
             return generic
         }

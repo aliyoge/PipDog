@@ -52,9 +52,9 @@ struct WelcomeView: View {
                 .padding(.top, 30)
                 .padding(.bottom, 22)
             VStack(alignment: .leading, spacing: 18) {
-                section("快捷键") { shortcuts }
-                section("小窗操作") { gestures }
-                section("权限") { permissions }
+                section("Shortcuts") { shortcuts }
+                section("PiP Gestures") { gestures }
+                section("Permissions") { permissions }
             }
             .padding(.horizontal, 24)
             footer
@@ -74,12 +74,13 @@ struct WelcomeView: View {
                 .interpolation(.high)
                 .frame(width: 80, height: 80)
                 .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
-            Text("欢迎使用 PipDog")
+            Text("Welcome to PipDog")
                 .font(.system(size: 22, weight: .bold))
-            Text("PipDog 在菜单栏运行，点击菜单栏图标 \(Text(menuBarImage).baselineOffset(-2)) 或使用快捷键开始")
+            Text("PipDog runs in the menu bar. Click the menu bar icon \(Text(menuBarImage).baselineOffset(-2)) or use a shortcut to start.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true) // 英文较长：换行而不是截断
         }
         .padding(.horizontal, 40)
     }
@@ -103,12 +104,12 @@ struct WelcomeView: View {
                     Text(item.title)
                     Spacer(minLength: 12)
                     if item.keys.isEmpty {
-                        Text("未设置").foregroundStyle(.tertiary)
+                        Text("Not Set").foregroundStyle(.tertiary)
                     } else {
                         HStack(spacing: 4) {
                             ForEach(Array(item.keys.enumerated()), id: \.offset) { _, key in Keycap(key: key) }
                             if let suffix = item.suffix {
-                                Text("+ \(suffix)")
+                                Text(verbatim: "+ \(suffix)")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                                     .padding(.leading, 2)
@@ -144,6 +145,7 @@ struct WelcomeView: View {
                 Label(hoverNote, systemImage: "eye.slash")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(12)
@@ -182,19 +184,20 @@ struct WelcomeView: View {
 
     private var footer: some View {
         HStack(spacing: 10) {
-            Text("以后可以从菜单「使用说明…」再看")
+            Text("Reopen anytime from Welcome Guide… in the menu.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Button("打开设置", action: onOpenSettings)
+            Button("Open Settings", action: onOpenSettings)
                 .controlSize(.large)
-            Button("开始使用", action: onStart)
+            Button("Get Started", action: onStart)
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
         }
     }
 
-    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+    private func section(_ title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
@@ -266,9 +269,9 @@ private struct PermissionBadge: View {
 
     private var title: String {
         switch state {
-        case .granted: "已授权"
-        case .restartRequired: "需重新启动"
-        case .missing: "未授权"
+        case .granted: String(localized: "Granted")
+        case .restartRequired: String(localized: "Relaunch Required")
+        case .missing: String(localized: "Not Granted")
         }
     }
 

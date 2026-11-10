@@ -52,8 +52,8 @@ enum Onboarding {
         let build = info?["CFBundleVersion"] as? String ?? "?"
         let alert = NSAlert()
         alert.messageText = "PipDog"
-        alert.informativeText = "版本 \(version)（\(build)）\n把任意窗口或其中一块区域变成置顶的实时小窗。"
-        alert.addButton(withTitle: "好")
+        alert.informativeText = String(localized: "Version \(version) (\(build))\nTurn any window, or part of one, into a live floating window that stays on top.")
+        alert.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()
         alert.layout()
         alert.window.orderFrontRegardless()
@@ -67,7 +67,7 @@ enum Onboarding {
         let window = WelcomeWindow(contentRect: NSRect(x: 0, y: 0, width: 540, height: 600),
                                    styleMask: [.titled, .closable, .fullSizeContentView],
                                    backing: .buffered, defer: true)
-        window.title = "欢迎使用 PipDog"
+        window.title = String(localized: "Welcome to PipDog")
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
@@ -144,19 +144,21 @@ enum Onboarding {
                                  keys: settings.combo(for: action).map(keys(of:)) ?? [])
         }
         if settings.config.clickEnabled {
-            shortcuts.append(.init(icon: "cursorarrow.click.2", title: "PiP 鼠标下方的区域",
+            shortcuts.append(.init(icon: "cursorarrow.click.2", title: String(localized: "PiP Area Under Pointer"),
                                    keys: KeyCodeNames.symbols(for: settings.config.clickModifiers).map(String.init),
-                                   suffix: "双击"))
+                                   suffix: String(localized: "Double-click")))
         }
         let gestures: [WelcomeInfo.Gesture] = [
-            .init(icon: "macwindow", action: "切回原窗口", gesture: click),
-            .init(icon: "arrow.right.to.line", action: "停到屏幕边 / 移回", gesture: "原窗口在前时再\(click)"),
-            .init(icon: "eye", action: "快速查看", gesture: "⌥ 单击"),
-            .init(icon: "plus.magnifyingglass", action: "放大画面", gesture: "滚动 / 捏合"),
-            .init(icon: "arrow.counterclockwise", action: "恢复原大小", gesture: "⌘ 单击"),
-            .init(icon: "hand.draw", action: "移动 / 平移", gesture: "拖动"),
-            .init(icon: "arrow.up.left.and.arrow.down.right", action: "调整大小", gesture: "拖右下角"),
-            .init(icon: "xmark.circle", action: "关闭小窗", gesture: "左上角 ×"),
+            .init(icon: "macwindow", action: String(localized: "Switch to source window"), gesture: click),
+            .init(icon: "arrow.right.to.line", action: String(localized: "Park at edge / bring back"),
+                  gesture: String(localized: "\(click) again when in front")),
+            .init(icon: "eye", action: String(localized: "Quick Look"), gesture: String(localized: "⌥-click")),
+            .init(icon: "plus.magnifyingglass", action: String(localized: "Zoom in"), gesture: String(localized: "Scroll / pinch")),
+            .init(icon: "arrow.counterclockwise", action: String(localized: "Reset zoom"), gesture: String(localized: "⌘-click")),
+            .init(icon: "hand.draw", action: String(localized: "Move / pan"), gesture: String(localized: "Drag")),
+            .init(icon: "arrow.up.left.and.arrow.down.right", action: String(localized: "Resize"),
+                  gesture: String(localized: "Drag bottom-right corner")),
+            .init(icon: "xmark.circle", action: String(localized: "Close PiP"), gesture: String(localized: "× at top left")),
         ]
         let screenState: WelcomeInfo.Permission.State = switch Permissions.screenRecordingState {
         case .authorized: .granted
@@ -168,12 +170,12 @@ enum Onboarding {
             menuBarIcon: StatusMenu.icon(size: 15),
             shortcuts: shortcuts,
             gestures: gestures,
-            hoverNote: PiPAppearanceSettings.shared.hoverAutoHide ? "鼠标停在小窗上约 1.5 秒会淡出，单独按一下 ⌥ 恢复" : nil,
+            hoverNote: PiPAppearanceSettings.shared.hoverAutoHide ? String(localized: "Rest the pointer on a PiP for about 1.5 s to fade it out; press ⌥ alone to bring it back") : nil,
             permissions: [
                 .init(icon: "rectangle.dashed.badge.record", name: Permissions.screenRecordingName,
-                      note: "实时显示画面，第一次 PiP 时请求", state: screenState),
-                .init(icon: "accessibility", name: "辅助功能",
-                      note: "把原窗口移到屏幕边上、修饰键 + 双击，用到时再引导",
+                      note: String(localized: "Shows live content; requested on your first PiP"), state: screenState),
+                .init(icon: "accessibility", name: String(localized: "Accessibility"),
+                      note: String(localized: "For edge parking and modifier + double-click; requested when needed"),
                       state: Permissions.hasAccessibility ? .granted : .missing),
             ])
     }

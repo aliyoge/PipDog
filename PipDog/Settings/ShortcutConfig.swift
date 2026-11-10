@@ -21,9 +21,9 @@ struct KeyCombo: Codable, Hashable, Sendable {
 
     /// 不能用作全局快捷键的原因；可以用时为 nil。
     var validationError: String? {
-        if !isValidHotKey { return "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）" }
+        if !isValidHotKey { return String(localized: "Include at least one of ⌘, ⌃ or ⌥ (⇧ alone isn't enough)") }
         if conflictsWithStandardShortcuts {
-            return "只用 ⌘ 或 ⌘⇧ 加普通按键会抢走 ⌘C、⌘Q、⌘W 这类常用快捷键，请再加上 ⌃ 或 ⌥（F1–F20 除外）"
+            return String(localized: "⌘ or ⌘⇧ with a regular key would take over common shortcuts like ⌘C, ⌘Q and ⌘W. Add ⌃ or ⌥ (F1–F20 are fine).")
         }
         return nil
     }
@@ -42,9 +42,9 @@ enum ShortcutAction: String, Codable, CodingKeyRepresentable, CaseIterable, Iden
 
     var title: String {
         switch self {
-        case .pipWindow: "PiP 当前窗口"
-        case .selectRegion: "框选区域"
-        case .closeAll: "关闭所有 PiP"
+        case .pipWindow: String(localized: "PiP Current Window")
+        case .selectRegion: String(localized: "Select Region to PiP")
+        case .closeAll: String(localized: "Close All PiPs")
         }
     }
 }

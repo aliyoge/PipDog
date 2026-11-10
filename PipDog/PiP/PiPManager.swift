@@ -40,8 +40,8 @@ final class PiPManager {
     func pipFocusedWindow() async {
         switch WindowLocator.focusedWindow() {
         case .found(let window): await open(window, region: nil)
-        case .noWindow(let appName): Feedback.show("「\(appName)」没有可以 PiP 的窗口")
-        case .nothing: Feedback.show("屏幕上没有可以 PiP 的窗口")
+        case .noWindow(let appName): Feedback.show(String(localized: "“\(appName)” has no window to PiP"))
+        case .nothing: Feedback.show(String(localized: "There's no window on screen to PiP"))
         }
     }
 
@@ -62,7 +62,7 @@ final class PiPManager {
     func pipRegion(_ rect: CGRect) async {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         guard let window = WindowLocator.window(at: center) else {
-            Feedback.show("选区下方没有可以 PiP 的窗口")
+            Feedback.show(String(localized: "There's no window under the selection to PiP"))
             return
         }
         await open(window, screenRegion: rect)
@@ -72,7 +72,7 @@ final class PiPManager {
     /// 辅助功能查询放在后台线程，避免目标 app 卡住时冻结主线程。
     func pipElement(at point: CGPoint) async {
         guard let window = WindowLocator.window(at: point) else {
-            Feedback.show("鼠标下方没有可以 PiP 的窗口")
+            Feedback.show(String(localized: "There's no window under the pointer to PiP"))
             return
         }
         let found = await Task.detached { AXRegionFinder.containerFrame(at: point, in: window) }.value
@@ -94,7 +94,7 @@ final class PiPManager {
     private func open(_ window: WindowInfo, screenRegion: CGRect) async {
         let clipped = screenRegion.intersection(window.bounds)
         guard !clipped.isNull, clipped.width >= minimumRegion, clipped.height >= minimumRegion else {
-            Feedback.show("区域太小（至少 \(Int(minimumRegion))×\(Int(minimumRegion))），没有打开 PiP")
+            Feedback.show(String(localized: "The region is too small (at least \(Int(minimumRegion))×\(Int(minimumRegion))), so no PiP was opened"))
             return
         }
         let relative = clipped.offsetBy(dx: -window.bounds.minX, dy: -window.bounds.minY)
@@ -116,7 +116,7 @@ final class PiPManager {
         let scWindow: SCWindow
         do {
             guard let found = try await WindowLocator.shareableWindow(for: window.id) else {
-                Feedback.show("无法抓取「\(window.ownerName)」的这个窗口")
+                Feedback.show(String(localized: "Can't capture this window of “\(window.ownerName)”"))
                 return
             }
             scWindow = found
@@ -149,11 +149,11 @@ final class PiPManager {
     }
 
     private func report(_ error: any Error) {
-        NSLog("PipDog: 启动 PiP 失败：\(error.localizedDescription)")
+        NSLog("PipDog: failed to start PiP: \(error.localizedDescription)")
         if Permissions.isScreenRecordingError(error) {
             Permissions.showAlert(.screenRecording, afterFailure: true)
         } else {
-            Feedback.show("启动 PiP 失败：暂时无法抓取这个窗口，请稍后再试") // 系统原文（多半是英文）只写日志
+            Feedback.show(String(localized: "Couldn't start PiP: this window can't be captured right now. Try again later.")) // 系统原文（多半是英文）只写日志
         }
     }
 }

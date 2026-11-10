@@ -7,10 +7,11 @@ struct SettingsView: View {
     private var windowClick: WindowClickSettings { .shared }
     private var appearance: PiPAppearanceSettings { .shared }
     private var launchAtLogin: LaunchAtLogin { .shared }
+    private var language: LanguageSettings { .shared }
 
     var body: some View {
         Form {
-            Section("全局快捷键") {
+            Section("Global Shortcuts") {
                 ForEach(ShortcutAction.allCases) { action in
                     VStack(alignment: .leading, spacing: 4) {
                         LabeledContent(action.title) { ShortcutRecorder(action: action) }
@@ -19,14 +20,14 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text("点击按钮后按下新的组合键，至少包含 ⌘、⌃ 或 ⌥；只用 ⌘ 或 ⌘⇧ 加普通键（如 ⌘C、⌘Q）会抢走常用快捷键，不允许。清除后该动作没有快捷键，仍可从菜单使用。切到别的 app 会自动取消录制。")
+                Text("Click a button, then press the new combination. It must include ⌘, ⌃ or ⌥; ⌘ or ⌘⇧ with a regular key (like ⌘C or ⌘Q) isn't allowed because it would take over common shortcuts. A cleared action has no shortcut but is still in the menu. Switching to another app cancels recording.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("修饰键 + 双击：PiP 鼠标下方的区域") {
-                Toggle("启用", isOn: Binding(get: { settings.config.clickEnabled },
+            Section("Modifier + Double-Click: PiP Area Under Pointer") {
+                Toggle("Enabled", isOn: Binding(get: { settings.config.clickEnabled },
                                             set: { settings.setClickEnabled($0) }))
-                LabeledContent("需要按住") {
+                LabeledContent("Hold") {
                     HStack(spacing: 4) {
                         ForEach(ClickModifier.allCases) { modifier in
                             Toggle(modifier.symbol, isOn: Binding(
@@ -37,63 +38,72 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(!settings.config.clickEnabled)
-                Text("至少选一个修饰键，默认 ⌥⇧。触发用的第二次点击会被 PipDog 拦下，不会传给目标 app，第一次单击仍会照常传过去。拦截需要辅助功能权限；没有权限时只能旁观，双击仍会传给目标 app。")
+                Text("Choose at least one modifier; the default is ⌥⇧. PipDog intercepts the second click so it doesn't reach the app, while the first click goes through as usual. Intercepting needs Accessibility permission; without it PipDog only observes, and the double-click still reaches the app.")
                     .font(.caption).foregroundStyle(.secondary)
                 if settings.config.clickModifiers.contains(.control) {
-                    Text("提示：按住 ⌃ 点击时 macOS 会把第一次点击当成右键，目标 app 可能弹出右键菜单。")
+                    Text("Tip: macOS treats a ⌃-click as a right-click, so the app may show its shortcut menu on the first click.")
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
 
-            Section("画面") {
-                Picker("帧率", selection: Binding(get: { capture.frameRate }, set: { capture.frameRate = $0 })) {
-                    ForEach(CaptureSettings.frameRateOptions, id: \.self) { Text("\($0) fps").tag($0) }
+            Section("Capture") {
+                Picker("Frame Rate", selection: Binding(get: { capture.frameRate }, set: { capture.frameRate = $0 })) {
+                    ForEach(CaptureSettings.frameRateOptions, id: \.self) { Text(verbatim: "\($0) fps").tag($0) }
                 }
-                Text("修改后立即应用到已打开的 PiP。帧率越高画面越流畅，但 CPU 占用也越高；盯日志、进度条用 5–10 fps 就够了。")
+                Text("Changes apply to open PiPs right away. Higher frame rates are smoother but use more CPU; 5–10 fps is plenty for watching logs or progress bars.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("小窗") {
-                Picker("切回 / 移到旁边", selection: Binding(get: { windowClick.mode }, set: { windowClick.mode = $0 })) {
+            Section("PiP Window") {
+                Picker("Switch Back / Park", selection: Binding(get: { windowClick.mode }, set: { windowClick.mode = $0 })) {
                     ForEach(WindowClickMode.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                Text("在小窗上单击或双击，把原窗口切到前面；原窗口已在最前时，把它移到屏幕边上。默认双击，拖动或随手点一下不会误触发。⌥ + 单击仍是快速查看。")
+                Text("Click or double-click a PiP to bring its source window to the front; if the source is already in front, it moves to the screen edge. Double-click is the default, so dragging or a stray click won't trigger it. ⌥-click is always Quick Look.")
                     .font(.caption).foregroundStyle(.secondary)
-                LabeledContent("不透明度") {
+                LabeledContent("Opacity") {
                     HStack {
                         Slider(value: Binding(get: { appearance.opacity }, set: { appearance.setOpacity($0) }),
                                in: PiPAppearanceSettings.minimumOpacity...1, step: 0.05)
-                        Text("\(Int((appearance.opacity * 100).rounded()))%")
+                        Text(verbatim: "\(Int((appearance.opacity * 100).rounded()))%")
                             .monospacedDigit()
                             .frame(width: 40, alignment: .trailing)
                     }
                 }
-                Toggle("悬停时自动隐藏", isOn: Binding(get: { appearance.hoverAutoHide },
+                Toggle("Hide on Hover", isOn: Binding(get: { appearance.hoverAutoHide },
                                                  set: { appearance.hoverAutoHide = $0 }))
-                Text("不透明度最低 30%。悬停隐藏默认关闭；打开后，鼠标在小窗上停约 1.5 秒，小窗会淡出，点击直接穿透到下面的窗口；鼠标移出小窗的范围就恢复，隐藏时单独按一下 ⌥（不点鼠标）也会立即恢复；按住 ⌥ 点击下面的 app 照常穿透。在小窗上点击、拖动、滚动后，或按住 ⌥、指着 × 和缩放手柄时不会隐藏。滚动或捏合可以放大画面，放大后拖动是平移；⌘ + 单击小窗恢复原大小。")
+                Text("Opacity goes down to 30%. Hide on Hover is off by default; when on, a PiP fades out after the pointer rests on it for about 1.5 s, and clicks go straight through to the window below. It comes back when the pointer leaves its area, or right away when you press ⌥ alone (without clicking); ⌥-clicks still go through to the app below. It doesn't hide after you click, drag or scroll on it, or while you hold ⌥ or point at × or the resize handle. Scroll or pinch to zoom in; when zoomed, dragging pans. ⌘-click a PiP to reset the zoom.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("启动") {
-                Toggle("开机时启动", isOn: Binding(get: { launchAtLogin.isEnabled },
+            Section("Startup") {
+                Toggle("Open at Login", isOn: Binding(get: { launchAtLogin.isEnabled },
                                               set: { launchAtLogin.setEnabled($0) }))
                 if launchAtLogin.requiresApproval {
-                    Text("已登记，还需要在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动。")
+                    Text("Registered. Allow PipDog in System Settings › General › Login Items & Extensions so it opens at login.")
                         .font(.caption).foregroundStyle(.orange)
-                    Button("打开登录项设置") { launchAtLogin.openLoginItemsSettings() }
+                    Button("Open Login Items Settings") { launchAtLogin.openLoginItemsSettings() }
                 }
-                Text("这是系统的登录项，不受「恢复默认」影响。")
+                Text("This is a macOS login item, so Restore Defaults doesn't change it.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("Language") {
+                Picker("Language", selection: Binding(get: { language.language }, set: { language.setLanguage($0) })) {
+                    ForEach(AppLanguage.allCases) { Text(verbatim: $0.title).tag($0) }
+                }
+                Text("PipDog asks to relaunch after you change the language. Follow System uses Simplified Chinese on Chinese systems and English otherwise.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             HStack {
                 Spacer()
-                Button("恢复默认") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
+                Button("Restore Defaults") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
                     settings.restoreDefaults()
                     capture.restoreDefaults()
                     windowClick.restoreDefaults()
                     appearance.restoreDefaults()
+                    language.restoreDefaults() // 有变化时会提示重新启动
                 }
             }
         }

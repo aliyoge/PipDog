@@ -16,7 +16,7 @@ final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
     static let shared = SnapshotPreview()
 
     struct WriteError: LocalizedError {
-        var errorDescription: String? { "无法保存截图" }
+        var errorDescription: String? { String(localized: "Couldn't save the snapshot") }
     }
 
     private nonisolated static var directory: URL {

@@ -33,7 +33,7 @@ final class HotKeys {
         let status = RegisterEventHotKey(UInt32(keyCode), modifiers, EventHotKeyID(signature: signature, id: id),
                                          GetApplicationEventTarget(), 0, &ref)
         guard status == noErr, let ref else {
-            NSLog("PipDog: 注册快捷键失败（keyCode=\(keyCode)，status=\(status)）")
+            NSLog("PipDog: failed to register hot key (keyCode=\(keyCode), status=\(status))")
             return .failed(status == noErr ? OSStatus(paramErr) : status)
         }
         refs.append(ref)
@@ -68,7 +68,7 @@ final class HotKeys {
         }, 1, &spec, nil, &handlerRef)
         guard status == noErr, handlerRef != nil else {
             handlerRef = nil
-            NSLog("PipDog: 安装全局快捷键处理器失败（status=\(status)）")
+            NSLog("PipDog: failed to install the hot key handler (status=\(status))")
             return status == noErr ? OSStatus(paramErr) : status
         }
         return nil

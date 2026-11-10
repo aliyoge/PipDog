@@ -136,7 +136,7 @@ private final class SelectionView: NSView {
     }
 
     private func drawHint() {
-        let hint = "拖动选择要 PiP 的区域，Esc 或右键取消" as NSString
+        let hint = String(localized: "Drag to select a region to PiP. Press Esc or right-click to cancel.") as NSString
         let attrs = textAttributes(size: 15)
         let size = hint.size(withAttributes: attrs)
         hint.draw(at: NSPoint(x: bounds.midX - size.width / 2, y: bounds.maxY - size.height - 60), withAttributes: attrs)

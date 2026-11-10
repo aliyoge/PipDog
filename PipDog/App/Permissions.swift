@@ -7,10 +7,17 @@ import ScreenCaptureKit
 enum Permissions {
     enum Kind { case screenRecording, accessibility }
 
-    enum ScreenRecordingState: String {
-        case authorized = "已授权"
-        case restartRequired = "已授权，需重新启动"
-        case notAuthorized = "未授权"
+    enum ScreenRecordingState {
+        case authorized, restartRequired, notAuthorized
+
+        /// 菜单里显示的状态
+        var title: String {
+            switch self {
+            case .authorized: String(localized: "Granted")
+            case .restartRequired: String(localized: "Granted, Relaunch Required")
+            case .notAuthorized: String(localized: "Not Granted")
+            }
+        }
     }
 
     // 在 applicationDidFinishLaunching 中立即读取，避免第一次 PiP 时才取启动快照。
@@ -23,8 +30,8 @@ enum Permissions {
     static var hasAccessibility: Bool { AXIsProcessTrusted() }
 
     static var screenRecordingName: String {
-        if #available(macOS 15, *) { return "屏幕与系统录音" }
-        return "屏幕录制"
+        if #available(macOS 15, *) { return String(localized: "Screen & System Audio Recording") }
+        return String(localized: "Screen Recording")
     }
 
     static var screenRecordingState: ScreenRecordingState {
@@ -66,7 +73,7 @@ enum Permissions {
             if afterFailure, !requestedScreenRecording, screenRecordingState == .notAuthorized {
                 requestedScreenRecording = true
                 _ = CGRequestScreenCaptureAccess()
-                Feedback.show("请在「系统设置 › 隐私与安全性 › \(screenRecordingName)」里打开 PipDog，然后重新启动 PipDog（再试一次 PiP 或点菜单里的权限状态）")
+                Feedback.show(String(localized: "Turn on PipDog in System Settings › Privacy & Security › \(screenRecordingName), then relaunch PipDog (try PiP again or click the permission status in the menu)"))
                 return
             }
             showScreenRecordingAlert()
@@ -75,7 +82,7 @@ enum Permissions {
             guard !hasAccessibility else { return }
             // 只用系统授权框：登记到「辅助功能」列表，不再叠加自定义 NSAlert。
             NSApp.activate()
-            Feedback.show(message ?? "请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
+            Feedback.show(message ?? String(localized: "Turn on PipDog in System Settings › Privacy & Security › Accessibility"))
             let key = "AXTrustedCheckOptionPrompt" // 避免 Swift 6 访问非并发安全的全局 CFString
             _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
         }
@@ -89,17 +96,17 @@ enum Permissions {
         let alert = NSAlert()
         alert.alertStyle = .warning
         if screenRecordingState == .restartRequired {
-            alert.messageText = "「\(screenRecordingName)」已授权，需要重新启动 PipDog 才能生效"
-            alert.informativeText = "重新启动后即可抓取窗口画面。"
-            alert.addButton(withTitle: "重新启动 PipDog")
-            alert.addButton(withTitle: "稍后")
-            if alert.runModal() == .alertFirstButtonReturn { restart() }
+            alert.messageText = String(localized: "\(screenRecordingName) is granted. Relaunch PipDog for it to take effect.")
+            alert.informativeText = String(localized: "After relaunching, PipDog can capture window content.")
+            alert.addButton(withTitle: String(localized: "Relaunch PipDog"))
+            alert.addButton(withTitle: String(localized: "Later"))
+            if alert.runModal() == .alertFirstButtonReturn { relaunch() }
         } else {
-            alert.messageText = "PipDog 需要「\(screenRecordingName)」权限"
-            alert.informativeText = "请在「系统设置 › 隐私与安全性 › \(screenRecordingName)」里打开 PipDog，再点「重新启动 PipDog」。授权状态可能延迟刷新；即使仍显示未授权，也可以重新启动。"
-            alert.addButton(withTitle: "打开系统设置")
-            alert.addButton(withTitle: "重新启动 PipDog")
-            alert.addButton(withTitle: "取消")
+            alert.messageText = String(localized: "PipDog needs \(screenRecordingName) permission")
+            alert.informativeText = String(localized: "Turn on PipDog in System Settings › Privacy & Security › \(screenRecordingName), then click “Relaunch PipDog”. The permission status may take a moment to update; you can relaunch even if it still shows as not granted.")
+            alert.addButton(withTitle: String(localized: "Open System Settings"))
+            alert.addButton(withTitle: String(localized: "Relaunch PipDog"))
+            alert.addButton(withTitle: String(localized: "Cancel"))
             let response = alert.runModal()
             if response == .alertFirstButtonReturn {
                 // 自定义弹窗已关闭后才允许系统请求；每次运行最多登记一次。
@@ -109,29 +116,30 @@ enum Permissions {
                 }
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"),
                    !NSWorkspace.shared.open(url) {
-                    Feedback.show("无法打开系统设置，请手动前往「隐私与安全性 › \(screenRecordingName)」")
+                    Feedback.show(String(localized: "Couldn't open System Settings. Go to Privacy & Security › \(screenRecordingName) manually."))
                 }
             } else if response == .alertSecondButtonReturn {
-                restart()
+                relaunch()
             }
         }
     }
 
-    private static func restart() {
+    /// 启动一个新实例再退出自己（屏幕录制授权后、切换语言后用）。
+    static func relaunch() {
         guard !restarting else { return }
         restarting = true
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.createsNewApplicationInstance = true
         NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { app, error in
             let launched = app != nil && error == nil
-            if let error { NSLog("PipDog: 重新启动失败：\(error.localizedDescription)") }
+            if let error { NSLog("PipDog: relaunch failed: \(error.localizedDescription)") }
             DispatchQueue.main.async {
                 restarting = false
                 if launched {
                     SourceWindowActivator.restoreAllStashed() // 先把移到屏幕边上的窗口放回去
                     NSApp.terminate(nil)
                 } else {
-                    Feedback.show("重新启动 PipDog 失败，请从菜单退出 PipDog 后再手动打开")
+                    Feedback.show(String(localized: "Couldn't relaunch PipDog. Quit PipDog from the menu and open it again."))
                 }
             }
         }

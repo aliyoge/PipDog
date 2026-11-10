@@ -271,9 +271,9 @@ private final class CloseButton: NSButton {
         imageScaling = .scaleProportionallyUpOrDown
         let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
             .applying(NSImage.SymbolConfiguration(paletteColors: [.white, NSColor.black.withAlphaComponent(0.6)]))
-        image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "关闭")?
+        image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: String(localized: "Close"))?
             .withSymbolConfiguration(config)
-        toolTip = "关闭这个 PiP"
+        toolTip = String(localized: "Close This PiP")
     }
 
     @available(*, unavailable)

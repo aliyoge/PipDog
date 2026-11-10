@@ -1,6 +1,7 @@
 name: PipDog
 options:
   bundleIdPrefix: com.hwj
+  developmentLanguage: en
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -12,6 +13,9 @@ settings:
     SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
+    # 界面文字都在 String Catalog（Localizable.xcstrings、InfoPlist.xcstrings）里，英文为源语言
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 targets:
   PipDog:
     type: application
@@ -26,7 +30,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
-        NSScreenCaptureUsageDescription: "PipDog 需要屏幕录制（macOS 15 起叫「屏幕与系统录音」）权限来实时显示窗口画面。"
+        NSScreenCaptureUsageDescription: "PipDog needs Screen Recording permission (called Screen & System Audio Recording on macOS 15 and later) to show live window content." # 中文在 InfoPlist.xcstrings
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hwj.PipDog
