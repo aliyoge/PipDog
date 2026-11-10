@@ -14,7 +14,7 @@ import UniformTypeIdentifiers
 final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
     static let shared = SnapshotPreview()
 
-    private struct WriteError: LocalizedError {
+    struct WriteError: LocalizedError {
         var errorDescription: String? { "无法保存截图" }
     }
 

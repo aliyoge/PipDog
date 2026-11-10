@@ -1,4 +1,5 @@
 import AppKit
+import CoreImage
 import CoreMedia
 import ScreenCaptureKit
 
@@ -41,6 +42,18 @@ final class WindowCapture: NSObject {
     private var isUpdating = false
     private var needsUpdate = false
     private var sourceTimer: Timer?
+    /// 等待配置更新结束的截图请求（setNeedsUpdate 的更新结束时唤醒）
+    private var updateWaiters: [CheckedContinuation<Void, Never>] = []
+    /// 截图进行中（同一时间只截一张）
+    private var isTakingSnapshot = false
+    /// 截图在等的那一帧：像素尺寸和原生分辨率配置一致的下一帧完整帧
+    private var frameWaiter: CheckedContinuation<CapturedFrame, any Error>?
+    private var awaitedPixelSize = CGSize.zero
+    /// 最近一帧完整帧（面板也持有同一帧，不多占缓冲）：已经是原生分辨率时截图直接用它，
+    /// 画面静止时 ScreenCaptureKit 不发新的完整帧
+    private var lastFrame: CapturedFrame?
+    /// 每次等帧加一，旧的超时任务不会误伤后一次截图
+    private var frameWaitID = 0
 
     private nonisolated let mailbox = FrameMailbox()
     private nonisolated let queue = DispatchQueue(label: "PipDog.capture")
@@ -119,46 +132,121 @@ final class WindowCapture: NSObject {
         onSourceSizeChange = nil
         onStop = nil
         _ = mailbox.take()
+        lastFrame = nil
+        failFrameWaiter(SnapshotError.notCapturing)
+        resumeUpdateWaiters()
         guard previous == .running, let stream else { return }
         try? await stream.stopCapture()
         detach(stream)
     }
 
-    /// 原尺寸截图一张（快速查看用）：按原窗口当前大小和原生像素比例，区域 PiP 裁剪到区域；不受面板尺寸上限影响。
+    /// 原尺寸截图一张（快速查看用）：从正在运行的抓取流里取，不另开 ScreenCaptureKit 会话
+    /// （同一窗口再开一个截图会话会和这条流冲突）。临时把这条流切到原生分辨率（不受面板尺寸和 4096 上限影响，
+    /// 区域 PiP 仍是那块区域），等到下一帧这个尺寸的完整帧，复制成 CGImage，再恢复原来的配置。
     func snapshot() async throws -> CGImage {
-        guard let bounds = WindowLocator.bounds(of: window.windowID) else { throw SnapshotError.windowClosed }
-        let windowRect = CGRect(origin: .zero, size: bounds.size)
-        let rect = requestedRegion.map { $0.intersection(windowRect) } ?? windowRect
-        guard !rect.isNull, rect.width >= 1, rect.height >= 1 else { throw SnapshotError.windowClosed }
-        let filter = SCContentFilter(desktopIndependentWindow: window)
-        let scale = CGFloat(filter.pointPixelScale)
-        let config = SCStreamConfiguration()
-        if requestedRegion != nil { config.sourceRect = rect }
-        config.width = Int((rect.width * scale).rounded())
-        config.height = Int((rect.height * scale).rounded())
-        config.captureResolution = .best
-        config.showsCursor = false
-        return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+        guard !isTakingSnapshot else { throw SnapshotError.busy }
+        guard WindowLocator.bounds(of: window.windowID) != nil else { throw SnapshotError.windowClosed }
+        guard state == .running, stream != nil else { throw SnapshotError.notCapturing }
+        let pixels = nativePixelSize()
+        if let lastFrame, Self.pixelSize(of: lastFrame) == pixels { return try Self.copyImage(lastFrame) }
+        isTakingSnapshot = true
+        defer { isTakingSnapshot = false }
+
+        // 不和 setNeedsUpdate 的配置更新交错：等它结束，再把这次截图当作进行中的更新
+        while isUpdating { await withCheckedContinuation { updateWaiters.append($0) } }
+        guard state == .running, let stream else { throw SnapshotError.notCapturing }
+        isUpdating = true
+        defer {
+            // 恢复：用 makeConfiguration()（面板尺寸上限 + 4096）重新配置；已经停止时 setNeedsUpdate 什么都不做
+            isUpdating = false
+            resumeUpdateWaiters()
+            setNeedsUpdate()
+        }
+
+        awaitedPixelSize = pixels
+        try await stream.updateConfiguration(makeConfiguration(pixelSize: pixels))
+        guard state == .running else { throw SnapshotError.notCapturing }
+        let frame = try await nextFrame(timeout: .seconds(1.5))
+        return try Self.copyImage(frame) // 在恢复配置（IOSurface 被复用）之前把像素复制出来
+    }
+
+    private static func pixelSize(of frame: CapturedFrame) -> CGSize {
+        CGSize(width: CVPixelBufferGetWidth(frame.pixelBuffer), height: CVPixelBufferGetHeight(frame.pixelBuffer))
+    }
+
+    /// 把一帧复制成独立的 CGImage（不再依赖抓取流的 IOSurface）。
+    private static func copyImage(_ frame: CapturedFrame) throws -> CGImage {
+        let image = CIImage(cvPixelBuffer: frame.pixelBuffer)
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let cgImage = CIContext().createCGImage(image, from: image.extent, format: .RGBA8, colorSpace: colorSpace)
+        else { throw SnapshotError.conversionFailed }
+        return cgImage
     }
 
     enum SnapshotError: LocalizedError {
-        case windowClosed
-        var errorDescription: String? { "原窗口已关闭或不可见" }
+        case windowClosed, notCapturing, busy, timedOut, conversionFailed
+        var errorDescription: String? {
+            switch self {
+            case .windowClosed: "原窗口已关闭或不可见"
+            case .notCapturing: "这个小窗还没有画面，暂时无法截图"
+            case .busy: "上一张截图还没完成"
+            case .timedOut: "原窗口暂时无法截图（可能已最小化或被隐藏），请稍后再试"
+            case .conversionFailed: "无法生成截图"
+            }
+        }
+    }
+
+    /// 等下一帧像素尺寸为 awaitedPixelSize 的完整帧；超时或抓取停止时抛错。
+    private func nextFrame(timeout: Duration) async throws -> CapturedFrame {
+        try await withCheckedThrowingContinuation { continuation in
+            frameWaiter = continuation
+            frameWaitID += 1
+            let id = frameWaitID
+            Task { [weak self] in
+                try? await Task.sleep(for: timeout)
+                guard let self, self.frameWaitID == id else { return }
+                self.failFrameWaiter(SnapshotError.timedOut)
+            }
+        }
+    }
+
+    private func failFrameWaiter(_ error: any Error) {
+        guard let waiter = frameWaiter else { return }
+        frameWaiter = nil
+        waiter.resume(throwing: error)
+    }
+
+    private func resumeUpdateWaiters() {
+        let waiters = updateWaiters
+        updateWaiters = []
+        waiters.forEach { $0.resume() }
+    }
+
+    /// 截图在等的话，把尺寸对得上的帧交给它（更新前排队的旧尺寸帧不算）。
+    private func handOverToSnapshot(_ frame: CapturedFrame) {
+        guard let waiter = frameWaiter, Self.pixelSize(of: frame) == awaitedPixelSize else { return }
+        frameWaiter = nil
+        waiter.resume(returning: frame)
     }
 
     // MARK: - 配置
 
-    /// 按当前状态新建一份配置（每次更新都用新对象）。
-    private func makeConfiguration() -> sending SCStreamConfiguration {
+    /// 按当前状态新建一份配置（每次更新都用新对象）。pixelSize 为 nil 时用面板尺寸上限（outputPixelSize）。
+    private func makeConfiguration(pixelSize: CGSize? = nil) -> sending SCStreamConfiguration {
         let config = SCStreamConfiguration()
         if let sourceRect { config.sourceRect = sourceRect }
-        let output = outputPixelSize()
+        let output = pixelSize ?? outputPixelSize()
         config.width = Int(output.width)
         config.height = Int(output.height)
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(max(fps, 1)))
         config.showsCursor = false
         config.queueDepth = 3 // 面板持有 1 帧、信箱里最多 1 帧，再留 1 帧给 ScreenCaptureKit
         return config
+    }
+
+    /// 源的原生像素尺寸（截图用，不受面板尺寸和长边上限影响）。
+    private func nativePixelSize() -> CGSize {
+        CGSize(width: max((sourceSize.width * scale).rounded(), 1), height: max((sourceSize.height * scale).rounded(), 1))
     }
 
     /// 输出像素尺寸：源的原生像素尺寸，按面板尺寸和长边上限等比缩小（不放大）。
@@ -188,6 +276,7 @@ final class WindowCapture: NSObject {
                 }
             }
             isUpdating = false
+            resumeUpdateWaiters()
             // 更新期间被跳过的尺寸变化，在下一帧重新检查
             lastGeometry = nil
             lastGeometryCheck = .distantPast
@@ -212,6 +301,8 @@ final class WindowCapture: NSObject {
 
     fileprivate func deliverLatestFrame() {
         guard isActive, let frame = mailbox.take() else { return }
+        lastFrame = frame
+        handOverToSnapshot(frame)
         onFrame?(frame)
         followSourceGeometry(frame.geometry)
     }

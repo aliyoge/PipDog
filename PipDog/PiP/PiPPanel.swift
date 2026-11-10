@@ -146,8 +146,18 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                 let image = try await capture.snapshot()
                 guard !isClosing else { return }
                 try await SnapshotPreview.shared.present(image, name: source.ownerName, from: self, previousApp: previousApp)
-            } catch {
+            } catch let error as WindowCapture.SnapshotError {
                 Feedback.show("快速查看失败：\(error.localizedDescription)")
+            } catch let error as SnapshotPreview.WriteError {
+                Feedback.show("快速查看失败：\(error.localizedDescription)")
+            } catch {
+                // ScreenCaptureKit 的原始错误（英文）不直接给用户看；明确是屏幕录制被拒才走权限引导
+                NSLog("PipDog: 快速查看截图失败：\(error.localizedDescription)")
+                if Permissions.isScreenRecordingError(error) {
+                    Permissions.showAlert(.screenRecording, afterFailure: true)
+                } else {
+                    Feedback.show("快速查看失败：原窗口暂时无法截图，请稍后再试")
+                }
             }
         }
     }
