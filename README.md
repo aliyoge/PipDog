@@ -116,7 +116,7 @@ open build/Build/Products/Debug/PipDog.app
 - **开机时启动**：设置窗口「启动」一栏和菜单栏里的「开机时启动」都可以开关，用的是系统登录项（`SMAppService.mainApp`），状态以「系统设置 › 通用 › 登录项与扩展」为准，PipDog 不另外保存；你在系统设置里改过后，回到 PipDog（或打开设置窗口、菜单）时会重新读取。启动时不会自动登记。系统要求你先允许时，设置窗口会显示说明和「打开登录项设置」按钮，从菜单打开时直接打开那个页面。PipDog 需要装在「应用程序」文件夹里（从临时构建目录运行时可能提示找不到可登记的应用）。
 - **恢复默认**：恢复上面表格里的默认快捷键、双击设置、帧率（10 fps）、小窗点击方式（双击）、不透明度（100%）和悬停时自动隐藏（关闭）；不改开机时启动。
 - 设置保存在 UserDefaults（`com.hwj.PipDog` 的 `PipDog.shortcutConfig`、`PipDog.captureFrameRate`、`PipDog.windowClickMode`、`PipDog.windowOpacity` 和 `PipDog.hoverAutoHide`），启动时读取；没有保存过时用默认值。读取是宽容的：缺少的字段用默认值，单个坏掉的快捷键（或不带修饰键的快捷键）只丢掉那一项。
-- 设置窗口打开期间 PipDog 会临时显示 Dock 图标，这样窗口能稳定地出现在最前面；关闭设置窗口后 Dock 图标消失。
+- 设置窗口打开期间 PipDog 会临时显示 Dock 图标，这样窗口能稳定地出现在最前面；关闭设置窗口后 Dock 图标消失。从菜单或 ⌘, 打开（包括再次打开、窗口被最小化过）时，设置窗口总会出现在其他 app 的窗口上面，不用再点 Dock 图标。
 
 ## 目录
 - `Config`：签名配置（xcconfig）
