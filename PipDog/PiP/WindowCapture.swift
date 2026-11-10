@@ -166,19 +166,28 @@ final class WindowCapture: NSObject {
         awaitedPixelSize = pixels
         try await stream.updateConfiguration(makeConfiguration(pixelSize: pixels))
         guard state == .running else { throw SnapshotError.notCapturing }
-        let frame = try await nextFrame(timeout: .seconds(1.5))
-        return try Self.copyImage(frame) // 在恢复配置（IOSurface 被复用）之前把像素复制出来
+        do {
+            let frame = try await nextFrame(timeout: .seconds(1.5))
+            return try Self.copyImage(frame) // 在恢复配置（IOSurface 被复用）之前把像素复制出来
+        } catch SnapshotError.timedOut {
+            // 画面不动的窗口（或原 app 被隐藏）不一定再发新帧：退回到当前画面（可能小于原尺寸）
+            guard let lastFrame else { throw SnapshotError.timedOut }
+            NSLog("PipDog: 等不到原尺寸新帧，快速查看使用当前画面")
+            return try Self.copyImage(lastFrame)
+        }
     }
 
     private static func pixelSize(of frame: CapturedFrame) -> CGSize {
         CGSize(width: CVPixelBufferGetWidth(frame.pixelBuffer), height: CVPixelBufferGetHeight(frame.pixelBuffer))
     }
 
+    private static let ciContext = CIContext()
+
     /// 把一帧复制成独立的 CGImage（不再依赖抓取流的 IOSurface）。
     private static func copyImage(_ frame: CapturedFrame) throws -> CGImage {
         let image = CIImage(cvPixelBuffer: frame.pixelBuffer)
         guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
-              let cgImage = CIContext().createCGImage(image, from: image.extent, format: .RGBA8, colorSpace: colorSpace)
+              let cgImage = ciContext.createCGImage(image, from: image.extent, format: .RGBA8, colorSpace: colorSpace)
         else { throw SnapshotError.conversionFailed }
         return cgImage
     }

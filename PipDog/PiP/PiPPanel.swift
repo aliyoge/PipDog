@@ -12,6 +12,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     /// 正在显示的帧；保留到下一帧到来，避免它的 IOSurface 被复用
     private var currentFrame: CapturedFrame?
     private var isClosing = false
+    /// 原 app 被隐藏时盖在画面上的暂停提示（隐藏后 ScreenCaptureKit 不再发完整帧，画面会停住）
+    private let pauseOverlay = PauseOverlay()
+    private var workspaceObservers: [NSObjectProtocol] = []
     var onClose: (() -> Void)?
     /// 抓取意外结束（原窗口关闭等）时调用，参数是给用户看的说明
     var onEnded: ((String) -> Void)?
@@ -58,6 +61,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         let handle = ResizeHandle(frame: NSRect(x: size.width - handleSize, y: 0, width: handleSize, height: handleSize))
         handle.autoresizingMask = [.minXMargin, .maxYMargin]
         view.addSubview(handle)
+        pauseOverlay.frame = view.bounds
+        pauseOverlay.autoresizingMask = [.width, .height]
+        view.addSubview(pauseOverlay) // 不接收鼠标，单击、拖动、×、缩放手柄照常可用
         view.onClick = { [weak self] modifiers in self?.clicked(modifiers: modifiers) }
         view.onCloseButton = { [weak self] in self?.close() }
         contentView = view
@@ -66,6 +72,29 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         capture.onSourceSizeChange = { [weak self] size in self?.adaptAspect(to: size) }
         capture.onStop = { [weak self] reason in self?.captureEnded(reason) }
         capture.setOutputLimit(pixelSize)
+        observeSourceHidden()
+    }
+
+    /// 原 app 隐藏 / 取消隐藏（我们的单击、⌘H、Dock 都算）时显示 / 去掉暂停提示。
+    private func observeSourceHidden() {
+        setSourceHidden(NSRunningApplication(processIdentifier: source.pid)?.isHidden ?? false)
+        let center = NSWorkspace.shared.notificationCenter
+        let pairs: [(Notification.Name, Bool)] = [
+            (NSWorkspace.didHideApplicationNotification, true), (NSWorkspace.didUnhideApplicationNotification, false),
+        ]
+        workspaceObservers = pairs.map { name, hidden in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier
+                MainActor.assumeIsolated {
+                    guard let self, pid == self.source.pid else { return }
+                    self.setSourceHidden(hidden)
+                }
+            }
+        }
+    }
+
+    private func setSourceHidden(_ hidden: Bool) {
+        pauseOverlay.isHidden = !hidden
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -119,6 +148,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         isClosing = true
         let capture = capture
         Task { await capture.stop() }
+        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        workspaceObservers = []
         imageLayer.contents = nil
         currentFrame = nil
         super.close()
@@ -135,22 +166,34 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         if modifiers.contains(.option) {
             showQuickLook()
         } else {
-            SourceWindowActivator.toggle(pid: source.pid, windowID: source.id, appName: source.ownerName)
+            // 自己隐藏 / 显示时立即更新提示，不等系统通知
+            if let hidden = SourceWindowActivator.toggle(pid: source.pid, windowID: source.id, appName: source.ownerName) {
+                setSourceHidden(hidden)
+            }
         }
     }
 
     private func showQuickLook() {
-        let previousApp = NSWorkspace.shared.frontmostApplication // 截图要一点时间，先记下来
+        // 趁刚收到点击先开始激活 PipDog（截图要一点时间），记下要还前台的 app
+        SnapshotPreview.shared.prepare(previousApp: NSWorkspace.shared.frontmostApplication)
         Task {
             do {
                 let image = try await capture.snapshot()
-                guard !isClosing else { return }
-                try await SnapshotPreview.shared.present(image, name: source.ownerName, from: self, previousApp: previousApp)
+                guard !isClosing else {
+                    SnapshotPreview.shared.restoreIfClosed()
+                    return
+                }
+                try await SnapshotPreview.shared.present(image, name: source.ownerName, from: self)
+            } catch WindowCapture.SnapshotError.busy {
+                Feedback.show("快速查看失败：\(WindowCapture.SnapshotError.busy.localizedDescription)") // 上一次还在进行，前台由它负责
             } catch let error as WindowCapture.SnapshotError {
+                SnapshotPreview.shared.restoreIfClosed()
                 Feedback.show("快速查看失败：\(error.localizedDescription)")
             } catch let error as SnapshotPreview.WriteError {
+                SnapshotPreview.shared.restoreIfClosed()
                 Feedback.show("快速查看失败：\(error.localizedDescription)")
             } catch {
+                SnapshotPreview.shared.restoreIfClosed()
                 // ScreenCaptureKit 的原始错误（英文）不直接给用户看；明确是屏幕录制被拒才走权限引导
                 NSLog("PipDog: 快速查看截图失败：\(error.localizedDescription)")
                 if Permissions.isScreenRecordingError(error) {
@@ -208,10 +251,47 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     }
 
     private func captureEnded(_ reason: WindowCapture.StopReason) {
-        switch reason {
-        case .windowClosed: onEnded?("原窗口已关闭，PiP 已结束")
-        case .failed(let error): onEnded?("PiP 已结束：\(error.localizedDescription)")
-        }
+        let ended = onEnded
         close()
+        switch reason {
+        case .windowClosed:
+            ended?("原窗口已关闭，PiP 已结束")
+        case .failed(let error):
+            // ScreenCaptureKit 的原始错误（英文）只写日志；明确是屏幕录制被拒才走权限引导
+            NSLog("PipDog: PiP 抓取中途停止：\(error.localizedDescription)")
+            if Permissions.isScreenRecordingError(error) {
+                Permissions.showAlert(.screenRecording, afterFailure: true)
+            } else {
+                ended?("PiP 已结束：画面抓取意外停止")
+            }
+        }
+    }
+}
+
+/// 原 app 被隐藏时盖在 PiP 画面上的半透明提示。不接收鼠标，事件照常交给下面的内容视图和按钮。
+private final class PauseOverlay: NSView {
+    private let label = NSTextField(wrappingLabelWithString: "原 app 已隐藏，画面暂停\n单击小窗恢复")
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.textColor = .white
+        label.alignment = .center
+        addSubview(label)
+        isHidden = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func layout() {
+        super.layout()
+        let width = max(bounds.width - 16, 1)
+        let height = min(label.sizeThatFits(NSSize(width: width, height: bounds.height)).height, bounds.height)
+        label.frame = NSRect(x: 8, y: (bounds.height - height) / 2, width: width, height: height)
     }
 }

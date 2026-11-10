@@ -18,7 +18,8 @@ final class HotKeys {
         case registered
         /// 全局快捷键事件处理器安装失败
         case handlerUnavailable(OSStatus)
-        /// RegisterEventHotKey 失败；eventHotKeyExistsErr 表示组合已被占用
+        /// RegisterEventHotKey 失败。注意：这里用非独占注册（options 为 0），其他 app 注册了同一组合也不会失败
+        /// （只有双方都独占注册才返回 eventHotKeyExistsErr），所以和其他 app 的冲突检测不出来。
         case failed(OSStatus)
     }
 

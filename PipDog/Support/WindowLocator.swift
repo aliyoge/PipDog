@@ -61,6 +61,14 @@ enum WindowLocator {
         return bounds(from: dict)
     }
 
+    /// 某个窗口的标题（kCGWindowName，有屏幕录制权限时才有）；没有时为 nil。
+    static func title(of id: CGWindowID) -> String? {
+        guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
+              let dict = list.first(where: { ($0["kCGWindowNumber"] as? CGWindowID) == id })
+        else { return nil }
+        return dict["kCGWindowName"] as? String
+    }
+
     /// 根据 CGWindowID 找到对应的 SCWindow。
     static func shareableWindow(for id: CGWindowID) async throws -> SCWindow? {
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
