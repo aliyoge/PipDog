@@ -28,6 +28,9 @@ final class PiPManager {
         CaptureSettings.shared.onFrameRateChange = { [weak self] fps in
             self?.panels.values.forEach { $0.setFrameRate(fps) }
         }
+        WindowClickSettings.shared.onModeChange = { [weak self] mode in
+            self?.panels.values.forEach { $0.clickModeDidChange(mode) }
+        }
     }
 
     /// PiP 最前面 app 的窗口。最前面的 app 没有可 PiP 的窗口时只提示，不去抓别的 app 的窗口。

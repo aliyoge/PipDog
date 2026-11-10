@@ -10,6 +10,7 @@
 		02CDCCD6E31778929D45F9C0 /* CapturedFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41B07AB4EDDBFE2AA6ABCDB /* CapturedFrame.swift */; };
 		082127F2669C1625D8474B43 /* RegionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */; };
 		0F3EC39CD016B935D5B78A64 /* ShortcutSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FA7079BB3F1B4D5633DF32 /* ShortcutSettings.swift */; };
+		11059A60828C1C8E09654895 /* WindowClickSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A7C23304FFEABAC88E4784 /* WindowClickSettings.swift */; };
 		1359FEACEA2C6FE8D7DBA4A8 /* PiPPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */; };
 		13CC6602DC53FA1B62AECD0A /* PiPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73D14FD74636A14F77D2C35 /* PiPManager.swift */; };
 		1FC3DFB5FEDCAE41A0C02535 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B006B69A584D899E11229DD /* AppDelegate.swift */; };
@@ -69,6 +70,7 @@
 		ED851B69B19361467D43631F /* SourceWindowActivator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceWindowActivator.swift; sourceTree = "<group>"; };
 		EE90D65C059A172F561D8B77 /* HotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeys.swift; sourceTree = "<group>"; };
 		F1454D76B7C93A30D308785A /* SettingsActivation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActivation.swift; sourceTree = "<group>"; };
+		F2A7C23304FFEABAC88E4784 /* WindowClickSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowClickSettings.swift; sourceTree = "<group>"; };
 		F73D14FD74636A14F77D2C35 /* PiPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -93,6 +95,7 @@
 				6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */,
 				7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */,
 				D4FA7079BB3F1B4D5633DF32 /* ShortcutSettings.swift */,
+				F2A7C23304FFEABAC88E4784 /* WindowClickSettings.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -280,6 +283,7 @@
 				7282503B8F3E17BC1D7BABB8 /* SnapshotPreview.swift in Sources */,
 				EED1C0C55B705B18CD82846F /* SourceWindowActivator.swift in Sources */,
 				F8E942665A86F876A9BE372C /* WindowCapture.swift in Sources */,
+				11059A60828C1C8E09654895 /* WindowClickSettings.swift in Sources */,
 				C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

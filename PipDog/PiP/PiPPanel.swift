@@ -107,6 +107,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     /// 隐藏时显示暂停提示（画面停在最后一帧，小窗不关）；取消隐藏时重新开始抓取，真的恢复了才去掉提示。
     private func setSourceHidden(_ hidden: Bool) {
         guard !hidden else {
+            pauseOverlay.update(gesture: WindowClickSettings.shared.mode)
             pauseOverlay.isHidden = false
             return
         }
@@ -116,9 +117,14 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
             if resumed {
                 pauseOverlay.isHidden = true
             } else {
-                Feedback.show("无法恢复「\(source.ownerName)」的画面，请再单击小窗重试")
+                Feedback.show("无法恢复「\(source.ownerName)」的画面，请再\(WindowClickSettings.shared.mode.title)小窗重试")
             }
         }
+    }
+
+    /// 设置里改了单击 / 双击：更新暂停提示里的说法。
+    func clickModeDidChange(_ mode: WindowClickMode) {
+        pauseOverlay.update(gesture: mode)
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -184,7 +190,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     // MARK: - 单击
 
-    /// 单击切回原窗口（原窗口已在最前时移到屏幕边上）；⌥ + 单击用快速查看看原尺寸截图。
+    /// 单击或双击（按设置，PiPContentView 已经判断过）切回原窗口（原窗口已在最前时移到屏幕边上）；
+    /// ⌥ + 单击用快速查看看原尺寸截图。
     private func clicked(modifiers: NSEvent.ModifierFlags) {
         guard !isClosing else { return }
         if modifiers.contains(.option) {
@@ -300,7 +307,13 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
 /// 原 app 被隐藏时盖在 PiP 画面上的半透明提示。不接收鼠标，事件照常交给下面的内容视图和按钮。
 private final class PauseOverlay: NSView {
-    private let label = NSTextField(wrappingLabelWithString: "原 app 已隐藏，画面暂停\n单击小窗恢复")
+    private let label = NSTextField(wrappingLabelWithString: "")
+
+    /// 提示里用当前设置的单击 / 双击
+    func update(gesture mode: WindowClickMode) {
+        label.stringValue = "原 app 已隐藏，画面暂停\n\(mode.title)小窗恢复"
+        needsLayout = true
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -310,6 +323,7 @@ private final class PauseOverlay: NSView {
         label.textColor = .white
         label.alignment = .center
         addSubview(label)
+        update(gesture: WindowClickSettings.shared.mode)
         isHidden = true
     }
 

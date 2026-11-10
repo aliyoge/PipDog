@@ -3,6 +3,7 @@ import AppKit
 /// PiP 面板的内容视图：区分单击和拖动，鼠标悬停时在左上角显示关闭按钮。
 /// 按下后移动不到 clickThreshold 点就松开算单击；超过就交给系统拖动窗口，松开时不再算单击。
 /// 叠在画面上的暂停提示不接收鼠标（hitTest 返回 nil），点在上面也算单击。
+/// 切回原窗口用单击还是双击看 WindowClickSettings（默认双击）；⌥ + 单击总是快速查看。
 /// 缩放手柄和关闭按钮是子视图，点在它们上面的事件不会到这里。
 final class PiPContentView: NSView {
     /// 单击和拖动的分界（点）
@@ -62,9 +63,18 @@ final class PiPContentView: NSView {
         isDragging = false
         guard wasClick else { return }
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        // 小窗没有双击动作：快速连点时每一下都算单击（显示后马上再点就隐藏）；只有 ⌥ 连点的后几下忽略，避免重复截图
-        if event.clickCount > 1, modifiers.contains(.option) { return }
-        onClick?(modifiers)
+        if modifiers.contains(.option) {
+            // ⌥ + 单击快速查看，两种设置下都一样；⌥ 连点的后几下忽略，避免重复截图
+            if event.clickCount == 1 { onClick?(modifiers) }
+            return
+        }
+        switch WindowClickSettings.shared.mode { // 每次点击实时读取设置
+        case .single:
+            onClick?(modifiers) // 快速连点时每一下都算（切回后马上再点就移到旁边）
+        case .double:
+            // 第 2、4、6… 下才算：快速连续双击两次（切回再移走）会被系统数成第 4 下，不能只认第 2 下
+            if event.clickCount > 0, event.clickCount.isMultiple(of: 2) { onClick?(modifiers) }
+        }
     }
 
     @objc private func closeClicked() { onCloseButton?() }

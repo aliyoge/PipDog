@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、开机时启动。
+/// 设置窗口：全局快捷键、修饰键 + 双击触发、帧率、小窗点击方式、开机时启动。
 struct SettingsView: View {
     private var settings: ShortcutSettings { .shared }
     private var capture: CaptureSettings { .shared }
+    private var windowClick: WindowClickSettings { .shared }
     private var launchAtLogin: LaunchAtLogin { .shared }
 
     var body: some View {
@@ -51,6 +52,15 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            Section("小窗") {
+                Picker("切回 / 移到旁边", selection: Binding(get: { windowClick.mode }, set: { windowClick.mode = $0 })) {
+                    ForEach(WindowClickMode.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                Text("在小窗上单击或双击，把原窗口切到前面；原窗口已在最前时，把它移到屏幕边上。默认双击，拖动或随手点一下不会误触发。⌥ + 单击仍是快速查看。")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("启动") {
                 Toggle("开机时启动", isOn: Binding(get: { launchAtLogin.isEnabled },
                                               set: { launchAtLogin.setEnabled($0) }))
@@ -68,6 +78,7 @@ struct SettingsView: View {
                 Button("恢复默认") { // 不改开机时启动：那是系统登录项，不是 app 的偏好
                     settings.restoreDefaults()
                     capture.restoreDefaults()
+                    windowClick.restoreDefaults()
                 }
             }
         }
