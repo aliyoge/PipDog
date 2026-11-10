@@ -48,6 +48,15 @@ enum Permissions {
         return !captureSucceeded && (!hadScreenRecordingAtLaunch || !CGPreflightScreenCaptureAccess())
     }
 
+    /// 抓取中途出错时用：除了上面的判断，启动时有权限、现在 preflight 却是 false，也当作运行中撤销了权限
+    /// （启动时没有权限的话，运行中授权后 preflight 可能一直是 false，不能这样判断）。
+    static func isScreenRecordingLost(_ error: any Error) -> Bool {
+        if isScreenRecordingError(error) { return true }
+        guard hadScreenRecordingAtLaunch, !CGPreflightScreenCaptureAccess() else { return false }
+        captureSucceeded = false
+        return true
+    }
+
     /// afterFailure：由 PiP 失败触发（而不是用户点菜单）。message：辅助功能引导时替换默认提示。
     static func showAlert(_ kind: Kind, afterFailure: Bool = false, message: String? = nil) {
         switch kind {
@@ -115,14 +124,14 @@ enum Permissions {
         configuration.createsNewApplicationInstance = true
         NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { app, error in
             let launched = app != nil && error == nil
-            let message = error?.localizedDescription ?? "未能启动新实例"
+            if let error { NSLog("PipDog: 重新启动失败：\(error.localizedDescription)") }
             DispatchQueue.main.async {
                 restarting = false
                 if launched {
                     SourceWindowActivator.restoreAllStashed() // 先把移到屏幕边上的窗口放回去
                     NSApp.terminate(nil)
                 } else {
-                    Feedback.show("重新启动 PipDog 失败：\(message)")
+                    Feedback.show("重新启动 PipDog 失败，请从菜单退出 PipDog 后再手动打开")
                 }
             }
         }

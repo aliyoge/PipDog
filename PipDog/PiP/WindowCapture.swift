@@ -110,7 +110,7 @@ final class WindowCapture: NSObject {
         }
         Permissions.recordCaptureSuccess()
         state = .running
-        sourceTimer = Timer.scheduledTimer(withTimeInterval: Self.sourceCheckInterval, repeats: true) { [weak self] _ in
+        sourceTimer = Timer.scheduledOnCommonModes(interval: Self.sourceCheckInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkSource(scaleFactor: nil) }
         }
         // 启动期间改过帧率或面板尺寸的话，补上最新的

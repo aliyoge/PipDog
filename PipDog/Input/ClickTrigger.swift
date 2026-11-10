@@ -22,6 +22,7 @@ final class ClickTrigger {
     private var didGuideAccessibility = false
     private var waitingForAccessibility = false
     private var didAnnounceAccessibility = false
+    private var didAnnounceRevoked = false
 
     func start(config: ShortcutConfig) {
         apply(config)
@@ -72,6 +73,7 @@ final class ClickTrigger {
                 return
             }
         } else {
+            if tap != nil { announceRevoked() } // 运行中撤销了辅助功能
             waitingForAccessibility = true
             removeTap()
         }
@@ -80,7 +82,7 @@ final class ClickTrigger {
 
     private func startMaintenanceTimer() {
         guard maintenanceTimer == nil else { return }
-        maintenanceTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        maintenanceTimer = Timer.scheduledOnCommonModes(interval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.refresh()
@@ -121,8 +123,16 @@ final class ClickTrigger {
 
     private func tapLost() {
         NSLog("PipDog: 鼠标事件 tap 已失效（可能是辅助功能权限被撤销），重新检查")
+        if !Permissions.hasAccessibility { announceRevoked() }
         removeTap()
         refresh()
+    }
+
+    /// 运行中辅助功能被关掉、手势退回只能旁观时提示一次（本次运行只说一次）。
+    private func announceRevoked() {
+        guard !didAnnounceRevoked else { return }
+        didAnnounceRevoked = true
+        Feedback.show("辅助功能权限已关闭，\(KeyCodeNames.symbols(for: modifiers)) + 双击暂时只能旁观，第二次点击会照常传给目标 app。在「系统设置 › 隐私与安全性 › 辅助功能」里重新打开 PipDog 即可恢复")
     }
 
     // MARK: - PipDog 自己的窗口（点在上面时不拦截）

@@ -22,6 +22,8 @@ final class ShortcutSettings {
     /// 录制期间：app 失去激活或设置窗口失去焦点就取消录制，避免全局快捷键一直处于注销状态
     @ObservationIgnored private var resignObservers: [NSObjectProtocol] = []
     @ObservationIgnored private let defaultsKey = "PipDog.shortcutConfig"
+    /// 启动时没注册上的快捷键，等启动提示的顺序轮到时再告诉用户（showLaunchFailuresIfNeeded）
+    @ObservationIgnored private var launchFailures: [ShortcutAction: HotKeys.Registration] = [:]
 
     private init() {
         config = Self.load(key: defaultsKey)
@@ -29,7 +31,28 @@ final class ShortcutSettings {
 
     /// 启动时注册已保存的快捷键。
     func activate() {
-        for (action, failure) in register(config) { errors[action] = failureMessage(failure, config.hotKeys[action]) }
+        launchFailures = register(config)
+        for (action, failure) in launchFailures { errors[action] = failureMessage(failure, config.hotKeys[action]) }
+    }
+
+    /// 启动时有快捷键没生效：提示一次是哪个、为什么、去设置里换。按了没反应时用户才知道原因。
+    func showLaunchFailuresIfNeeded() {
+        let failures = launchFailures
+        launchFailures = [:]
+        guard !failures.isEmpty else { return }
+        if failures.values.contains(where: { if case .handlerUnavailable = $0 { true } else { false } }) {
+            Feedback.show("全局快捷键暂时不可用，只能从菜单栏的 PiP 菜单使用；请重新启动 PipDog")
+            return
+        }
+        let items = ShortcutAction.allCases.compactMap { action -> String? in
+            guard let failure = failures[action] else { return nil }
+            let name = config.hotKeys[action]?.display ?? action.title
+            if case .failed(let status) = failure, status == OSStatus(eventHotKeyExistsErr) {
+                return "\(name)（\(action.title)，已被其他 app 占用）"
+            }
+            return "\(name)（\(action.title)）"
+        }
+        Feedback.show("快捷键没有生效：\(items.joined(separator: "、"))。请在 PipDog 设置里换一个组合，或先从菜单使用")
     }
 
     func combo(for action: ShortcutAction) -> KeyCombo? { config.hotKeys[action] }
@@ -166,12 +189,12 @@ final class ShortcutSettings {
         switch failure {
         case .registered:
             return ""
-        case .handlerUnavailable(let status):
-            return "全局快捷键初始化失败（错误 \(status)），\(name) 暂时只能从菜单使用"
+        case .handlerUnavailable:
+            return "全局快捷键初始化失败，\(name) 暂时只能从菜单使用；请重新启动 PipDog"
         case .failed(let status) where status == OSStatus(eventHotKeyExistsErr):
             return "\(name) 已被其他 app 占用，未生效"
-        case .failed(let status):
-            return "\(name) 注册失败（错误 \(status)），未生效"
+        case .failed:
+            return "\(name) 注册失败，未生效；请换一个组合或重新启动 PipDog" // 错误码只写日志（HotKeys）
         }
     }
 

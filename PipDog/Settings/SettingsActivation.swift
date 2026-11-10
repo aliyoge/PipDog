@@ -20,9 +20,14 @@ final class SettingsActivation {
 
     private init() {}
 
+    /// 设置窗口正开着（使用说明关掉时据此决定要不要交还前台）
+    var isShowing: Bool { window?.isVisible == true }
+
     /// 菜单和 ⌘, 共用一个设置窗口。
-    func open() {
+    /// returningTo：关掉设置后要把前台还给的 app（从使用说明打开时，PipDog 已经因为弹框在前台，记不到原来的 app）。
+    func open(returningTo app: NSRunningApplication? = nil) {
         LaunchAtLogin.shared.refresh() // 窗口会复用：每次打开都重读登录项状态
+        if let app, app != NSRunningApplication.current { previousApp = app }
         if let window {
             show(window)
             return

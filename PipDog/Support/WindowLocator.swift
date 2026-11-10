@@ -62,6 +62,15 @@ enum WindowLocator {
         return bounds(from: dict)
     }
 
+    /// 窗口是不是在当前桌面上显示（kCGWindowIsOnscreen：最小化、在别的桌面（Space）、所属 app 隐藏时为 false）；
+    /// 窗口已不存在时为 nil。移到屏幕边上的窗口仍算显示。
+    static func isOnScreen(_ id: CGWindowID) -> Bool? {
+        guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
+              let dict = list.first(where: { ($0["kCGWindowNumber"] as? CGWindowID) == id })
+        else { return nil }
+        return dict["kCGWindowIsOnscreen"] as? Bool ?? false
+    }
+
     /// 某个窗口的标题（kCGWindowName，有屏幕录制权限时才有）；没有时为 nil。
     static func title(of id: CGWindowID) -> String? {
         guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],

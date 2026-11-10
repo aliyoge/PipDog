@@ -9,7 +9,6 @@ final class HotKeys {
     private var actions: [UInt32: () -> Void] = [:]
     private var refs: [EventHotKeyRef] = []
     private var handlerRef: EventHandlerRef?
-    private var reportedHandlerFailure = false
     private var nextID: UInt32 = 1
     private let signature: OSType = 0x5044_6F67 // "PDog"
 
@@ -52,7 +51,8 @@ final class HotKeys {
         actions[id]?()
     }
 
-    /// 安装快捷键事件处理器；成功（或已安装）返回 nil，失败返回错误码，并记日志、提示一次（之后每次注册都会重试安装）。
+    /// 安装快捷键事件处理器；成功（或已安装）返回 nil，失败返回错误码并记日志（之后每次注册都会重试安装）。
+    /// 给用户的提示由 ShortcutSettings 统一给：启动时提示一次，设置里显示红字。
     private func installHandlerIfNeeded() -> OSStatus? {
         guard handlerRef == nil else { return nil }
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
@@ -69,10 +69,6 @@ final class HotKeys {
         guard status == noErr, handlerRef != nil else {
             handlerRef = nil
             NSLog("PipDog: 安装全局快捷键处理器失败（status=\(status)）")
-            if !reportedHandlerFailure {
-                reportedHandlerFailure = true
-                Feedback.show("全局快捷键初始化失败（错误 \(status)），暂时只能从菜单使用")
-            }
             return status == noErr ? OSStatus(paramErr) : status
         }
         return nil

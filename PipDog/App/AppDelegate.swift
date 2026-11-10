@@ -26,7 +26,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.onConfigChange = { [clickTrigger] config in clickTrigger.apply(config) }
         clickTrigger.start(config: settings.config)
         statusMenu = StatusMenu()
-        SourceWindowActivator.showLeftoverNoticeIfNeeded() // 上次退出时没放回的窗口（不是权限提示）
+        // 启动时的提示按顺序来：先使用说明（只有第一次启动，欢迎窗口关掉后才继续），再上次退出没放回的窗口，
+        // 再没生效的快捷键（浮层几秒就消失，两条之间隔开）。启动时不弹权限框。
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                Onboarding.showOnFirstLaunch {
+                    let leftover = SourceWindowActivator.showLeftoverNoticeIfNeeded()
+                    Task { @MainActor in
+                        if leftover { try? await Task.sleep(for: .seconds(3)) }
+                        ShortcutSettings.shared.showLaunchFailuresIfNeeded()
+                    }
+                }
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

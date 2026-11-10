@@ -131,7 +131,7 @@ enum SourceWindowActivator {
             let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
             guard let result else {
                 stashed[windowID] = nil
-                Feedback.show("无法移动「\(appName)」的窗口")
+                Feedback.show("无法移动「\(appName)」的窗口（全屏窗口或这个 app 不允许移动窗口），可以先退出全屏再试")
                 return
             }
             stashed[windowID]?.parkedX = result.x
@@ -163,7 +163,7 @@ enum SourceWindowActivator {
             moving.remove(windowID)
             let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
             guard let result else {
-                Feedback.show("无法把「\(appName)」的窗口移回原位")
+                Feedback.show("无法把「\(appName)」的窗口移回原位，可以再\(WindowClickSettings.shared.mode.title)小窗重试，或手动把窗口拖回来")
                 if closedMeanwhile { restoreIfStashed(windowID: windowID) } // 期间 PiP 关了：再试一次放回
                 return
             }
@@ -289,10 +289,13 @@ enum SourceWindowActivator {
 
     /// 启动时：上次退出留下没放回的窗口，就提示一次并清掉记录。
     @MainActor
-    static func showLeftoverNoticeIfNeeded() {
-        guard let notice = UserDefaults.standard.string(forKey: leftoverNoticeKey) else { return }
+    /// 返回是否显示了提示。
+    @discardableResult
+    static func showLeftoverNoticeIfNeeded() -> Bool {
+        guard let notice = UserDefaults.standard.string(forKey: leftoverNoticeKey) else { return false }
         UserDefaults.standard.removeObject(forKey: leftoverNoticeKey)
         Feedback.show(notice)
+        return true
     }
 
     /// 窗口几乎完全在所有屏幕之外（只露出不到 tolerance 点宽），比如被停在屏幕边上的窗口。
@@ -457,6 +460,18 @@ enum SourceWindowActivator {
 
     /// 在 app 的 AX 窗口里按位置和大小（误差 tolerance）找原窗口。有多个时只在标题能唯一区分时才选，
     /// 否则返回 nil（宁可不动，也不移错窗口）。公开 API 拿不到 AX 窗口对应的 CGWindowID。
+    /// 原窗口是不是最小化了（AX `kAXMinimizedAttribute`）。没有辅助功能权限、找不到或分不清窗口时返回 nil。
+    /// 在后台线程调用（AX 请求带超时）。
+    nonisolated static func isMinimized(pid: pid_t, bounds: CGRect, title: String?) -> Bool? {
+        guard AXIsProcessTrusted() else { return nil }
+        let deadline = Date().addingTimeInterval(totalTimeLimit)
+        guard let window = findWindow(in: AXUIElementCreateApplication(pid), bounds: bounds, title: title, before: deadline),
+              prepare(window, before: deadline) else { return nil }
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(window, kAXMinimizedAttribute as CFString, &value) == .success else { return nil }
+        return value as? Bool
+    }
+
     private nonisolated static func findWindow(in app: AXUIElement, bounds: CGRect, title: String?,
                                                before deadline: Date) -> AXUIElement? {
         guard prepare(app, before: deadline) else { return nil }

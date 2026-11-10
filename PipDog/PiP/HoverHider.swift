@@ -151,7 +151,7 @@ final class HoverHider {
             return !optionTapSpoiled && Date().timeIntervalSince(start) <= Self.optionTapLimit
         }
         // 和别的修饰键一起按、按着鼠标（定时检查兜底：全局 mouseDown 漏掉时）都作废
-        let clean = flags == .option && NSEvent.pressedMouseButtons == 0
+        let clean = flags == .option && NSEvent.pressedMouseButtons == 0 && !Self.nonModifierKeyDown()
         if optionPressedAt == nil {
             optionPressedAt = Date()
             optionTapSpoiled = !clean
@@ -159,6 +159,15 @@ final class HoverHider {
             optionTapSpoiled = true
         }
         return false
+    }
+
+    /// 有没有修饰键以外的键按着（⌥ + E 这类组合字符）。没有辅助功能时收不到全局 keyDown，
+    /// 用 `CGEventSource.keyState` 直接读按键状态兜底。
+    private static func nonModifierKeyDown() -> Bool {
+        let modifierKeys: ClosedRange<CGKeyCode> = 54...63 // ⌘ ⇧ ⇪ ⌥ ⌃（左右）和 fn
+        return (0..<128).contains { (code: CGKeyCode) in
+            !modifierKeys.contains(code) && CGEventSource.keyState(.combinedSessionState, key: code)
+        }
     }
 
     /// 鼠标移动、修饰键变化、定时检查都走这里。
@@ -188,7 +197,7 @@ final class HoverHider {
 
     private func scheduleTimer() {
         cancelTimer()
-        timer = Timer.scheduledTimer(withTimeInterval: Self.delay, repeats: false) { [weak self] _ in
+        timer = Timer.scheduledOnCommonModes(interval: Self.delay, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.timerFired() }
         }
     }
@@ -235,7 +244,7 @@ final class HoverHider {
 
     private func startHiddenPoll() {
         stopHiddenPoll()
-        hiddenPoll = Timer.scheduledTimer(withTimeInterval: Self.hiddenPollInterval, repeats: true) { [weak self] _ in
+        hiddenPoll = Timer.scheduledOnCommonModes(interval: Self.hiddenPollInterval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.pointerMoved() }
         }
     }

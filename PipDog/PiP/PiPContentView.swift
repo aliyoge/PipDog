@@ -135,7 +135,7 @@ final class PiPContentView: NSView {
     private func zoomDidChange() {
         zoomBadge.show(zoom: zoom, in: bounds)
         zoomSettleTimer?.invalidate()
-        zoomSettleTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
+        zoomSettleTimer = Timer.scheduledOnCommonModes(interval: 0.3, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.onZoomSettled?(self.zoom)

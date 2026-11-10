@@ -26,7 +26,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
-        NSScreenCaptureUsageDescription: PipDog 需要屏幕录制权限来实时显示窗口画面。
+        NSScreenCaptureUsageDescription: "PipDog 需要屏幕录制（macOS 15 起叫「屏幕与系统录音」）权限来实时显示窗口画面。"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hwj.PipDog

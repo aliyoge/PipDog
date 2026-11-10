@@ -12,8 +12,15 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     /// 正在显示的帧；保留到下一帧到来，避免它的 IOSurface 被复用
     private var currentFrame: CapturedFrame?
     private var isClosing = false
-    /// 原 app 被隐藏时盖在画面上的暂停提示（隐藏后 ScreenCaptureKit 不再发完整帧，画面会停住）
+    /// 画面停住时盖在上面的暂停提示：原 app 被隐藏（隐藏后 ScreenCaptureKit 不再发完整帧），或原窗口最小化。
+    /// 原窗口在别的桌面（Space）时不提示：那时抓取可能照常出帧，只是内容不常变，提示会反复闪。
     private let pauseOverlay = PauseOverlay()
+    /// 原 app 隐藏的暂停提示正在显示（优先于最小化）
+    private var showsHiddenPause = false
+    /// 原窗口最小化了
+    private var showsMinimizedPause = false
+    private var minimizedTimer: Timer?
+    private var checkingMinimized = false
     private var workspaceObservers: [NSObjectProtocol] = []
     private var hoverHider: HoverHider?
     /// 画面缩放倍数（PiPContentView 缩放停下后告诉这里）：抓取分辨率跟着放大
@@ -121,15 +128,16 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     /// 隐藏时显示暂停提示（画面停在最后一帧，小窗不关）；取消隐藏时重新开始抓取，真的恢复了才去掉提示。
     private func setSourceHidden(_ hidden: Bool) {
         guard !hidden else {
-            pauseOverlay.update(gesture: WindowClickSettings.shared.mode)
-            pauseOverlay.isHidden = false
+            showsHiddenPause = true
+            updatePauseOverlay()
             return
         }
         Task {
             let resumed = await capture.resumeAfterUnhide()
             guard !isClosing, let resumed else { return } // nil：还隐藏着或另一次恢复正在进行
             if resumed {
-                pauseOverlay.isHidden = true
+                showsHiddenPause = false
+                updatePauseOverlay()
             } else {
                 Feedback.show("无法恢复「\(source.ownerName)」的画面，请再\(WindowClickSettings.shared.mode.title)小窗重试")
             }
@@ -138,7 +146,38 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     /// 设置里改了单击 / 双击：更新暂停提示里的说法。
     func clickModeDidChange(_ mode: WindowClickMode) {
-        pauseOverlay.update(gesture: mode)
+        updatePauseOverlay()
+    }
+
+    private func updatePauseOverlay() {
+        let mode = WindowClickSettings.shared.mode
+        if showsHiddenPause {
+            pauseOverlay.update(text: "原 app 已隐藏，画面暂停\n\(mode.title)小窗恢复")
+        } else if showsMinimizedPause {
+            pauseOverlay.update(text: "原窗口已最小化，画面暂停\n从程序坞恢复原窗口后继续")
+        }
+        pauseOverlay.isHidden = !(showsHiddenPause || showsMinimizedPause)
+    }
+
+    /// 每秒看一次原窗口是否最小化：窗口在当前桌面上显示就肯定没有；不显示时（最小化、别的桌面、app 隐藏）
+    /// 再用 AX 在后台问一次是不是最小化（没有辅助功能权限就问不到，不提示）。原 app 隐藏由通知处理，这里不管。
+    private func checkSourceMinimized() {
+        guard !isClosing, !checkingMinimized, let onScreen = WindowLocator.isOnScreen(source.id) else { return }
+        guard !onScreen else { return setMinimizedPause(false) }
+        guard Permissions.hasAccessibility, let bounds = WindowLocator.bounds(of: source.id) else { return }
+        checkingMinimized = true
+        let pid = source.pid, title = WindowLocator.title(of: source.id)
+        Task {
+            let minimized = await Task.detached { SourceWindowActivator.isMinimized(pid: pid, bounds: bounds, title: title) }.value
+            checkingMinimized = false
+            if let minimized { setMinimizedPause(minimized) }
+        }
+    }
+
+    private func setMinimizedPause(_ minimized: Bool) {
+        guard !isClosing, minimized != showsMinimizedPause else { return }
+        showsMinimizedPause = minimized
+        updatePauseOverlay()
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -166,6 +205,9 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     func start() async throws {
         orderFrontRegardless()
         hoverHider?.setEnabled(PiPAppearanceSettings.shared.hoverAutoHide)
+        minimizedTimer = Timer.scheduledOnCommonModes(interval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkSourceMinimized() }
+        }
         try await capture.start(fps: CaptureSettings.shared.frameRate)
     }
 
@@ -209,6 +251,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         workspaceObservers = []
         hoverHider?.stop()
         hoverHider = nil
+        minimizedTimer?.invalidate()
+        minimizedTimer = nil
         imageLayer.contents = nil
         currentFrame = nil
         super.close()
@@ -323,24 +367,25 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         case .windowClosed:
             ended?("原窗口已关闭，PiP 已结束")
         case .failed(let error):
-            // ScreenCaptureKit 的原始错误（英文）只写日志；明确是屏幕录制被拒才走权限引导
+            // ScreenCaptureKit 的原始错误（英文）只写日志；屏幕录制被拒或运行中被撤销才走权限引导
             NSLog("PipDog: PiP 抓取中途停止：\(error.localizedDescription)")
-            if Permissions.isScreenRecordingError(error) {
+            if Permissions.isScreenRecordingLost(error) {
                 Permissions.showAlert(.screenRecording, afterFailure: true)
+            } else if WindowLocator.isOnScreen(source.id) == false {
+                ended?("PiP 已结束：原窗口不在当前桌面（最小化或在其他桌面）时系统停止了抓取，恢复原窗口后再 PiP 一次")
             } else {
-                ended?("PiP 已结束：画面抓取意外停止")
+                ended?("PiP 已结束：画面抓取意外停止，可以再 PiP 一次这个窗口")
             }
         }
     }
 }
 
-/// 原 app 被隐藏时盖在 PiP 画面上的半透明提示。不接收鼠标，事件照常交给下面的内容视图和按钮。
+/// 画面暂停时盖在 PiP 画面上的半透明提示（文字由 PiPPanel 按原因给）。不接收鼠标，事件照常交给下面的内容视图和按钮。
 private final class PauseOverlay: NSView {
     private let label = NSTextField(wrappingLabelWithString: "")
 
-    /// 提示里用当前设置的单击 / 双击
-    func update(gesture mode: WindowClickMode) {
-        label.stringValue = "原 app 已隐藏，画面暂停\n\(mode.title)小窗恢复"
+    func update(text: String) {
+        label.stringValue = text
         needsLayout = true
     }
 
@@ -352,7 +397,6 @@ private final class PauseOverlay: NSView {
         label.textColor = .white
         label.alignment = .center
         addSubview(label)
-        update(gesture: WindowClickSettings.shared.mode)
         isHidden = true
     }
 

@@ -22,9 +22,19 @@ struct PipDogApp: App {
 final class StatusMenu: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
+    /// 菜单栏图标：资源目录里的模板图 StatusIcon（`Design/StatusIcon.swift` 生成），系统按菜单栏深浅着色。
+    /// size 是显示尺寸（pt）：菜单栏用 18，欢迎窗口正文里用小一点的。
+    static func icon(size: CGFloat = 18) -> NSImage? {
+        guard let image = (NSImage(named: "StatusIcon")?.copy() as? NSImage) else { return nil }
+        image.isTemplate = true
+        image.size = NSSize(width: size, height: size)
+        image.accessibilityDescription = "PipDog"
+        return image
+    }
+
     override init() {
         super.init()
-        statusItem.button?.image = NSImage(systemSymbolName: "pip", accessibilityDescription: "PipDog")
+        statusItem.button?.image = Self.icon()
         let menu = NSMenu()
         menu.autoenablesItems = false
         menu.delegate = self
@@ -61,12 +71,14 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         launchItem.state = launchAtLogin.isEnabled ? .on : .off
 
         let screenRecording = Permissions.screenRecordingState
-        add("屏幕录制：\(screenRecording.rawValue)", action: #selector(screenRecordingGuide),
+        add("\(Permissions.screenRecordingName)：\(screenRecording.rawValue)", action: #selector(screenRecordingGuide),
             enabled: screenRecording != .authorized, to: menu)
         let accessibility = Permissions.hasAccessibility
         let accessibilityTitle = accessibility ? "辅助功能：已授权" : "辅助功能：未授权（移到屏幕边上、修饰键 + 双击需要）"
         add(accessibilityTitle, action: #selector(accessibilityGuide), enabled: !accessibility, to: menu)
         menu.addItem(.separator())
+        add("使用说明…", action: #selector(showGuide), to: menu)
+        add("关于 PipDog", action: #selector(showAbout), to: menu)
         let quit = add("退出 PipDog", action: #selector(terminate), to: menu)
         quit.keyEquivalent = "q"
         quit.keyEquivalentModifierMask = .command
@@ -90,6 +102,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     @objc private func screenRecordingGuide() { Permissions.showAlert(.screenRecording) }
     @objc private func accessibilityGuide() { Permissions.showAlert(.accessibility) }
     @objc private func terminate() { NSApp.terminate(nil) }
+    @objc private func showGuide() { Onboarding.showGuide() }
+    @objc private func showAbout() { Onboarding.showAbout() }
     @objc private func toggleLaunchAtLogin() {
         let launchAtLogin = LaunchAtLogin.shared
         launchAtLogin.setEnabled(!launchAtLogin.isEnabled, openSettingsIfNeeded: true)

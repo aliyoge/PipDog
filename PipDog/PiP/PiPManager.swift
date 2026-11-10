@@ -153,7 +153,7 @@ final class PiPManager {
         if Permissions.isScreenRecordingError(error) {
             Permissions.showAlert(.screenRecording, afterFailure: true)
         } else {
-            Feedback.show("启动 PiP 失败：\(error.localizedDescription)")
+            Feedback.show("启动 PiP 失败：暂时无法抓取这个窗口，请稍后再试") // 系统原文（多半是英文）只写日志
         }
     }
 }
