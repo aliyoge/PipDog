@@ -1,7 +1,9 @@
 import AppKit
 import ApplicationServices
 
-/// 单击 PiP 时把原窗口切到前台：先激活原 app；有辅助功能权限时再用 AX 把那个窗口提到最前。
+/// 单击 PiP 时把原窗口切到前台：用协作激活把前台交给原 app；有辅助功能权限时再用 AX 把那个窗口提到最前。
+/// PipDog 是菜单栏 app，点非激活的 PiP 时它不在前台，直接 activate() 在 macOS 14+ 常被忽略，
+/// 所以先激活自己（刚收到用户点击），再 yieldActivation 并 activate(from:)，和 SnapshotPreview 还前台的做法一样。
 /// 没有权限时只激活 app，不弹任何授权（辅助功能仍然只有双击功能需要）。
 /// AX 调用放在后台，单次请求和整次操作都有超时，目标 app 卡住时不会冻结界面。
 enum SourceWindowActivator {
@@ -16,7 +18,12 @@ enum SourceWindowActivator {
             Feedback.show("「\(appName)」已经退出")
             return
         }
-        _ = app.activate()
+        // 原 app 已在前台且 PipDog 不在前台时不用再切（PiP 不抢键盘，焦点本来就在原 app）
+        if NSApp.isActive || !app.isActive {
+            if !NSApp.isActive { NSApp.activate() }
+            NSApp.yieldActivation(to: app)
+            _ = app.activate(from: .current)
+        }
         guard Permissions.hasAccessibility, let bounds = WindowLocator.bounds(of: windowID) else { return }
         Task.detached { raiseWindow(pid: pid, bounds: bounds) }
     }

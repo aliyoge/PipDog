@@ -1,5 +1,4 @@
 import AppKit
-import Carbon.HIToolbox
 import QuickLookUI
 import ScreenCaptureKit
 
@@ -107,15 +106,12 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     func windowDidEndLiveResize(_ notification: Notification) { contentSizeDidSettle() }
     func windowDidChangeBackingProperties(_ notification: Notification) { contentSizeDidSettle() }
 
-    override var canBecomeKey: Bool { true }
+    /// 只在打开快速查看期间为 true（由 SnapshotPreview 设置和清除）：快速查看要从 key / 主窗口的响应链找控制者。
+    /// 平时 PiP 不成为 key 窗口，按下、拖动、单击都不会抢走用户正在打字的 app 的键盘。
+    var allowsKeyFocus = false
+    override var canBecomeKey: Bool { allowsKeyFocus }
     /// 快速查看从主窗口的响应链找控制者，PiP 要能成为主窗口
     override var canBecomeMain: Bool { true }
-
-    override func keyDown(with event: NSEvent) {
-        let code = Int(event.keyCode)
-        if code == kVK_Delete || code == kVK_Escape { close() } // ⌫ / Esc 关闭
-        else { super.keyDown(with: event) }
-    }
 
     /// 唯一的关闭流程：停止抓取（移除输出）→ 关窗 → 通知 PiPManager 移除。可以重复调用。
     override func close() {

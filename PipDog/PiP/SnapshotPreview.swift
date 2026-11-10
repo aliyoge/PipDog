@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 /// QLPreviewPanel 通过响应链找控制者：PiPPanel 实现 accept/begin/endPreviewPanelControl，
 /// 并转给这里（数据源）。PipDog 是菜单栏 app，平时不在前台，所以打开前先激活自己；
 /// 快速查看关闭时如果 PipDog 仍在前台，就把前台还给打开前的 app。
+/// PiP 平时不能成为 key 窗口，只在快速查看期间临时允许（allowsKeyFocus），关闭后恢复。
 @MainActor
 final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
     static let shared = SnapshotPreview()
@@ -25,9 +26,11 @@ final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
     private(set) var item: URL?
     /// 为了快速查看而激活 PipDog 之前的前台 app
     private var returnTo: NSRunningApplication?
+    /// 当前临时允许成为 key 窗口的 PiP（快速查看的控制者）
+    private weak var keyPanel: PiPPanel?
 
     /// 保存截图并在 panel 上方打开快速查看（已打开时换成新截图）。
-    func present(_ image: CGImage, name: String, from panel: NSWindow, previousApp: NSRunningApplication?) async throws {
+    func present(_ image: CGImage, name: String, from panel: PiPPanel, previousApp: NSRunningApplication?) async throws {
         let url = try write(image, name: name)
         if let item, item != url { try? FileManager.default.removeItem(at: item) }
         item = url
@@ -41,7 +44,13 @@ final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
         } else if !preview.isVisible {
             returnTo = nil
         }
-        guard panel.isVisible else { return } // 等待期间 PiP 被关掉了
+        guard panel.isVisible else { // 等待期间 PiP 被关掉了：快速查看没开的话把前台还回去
+            restoreIfClosed()
+            return
+        }
+        if let keyPanel, keyPanel !== panel { keyPanel.allowsKeyFocus = false }
+        keyPanel = panel
+        panel.allowsKeyFocus = true
         panel.makeKeyAndOrderFront(nil) // 让这个 PiP 成为主窗口，快速查看才能从响应链找到它
         let above = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
         if preview.level.rawValue < above.rawValue { preview.level = above } // 不被置顶的 PiP 挡住
@@ -88,6 +97,8 @@ final class SnapshotPreview: NSObject, QLPreviewPanelDataSource {
 
     private func restoreIfClosed() {
         guard !(QLPreviewPanel.sharedPreviewPanelExists() && QLPreviewPanel.shared().isVisible) else { return }
+        keyPanel?.allowsKeyFocus = false // 快速查看关了：PiP 恢复成不抢键盘
+        keyPanel = nil
         let app = returnTo
         returnTo = nil
         guard let app, !app.isTerminated, NSApp.isActive else { return } // 用户已经切到别的 app 了就不动
