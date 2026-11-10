@@ -129,13 +129,13 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     // MARK: - 单击
 
-    /// 单击切回原窗口；⌥ + 单击用快速查看看原尺寸截图。
+    /// 单击切回原窗口（原窗口已在最前时隐藏原 app）；⌥ + 单击用快速查看看原尺寸截图。
     private func clicked(modifiers: NSEvent.ModifierFlags) {
         guard !isClosing else { return }
         if modifiers.contains(.option) {
             showQuickLook()
         } else {
-            SourceWindowActivator.bringToFront(pid: source.pid, windowID: source.id, appName: source.ownerName)
+            SourceWindowActivator.toggle(pid: source.pid, windowID: source.id, appName: source.ownerName)
         }
     }
 

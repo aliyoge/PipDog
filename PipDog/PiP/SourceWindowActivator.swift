@@ -12,6 +12,21 @@ enum SourceWindowActivator {
     /// AX 窗口位置大小和 CGWindow bounds 比较时允许的误差（点）
     static let tolerance: CGFloat = 2
 
+    /// 单击 PiP：原窗口已经是屏幕上最前面的普通窗口时隐藏原 app（同 ⌘H，该 app 的所有窗口一起隐藏），
+    /// 否则把原窗口切到前台。按当前窗口顺序判断，不记单击次数：用户自己切走后再单击会重新显示。
+    @MainActor
+    static func toggle(pid: pid_t, windowID: CGWindowID, appName: String) {
+        guard WindowLocator.onScreenWindows().first?.id == windowID else {
+            bringToFront(pid: pid, windowID: windowID, appName: appName)
+            return
+        }
+        guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else {
+            Feedback.show("「\(appName)」已经退出")
+            return
+        }
+        if !app.hide() { Feedback.show("无法隐藏「\(appName)」") }
+    }
+
     @MainActor
     static func bringToFront(pid: pid_t, windowID: CGWindowID, appName: String) {
         guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else {
