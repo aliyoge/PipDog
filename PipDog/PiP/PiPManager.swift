@@ -133,6 +133,7 @@ final class PiPManager {
         }
         panel.onEnded = { message in Feedback.show(message) }
         panels[key] = panel
+        SourceWindowActivator.cancelPendingRestore(windowID: window.id) // 又开了这个窗口的 PiP：停放做完不再放回
         do {
             try await panel.start()
         } catch {

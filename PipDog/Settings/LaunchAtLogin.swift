@@ -66,10 +66,15 @@ final class LaunchAtLogin {
 
     func openLoginItemsSettings() { SMAppService.openSystemSettingsLoginItems() }
 
-    /// 把 ServiceManagement 的常见错误换成中文说明。
+    /// 把 ServiceManagement 的常见错误换成中文说明；别的错误用通用说明。
     private static func message(for error: any Error, enabling: Bool) -> String {
         let action = enabling ? "打开" : "关闭"
-        switch (error as NSError).code {
+        let nsError = error as NSError
+        let generic = "无法\(action)开机时启动，请稍后再试，或在「系统设置 › 通用 › 登录项与扩展」里手动设置"
+        // 只认 ServiceManagement 的错误域：其他来源的错误即使错误码相同，也不套用下面的说明。
+        // SMAppServiceErrorDomain 常量 macOS 15 才公开、kSMErrorDomainFramework 已弃用，所以直接比字符串
+        guard ["SMAppServiceErrorDomain", "kSMErrorDomainFramework"].contains(nsError.domain) else { return generic }
+        switch nsError.code {
         case kSMErrorLaunchDeniedByUser:
             return "无法\(action)开机时启动：被系统拒绝，请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog"
         case kSMErrorInvalidSignature:
@@ -81,7 +86,7 @@ final class LaunchAtLogin {
         case kSMErrorServiceUnavailable:
             return "无法\(action)开机时启动：登录项服务暂时不可用，请稍后再试"
         default:
-            return "无法\(action)开机时启动，请稍后再试，或在「系统设置 › 通用 › 登录项与扩展」里手动设置"
+            return generic
         }
     }
 }

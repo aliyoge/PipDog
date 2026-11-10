@@ -19,6 +19,9 @@ final class PiPContentView: NSView {
     private var mouseDownEvent: NSEvent?
     private var mouseDownLocation = NSPoint.zero
     private var isDragging = false
+    /// 这一串连点是不是 ⌥ 点击（nil：还没开始或被拖动打断），以及它从系统 clickCount 的第几下开始
+    private var seriesOption: Bool?
+    private var seriesStart = 0
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -61,11 +64,21 @@ final class PiPContentView: NSView {
         let wasClick = mouseDownEvent != nil && !isDragging
         mouseDownEvent = nil
         isDragging = false
-        guard wasClick else { return }
+        guard wasClick else {
+            seriesOption = nil // 拖动打断连点
+            return
+        }
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        if modifiers.contains(.option) {
+        let option = modifiers.contains(.option)
+        // 系统的 clickCount 不分修饰键：⌥ 和不带 ⌥ 换着点时，从换的那一下重新数
+        if event.clickCount <= 1 || seriesOption != option {
+            seriesOption = option
+            seriesStart = event.clickCount - 1
+        }
+        let clickCount = event.clickCount - seriesStart
+        if option {
             // ⌥ + 单击快速查看，两种设置下都一样；⌥ 连点的后几下忽略，避免重复截图
-            if event.clickCount == 1 { onClick?(modifiers) }
+            if clickCount == 1 { onClick?(modifiers) }
             return
         }
         switch WindowClickSettings.shared.mode { // 每次点击实时读取设置
@@ -73,7 +86,7 @@ final class PiPContentView: NSView {
             onClick?(modifiers) // 快速连点时每一下都算（切回后马上再点就移到旁边）
         case .double:
             // 第 2、4、6… 下才算：快速连续双击两次（切回再移走）会被系统数成第 4 下，不能只认第 2 下
-            if event.clickCount > 0, event.clickCount.isMultiple(of: 2) { onClick?(modifiers) }
+            if clickCount > 0, clickCount.isMultiple(of: 2) { onClick?(modifiers) }
         }
     }
 

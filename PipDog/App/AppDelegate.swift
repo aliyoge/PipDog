@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settings.onConfigChange = { [clickTrigger] config in clickTrigger.apply(config) }
         clickTrigger.start(config: settings.config)
         statusMenu = StatusMenu()
+        SourceWindowActivator.showLeftoverNoticeIfNeeded() // 上次退出时没放回的窗口（不是权限提示）
     }
 
     func applicationWillTerminate(_ notification: Notification) {

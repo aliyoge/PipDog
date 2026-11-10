@@ -10,7 +10,7 @@ struct AXWindowRef: @unchecked Sendable {
 /// 单击 PiP 时把原窗口切到前台：用协作激活把前台交给原 app；有辅助功能权限时再用 AX 把那个窗口提到最前。
 /// PipDog 是菜单栏 app，点非激活的 PiP 时它不在前台，直接 activate() 在 macOS 14+ 常被忽略，
 /// 所以先激活自己（刚收到用户点击），再 yieldActivation 并 activate(from:)，和 SnapshotPreview 还前台的做法一样。
-/// 原窗口已在最前时再单击：用 AX 把窗口移到屏幕边上，只留 1 点在屏幕内（不隐藏 app，抓取不停，小窗画面照常更新），
+/// 原窗口已在最前时再点一次小窗（单击或双击，按设置）：用 AX 把窗口移到屏幕边上，只留 1 点在屏幕内（不隐藏 app，抓取不停，小窗画面照常更新），
 /// 下次单击移回原位。不用 hide()：隐藏 app 会让 ScreenCaptureKit 停掉抓取。
 /// 没有权限时只能在 app 不在前台时激活它，移不了窗口，同一 app 的另一个窗口已在最前时也提不起指定窗口。
 /// 只有用户要移动窗口而缺权限时，才走 `Permissions` 现有的系统授权框（每次运行一次）；切到前台从不请求权限。
@@ -18,8 +18,10 @@ struct AXWindowRef: @unchecked Sendable {
 enum SourceWindowActivator {
     static let messagingTimeout: TimeInterval = 0.25
     static let totalTimeLimit: TimeInterval = 0.5
-    /// 移动后等窗口列表里的原窗口（CGWindowID）到位的最长时间
+    /// 移动后等窗口列表里的原窗口（CGWindowID）到位的时间
     static let verifyTimeLimit: TimeInterval = 0.3
+    /// AX 窗口已经到位、窗口列表还没跟上时（Electron、Java、远程桌面等较慢的 app）最多再等到的总时间
+    static let slowVerifyTimeLimit: TimeInterval = 1.0
     /// AX 窗口位置大小和 CGWindow bounds 比较时允许的误差（点）
     static let tolerance: CGFloat = 2
 
@@ -46,8 +48,16 @@ enum SourceWindowActivator {
     @MainActor private static var restoreWhenDone: Set<CGWindowID> = []
     /// 本次运行是否已经为移动窗口弹过辅助功能系统授权框（之后只提示）
     @MainActor private static var requestedAccessibility = false
-    /// 退出时关上：之后后台不再开始停放移动；锁保证关上之前正在进行的那一次已经做完
-    private static let parkGate = OSAllocatedUnfairLock(initialState: false)
+    /// 停放移动的闸门：退出时关上，之后后台不再开始停放移动；锁保证关上之前正在设位置的那一次已经做完。
+    /// applied 记下已经设过位置、还没收尾的停放（退出时这些窗口要按原位置放回，不能当作没移动）。
+    private struct ParkGateState {
+        var closed = false
+        var applied: Set<CGWindowID> = []
+    }
+
+    private static let parkGate = OSAllocatedUnfairLock(initialState: ParkGateState())
+    /// 上次退出时没能放回的窗口，下次启动时提示一次（退出时的提示浮层来不及显示）
+    private static let leftoverNoticeKey = "PipDog.leftoverParkedWindowsNotice"
 
     /// 单击 PiP：窗口被我们移到了屏幕边上（或看起来停在屏幕外）→ 移回并切到前台；原窗口已经是屏幕上最前面的普通窗口 →
     /// 移到屏幕边上，把前台交给下面的窗口；否则切到前台。按当前状态判断，不记单击次数。
@@ -116,6 +126,7 @@ enum SourceWindowActivator {
                 moveWindow(pid: pid, windowID: windowID, known: nil, bounds: bounds, title: title, to: parked,
                            allowClamped: true, gated: true)
             }.value
+            parkGate.withLock { _ = $0.applied.remove(windowID) }
             moving.remove(windowID)
             let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
             guard let result else {
@@ -197,6 +208,12 @@ enum SourceWindowActivator {
         _ = app.activate(from: .current)
     }
 
+    /// 又打开了这个窗口的 PiP：取消「停放做完就放回」（之前关掉最后一个 PiP 时设的）。
+    @MainActor
+    static func cancelPendingRestore(windowID: CGWindowID) {
+        restoreWhenDone.remove(windowID)
+    }
+
     /// 某个窗口的最后一个 PiP 关闭时：窗口还在屏幕边上的话放回原位（不切前台）。
     /// 正在移动就等移完再放回；放回失败保留记录（下次 PiP 这个窗口单击、或退出 PipDog 时再试）。
     @MainActor
@@ -230,25 +247,52 @@ enum SourceWindowActivator {
     }
 
     /// 退出或重启 PipDog 前：同步把还停在屏幕边上的窗口放回原位（进程马上结束，不能交给 Task）。
-    /// 先关上 parkGate，正在进行的停放做完、之后的不再执行；用户自己挪走的窗口不动。每个窗口最多约 0.8 秒。
+    /// 先关上 parkGate：之后的停放不再执行；已经设过位置、还在确认的停放，等它在窗口列表里出现在屏幕边上
+    /// （最多约 1 秒，只在确实有这种停放时才等），然后同样放回。用户自己挪走的窗口不动。
+    /// 退出时不撤回任何移动：确认不了就让窗口留在 AX 放的位置（应当是原位置）。
+    /// 没能放回的窗口写日志，并记下来在下次启动时提示（这时的提示浮层来不及显示）。
     @MainActor
     static func restoreAllStashed() {
-        parkGate.withLock { $0 = true }
-        if !moving.isEmpty { Thread.sleep(forTimeInterval: 0.1) } // 让窗口列表跟上刚做完的移动
+        let inFlight = parkGate.withLock { state -> Set<CGWindowID> in
+            state.closed = true
+            return state.applied
+        }
         let entries = stashed
         stashed = [:]
+        if !inFlight.isEmpty {
+            let deadline = Date().addingTimeInterval(slowVerifyTimeLimit)
+            while Date() < deadline, !inFlight.allSatisfy({ id in
+                guard let stash = entries[id], let bounds = WindowLocator.bounds(of: id) else { return true }
+                return isParked(bounds, stash)
+            }) {
+                Thread.sleep(forTimeInterval: 0.05)
+            }
+        }
         let hasAccessibility = Permissions.hasAccessibility
         var stuck: [String] = []
         for (windowID, stash) in entries {
+            // 不在停放位置：用户自己挪走了，或进行中的停放最终没落到边上（还在原处）
             guard let bounds = WindowLocator.bounds(of: windowID), isParked(bounds, stash) else { continue }
             let restored = hasAccessibility && moveWindow(
                 pid: stash.pid, windowID: windowID, known: stash.window, bounds: bounds,
-                title: WindowLocator.title(of: windowID), to: stash.original.origin, allowClamped: false) != nil
+                title: WindowLocator.title(of: windowID), to: stash.original.origin, allowClamped: false,
+                undoOnMismatch: false) != nil
             if !restored { stuck.append("\(windowID)（pid \(stash.pid)）") }
         }
         guard !stuck.isEmpty else { return }
         NSLog("PipDog: 退出时这些窗口没能移回原位：\(stuck.joined(separator: "、"))")
-        Feedback.show(hasAccessibility ? "有窗口没能移回原位，还在屏幕边上" : "有窗口还在屏幕边上，移回需要辅助功能权限")
+        let notice = hasAccessibility
+            ? "上次退出时有窗口没能移回原位，可能还在屏幕边上"
+            : "上次退出时有窗口还在屏幕边上，移回需要辅助功能权限"
+        UserDefaults.standard.set(notice, forKey: leftoverNoticeKey)
+    }
+
+    /// 启动时：上次退出留下没放回的窗口，就提示一次并清掉记录。
+    @MainActor
+    static func showLeftoverNoticeIfNeeded() {
+        guard let notice = UserDefaults.standard.string(forKey: leftoverNoticeKey) else { return }
+        UserDefaults.standard.removeObject(forKey: leftoverNoticeKey)
+        Feedback.show(notice)
     }
 
     /// 窗口几乎完全在所有屏幕之外（只露出不到 tolerance 点宽），比如被停在屏幕边上的窗口。
@@ -327,38 +371,66 @@ enum SourceWindowActivator {
         AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, kCFBooleanTrue)
     }
 
-    /// 把原窗口移到 origin（全局左上角坐标），不改大小、不切前台。以窗口列表里原窗口（windowID）的实际位置为准：
-    /// AX 窗口移动了、原窗口却没到位（移错了同 app 的另一个窗口），就把那个窗口放回去，当作失败。
+    /// 把原窗口移到 origin（全局左上角坐标），不改大小、不切前台。以窗口列表里原窗口（windowID）的实际位置为准。
+    /// - 原窗口约 0.3 秒内到位：成功。AX 窗口已经到位、窗口列表还没跟上（慢的 app）时最多等到约 1 秒。
+    /// - 等完了原窗口还在移动前的位置、AX 窗口却动了：移错了同 app 的另一个窗口，undoOnMismatch 时把它放回去，失败。
+    /// - 其他说不清的情况不撤回：AX 窗口在目标位置就按成功算（用 AX 的位置），否则失败。
     /// allowClamped：系统把位置限制在别处时也算成功（停放用）。gated：受 parkGate 控制（停放用）。
-    /// 返回实际移动的 AX 窗口和原窗口移动后的 x；失败返回 nil。
+    /// 返回实际移动的 AX 窗口和移动后的 x；失败返回 nil。
     nonisolated static func moveWindow(pid: pid_t, windowID: CGWindowID, known: AXWindowRef?, bounds: CGRect, title: String?,
-                                       to origin: CGPoint, allowClamped: Bool, gated: Bool = false) -> MoveResult? {
-        let deadline = Date().addingTimeInterval(totalTimeLimit)
+                                       to origin: CGPoint, allowClamped: Bool, gated: Bool = false,
+                                       undoOnMismatch: Bool = true) -> MoveResult? {
+        let start = Date()
+        let deadline = start.addingTimeInterval(totalTimeLimit)
         let app = AXUIElementCreateApplication(pid)
         guard let window = resolve(known, in: app, bounds: bounds, title: title, before: deadline),
               let before = frame(of: window, before: deadline) else { return nil }
         let applied = gated
-            ? parkGate.withLockUnchecked { closed in !closed && setPosition(of: window, to: origin, before: deadline) }
+            ? parkGate.withLockUnchecked { state in
+                guard !state.closed, setPosition(of: window, to: origin, before: deadline) else { return false }
+                state.applied.insert(windowID)
+                return true
+            }
             : setPosition(of: window, to: origin, before: deadline)
         guard applied else { return nil }
+        let ref = AXWindowRef(element: window)
 
-        // 等原窗口在窗口列表里到位（窗口服务器可能稍晚一点更新）
-        let verifyDeadline = Date().addingTimeInterval(verifyTimeLimit)
-        while true {
-            if let now = WindowLocator.bounds(of: windowID), abs(now.minX - origin.x) <= tolerance {
-                return MoveResult(window: AXWindowRef(element: window), x: now.minX)
+        func reachedInList() -> CGFloat? {
+            guard let now = WindowLocator.bounds(of: windowID), abs(now.minX - origin.x) <= tolerance else { return nil }
+            return now.minX
+        }
+        func wait(until limit: Date) -> CGFloat? {
+            while true {
+                if let x = reachedInList() { return x }
+                guard Date() < limit else { return nil }
+                Thread.sleep(forTimeInterval: 0.03)
             }
-            guard Date() < verifyDeadline else { break }
-            Thread.sleep(forTimeInterval: 0.03)
         }
-        let after = frame(of: window, before: Date().addingTimeInterval(messagingTimeout))
-        if allowClamped, let now = WindowLocator.bounds(of: windowID), abs(now.minX - bounds.minX) > tolerance,
-           let after, abs(after.minX - now.minX) <= tolerance {
-            return MoveResult(window: AXWindowRef(element: window), x: now.minX) // 系统把位置限制在了别处
+        func axFrame() -> CGRect? { frame(of: window, before: Date().addingTimeInterval(messagingTimeout)) }
+        func atTarget(_ frame: CGRect?) -> Bool {
+            guard let frame else { return false }
+            return abs(frame.minX - origin.x) <= tolerance && abs(frame.minY - origin.y) <= tolerance
         }
-        if let after, abs(after.minX - before.minX) > tolerance || abs(after.minY - before.minY) > tolerance {
-            _ = setPosition(of: window, to: before.origin, before: Date().addingTimeInterval(messagingTimeout))
+
+        if let x = wait(until: start.addingTimeInterval(verifyTimeLimit)) { return MoveResult(window: ref, x: x) }
+        var after = axFrame()
+        if atTarget(after) { // AX 说到位了：窗口列表可能只是慢，再等一会
+            if let x = wait(until: start.addingTimeInterval(slowVerifyTimeLimit)) { return MoveResult(window: ref, x: x) }
+            after = axFrame()
         }
+        let now = WindowLocator.bounds(of: windowID)
+        if allowClamped, let now, abs(now.minX - bounds.minX) > tolerance, let after, abs(after.minX - now.minX) <= tolerance {
+            return MoveResult(window: ref, x: now.minX) // 系统把位置限制在了别处
+        }
+        let listUnmoved = now.map { abs($0.minX - bounds.minX) <= tolerance && abs($0.minY - bounds.minY) <= tolerance } ?? false
+        let axMoved = after.map { abs($0.minX - before.minX) > tolerance || abs($0.minY - before.minY) > tolerance } ?? false
+        if listUnmoved, axMoved { // 原窗口没动、AX 窗口动了：移错了窗口
+            if undoOnMismatch {
+                _ = setPosition(of: window, to: before.origin, before: Date().addingTimeInterval(messagingTimeout))
+            }
+            return nil
+        }
+        if let after, atTarget(after) { return MoveResult(window: ref, x: after.minX) } // 说不清时不撤回
         return nil
     }
 
