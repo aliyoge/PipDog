@@ -48,8 +48,8 @@ enum Permissions {
         return !captureSucceeded && (!hadScreenRecordingAtLaunch || !CGPreflightScreenCaptureAccess())
     }
 
-    /// afterFailure：由 PiP 失败触发（而不是用户点菜单）。
-    static func showAlert(_ kind: Kind, afterFailure: Bool = false) {
+    /// afterFailure：由 PiP 失败触发（而不是用户点菜单）。message：辅助功能引导时替换默认提示。
+    static func showAlert(_ kind: Kind, afterFailure: Bool = false, message: String? = nil) {
         switch kind {
         case .screenRecording:
             // 本次运行第一次因未授权失败：只发起系统请求（登记到列表，系统框自带「打开系统设置」），
@@ -62,10 +62,11 @@ enum Permissions {
             }
             showScreenRecordingAlert()
         case .accessibility:
-            guard ShortcutSettings.shared.config.clickEnabled, !hasAccessibility else { return }
+            // 修饰键 + 双击和「单击小窗把原窗口移到屏幕边上」需要；调用方只在用户用到这些功能时调用
+            guard !hasAccessibility else { return }
             // 只用系统授权框：登记到「辅助功能」列表，不再叠加自定义 NSAlert。
             NSApp.activate()
-            Feedback.show("请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
+            Feedback.show(message ?? "请在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog")
             let key = "AXTrustedCheckOptionPrompt" // 避免 Swift 6 访问非并发安全的全局 CFString
             _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
         }
@@ -118,6 +119,7 @@ enum Permissions {
             DispatchQueue.main.async {
                 restarting = false
                 if launched {
+                    SourceWindowActivator.restoreAllStashed() // 先把移到屏幕边上的窗口放回去
                     NSApp.terminate(nil)
                 } else {
                     Feedback.show("重新启动 PipDog 失败：\(message)")

@@ -10,7 +10,7 @@ import ScreenCaptureKit
 /// 配置更新只有一条串行路径（setNeedsUpdate）：每次都用当前状态新建一个 SCStreamConfiguration 交给
 /// updateConfiguration，不会在更新进行中修改同一个配置对象；更新期间又有变化时，结束后再更新一次。
 ///
-/// 原 app 被隐藏（⌘H、Dock、单击小窗）时 ScreenCaptureKit 会停掉这条流，窗口也可能从窗口列表里消失。
+/// 原 app 被隐藏（⌘H、Dock）时 ScreenCaptureKit 会停掉这条流，窗口也可能从窗口列表里消失。
 /// 这不算结束：进入 paused（保留最近一帧和回调，不调用 onStop），原 app 取消隐藏后 resumeAfterUnhide()
 /// 重新找到窗口、重新开始抓取。只有 app 退出、或 app 没隐藏但窗口不见了，才当作原窗口已关闭。
 @MainActor
@@ -339,34 +339,42 @@ final class WindowCapture: NSObject {
         Task { try? await stream.stopCapture() } // 流可能已经被系统停了，失败不要紧
     }
 
-    /// 原 app 取消隐藏后重新开始抓取。不是 paused 时什么都不做。
+    /// 原 app 取消隐藏后重新开始抓取。返回 true：正在抓取（恢复成功或本来就没暂停）；
+    /// false：没能恢复（仍暂停，可以再试）；nil：app 还隐藏着、另一次恢复正在进行，或抓取已经结束。
     /// 窗口刚显示时 ScreenCaptureKit 可能还没列出它，约 1 秒内重试几次。
-    func resumeAfterUnhide() async {
-        guard state == .paused, !isResuming else { return }
+    func resumeAfterUnhide() async -> Bool? {
+        guard state == .paused else { return isActive ? true : nil }
+        guard !isResuming else { return nil }
         isResuming = true
         defer { isResuming = false }
         for attempt in 0..<8 {
             if attempt > 0 { try? await Task.sleep(for: .milliseconds(150)) }
-            guard state == .paused else { return } // 期间被关掉了
-            guard let app = sourceApp else { return end(.windowClosed) }
-            if app.isHidden { return } // 又被隐藏了，等下一次取消隐藏
+            guard state == .paused else { return nil } // 期间被关掉了
+            guard let app = sourceApp else {
+                end(.windowClosed)
+                return nil
+            }
+            if app.isHidden { return nil } // 又被隐藏了，等下一次取消隐藏
             guard let found = try? await WindowLocator.shareableWindow(for: window.windowID) else { continue }
-            guard state == .paused else { return }
+            guard state == .paused else { return nil }
             window = found
             state = .idle
             do {
                 try await start(fps: fps)
+                return isActive
             } catch {
                 NSLog("PipDog: 取消隐藏后重新抓取失败：\(error.localizedDescription)")
                 state = .paused
                 end(.failed(error))
+                return nil
             }
-            return
         }
         // 一直找不到：窗口真的不见了就结束；否则保持暂停，下次单击小窗再试
         if state == .paused, sourceApp?.isHidden == false, WindowLocator.bounds(of: window.windowID) == nil {
             end(.windowClosed)
+            return nil
         }
+        return state == .paused ? false : nil
     }
 
     /// 流停了或窗口不在窗口列表里了：app 退出就结束；否则先暂停，稍等再判断
@@ -388,7 +396,7 @@ final class WindowCapture: NSObject {
             } else if let error {
                 end(.failed(error))
             } else {
-                await resumeAfterUnhide()
+                _ = await resumeAfterUnhide()
             }
         }
     }

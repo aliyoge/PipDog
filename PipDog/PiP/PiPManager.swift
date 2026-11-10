@@ -120,7 +120,14 @@ final class PiPManager {
         guard generation == closeGeneration else { return } // 查找期间按了「关闭所有」
 
         let panel = PiPPanel(window: scWindow, region: region, source: window, cascadeIndex: panels.count)
-        panel.onClose = { [weak self] in self?.panels[key] = nil }
+        panel.onClose = { [weak self] in
+            guard let self else { return }
+            panels[key] = nil
+            // 同一窗口的最后一个 PiP（整窗、区域）关了，才把移到屏幕边上的原窗口放回去
+            if !panels.keys.contains(where: { $0.windowID == key.windowID }) {
+                SourceWindowActivator.restoreIfStashed(windowID: key.windowID)
+            }
+        }
         panel.onEnded = { message in Feedback.show(message) }
         panels[key] = panel
         do {

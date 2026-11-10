@@ -59,11 +59,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         add("屏幕录制：\(screenRecording.rawValue)", action: #selector(screenRecordingGuide),
             enabled: screenRecording != .authorized, to: menu)
         let accessibility = Permissions.hasAccessibility
-        let accessibilityTitle = settings.config.clickEnabled
-            ? "辅助功能：\(accessibility ? "已授权" : "未授权")"
-            : "辅助功能：不需要（双击已关闭）"
-        add(accessibilityTitle, action: #selector(accessibilityGuide),
-            enabled: settings.config.clickEnabled && !accessibility, to: menu)
+        let accessibilityTitle = accessibility ? "辅助功能：已授权" : "辅助功能：未授权（移到屏幕边上、修饰键 + 双击需要）"
+        add(accessibilityTitle, action: #selector(accessibilityGuide), enabled: !accessibility, to: menu)
         menu.addItem(.separator())
         let quit = add("退出 PipDog", action: #selector(terminate), to: menu)
         quit.keyEquivalent = "q"

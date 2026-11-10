@@ -75,7 +75,8 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         observeSourceHidden()
     }
 
-    /// 原 app 隐藏 / 取消隐藏（我们的单击、⌘H、Dock 都算）时显示 / 去掉暂停提示。
+    /// 原 app 隐藏 / 取消隐藏（⌘H、Dock，或单击小窗取消隐藏）时显示 / 去掉暂停提示；原 app 退出时结束 PiP
+    /// （隐藏期间抓取已暂停，没有别的路径能发现它退出）。
     private func observeSourceHidden() {
         setSourceHidden(NSRunningApplication(processIdentifier: source.pid)?.isHidden ?? false)
         let center = NSWorkspace.shared.notificationCenter
@@ -91,12 +92,33 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                 }
             }
         }
+        workspaceObservers.append(center.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil,
+                                                     queue: .main) { [weak self] note in
+            let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier
+            MainActor.assumeIsolated {
+                guard let self, pid == self.source.pid, !self.isClosing else { return }
+                let ended = self.onEnded
+                self.close()
+                ended?("原窗口已关闭，PiP 已结束")
+            }
+        })
     }
 
-    /// 隐藏时显示暂停提示（画面停在最后一帧，小窗不关）；取消隐藏时去掉提示并重新开始抓取。
+    /// 隐藏时显示暂停提示（画面停在最后一帧，小窗不关）；取消隐藏时重新开始抓取，真的恢复了才去掉提示。
     private func setSourceHidden(_ hidden: Bool) {
-        pauseOverlay.isHidden = !hidden
-        if !hidden { Task { await capture.resumeAfterUnhide() } }
+        guard !hidden else {
+            pauseOverlay.isHidden = false
+            return
+        }
+        Task {
+            let resumed = await capture.resumeAfterUnhide()
+            guard !isClosing, let resumed else { return } // nil：还隐藏着或另一次恢复正在进行
+            if resumed {
+                pauseOverlay.isHidden = true
+            } else {
+                Feedback.show("无法恢复「\(source.ownerName)」的画面，请再单击小窗重试")
+            }
+        }
     }
 
     /// 面板初始大小：保持源的宽高比。整窗默认宽 360；区域尽量按原尺寸显示，但限制在 160…480。
@@ -150,7 +172,6 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         isClosing = true
         let capture = capture
         Task { await capture.stop() }
-        SourceWindowActivator.restoreIfStashed(pid: source.pid, windowID: source.id) // 原窗口还停在屏幕边上就放回去
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers = []
         imageLayer.contents = nil
@@ -163,13 +184,13 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
 
     // MARK: - 单击
 
-    /// 单击切回原窗口（原窗口已在最前时隐藏原 app）；⌥ + 单击用快速查看看原尺寸截图。
+    /// 单击切回原窗口（原窗口已在最前时移到屏幕边上）；⌥ + 单击用快速查看看原尺寸截图。
     private func clicked(modifiers: NSEvent.ModifierFlags) {
         guard !isClosing else { return }
         if modifiers.contains(.option) {
             showQuickLook()
         } else {
-            // 自己隐藏 / 显示时立即更新提示，不等系统通知
+            // 原 app 被隐藏时单击会取消隐藏：立即尝试恢复画面，不等系统通知
             if let hidden = SourceWindowActivator.toggle(pid: source.pid, windowID: source.id, appName: source.ownerName) {
                 setSourceHidden(hidden)
             }

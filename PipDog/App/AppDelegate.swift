@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        SourceWindowActivator.restoreAllStashed() // 移到屏幕边上的窗口同步放回原位
         HotKeys.shared.unregisterAll()
         clickTrigger.stop()
         SnapshotPreview.removeTemporaryFiles()

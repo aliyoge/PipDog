@@ -7,7 +7,7 @@ import ApplicationServices
 /// 原窗口已在最前时再单击：用 AX 把窗口移到屏幕边上，只留 1 点在屏幕内（不隐藏 app，抓取不停，小窗画面照常更新），
 /// 下次单击移回原位。不用 hide()：隐藏 app 会让 ScreenCaptureKit 停掉抓取。
 /// 没有权限时只能在 app 不在前台时激活它，移不了窗口，同一 app 的另一个窗口已在最前时也提不起指定窗口。
-/// 这里绝不弹授权（辅助功能仍然只有双击功能需要）。
+/// 只有用户要移动窗口而缺权限时，才走 `Permissions` 现有的系统授权框（每次运行一次）；切到前台从不请求权限。
 /// AX 调用放在后台，单次请求和整次操作都有超时，目标 app 卡住时不会冻结界面。
 enum SourceWindowActivator {
     static let messagingTimeout: TimeInterval = 0.25
@@ -15,16 +15,24 @@ enum SourceWindowActivator {
     /// AX 窗口位置大小和 CGWindow bounds 比较时允许的误差（点）
     static let tolerance: CGFloat = 2
 
-    /// 被移到屏幕边上的窗口：原来的位置大小（全局左上角坐标）和移过去的 x
+    /// 被移到屏幕边上的窗口：原 app 进程、原来的位置大小（全局左上角坐标）和移过去的 x。
+    /// 开始移动前就写入，确认移回原位后才删除；移动失败才丢弃。
     private struct Stash {
+        var pid: pid_t
         var original: CGRect
         var parkedX: CGFloat
     }
 
     @MainActor private static var stashed: [CGWindowID: Stash] = [:]
+    /// 正在移动（停放或移回）的窗口：同一窗口同时只有一次移动，期间的单击忽略
+    @MainActor private static var moving: Set<CGWindowID> = []
+    /// 停放途中最后一个 PiP 被关掉了：移完立刻放回原位
+    @MainActor private static var restoreWhenDone: Set<CGWindowID> = []
+    /// 本次运行是否已经为移动窗口弹过辅助功能系统授权框（之后只提示）
+    @MainActor private static var requestedAccessibility = false
 
-    /// 单击 PiP：窗口被我们移到了屏幕边上 → 移回原位并切到前台；原窗口已经是屏幕上最前面的普通窗口 →
-    /// 移到屏幕边上；否则切到前台。按当前状态判断，不记单击次数。
+    /// 单击 PiP：窗口被我们移到了屏幕边上（或看起来停在屏幕外）→ 移回并切到前台；原窗口已经是屏幕上最前面的普通窗口 →
+    /// 移到屏幕边上，把前台交给下面的窗口；否则切到前台。按当前状态判断，不记单击次数。
     /// 返回原 app 现在是否处于隐藏状态（PiP 据此显示 / 去掉暂停提示，只有真的隐藏（⌘H）才算）；app 已退出时返回 nil。
     @MainActor
     @discardableResult
@@ -34,56 +42,163 @@ enum SourceWindowActivator {
             Feedback.show("「\(appName)」已经退出")
             return nil
         }
+        guard !moving.contains(windowID) else { return app.isHidden } // 上一次移动还没完成
         stashed = stashed.filter { WindowLocator.bounds(of: $0.key) != nil } // 已关闭的窗口不再记
         let bounds = WindowLocator.bounds(of: windowID)
-        if let stash = stashed[windowID] {
-            stashed[windowID] = nil
-            // 还在我们放的位置才移回；用户自己挪走了就当普通窗口处理
-            if let bounds, abs(bounds.minX - stash.parkedX) <= tolerance {
-                restore(pid: pid, windowID: windowID, appName: appName, from: bounds, to: stash.original.origin)
+        if let stash = stashed[windowID], let bounds {
+            if abs(bounds.minX - stash.parkedX) <= tolerance || isMostlyOffscreen(bounds) {
+                moveBack(pid: pid, windowID: windowID, appName: appName, from: bounds, to: stash.original.origin)
                 return app.isHidden
             }
+            stashed[windowID] = nil // 用户自己挪走了，当普通窗口处理
+        }
+        if let bounds, isMostlyOffscreen(bounds) {
+            // 没有记录却停在屏幕外（记录丢了、上次 PipDog 异常退出）：拉回屏幕内，不当成新的原位置再停一次
+            moveBack(pid: pid, windowID: windowID, appName: appName, from: bounds, to: onScreenOrigin(for: bounds))
+            return app.isHidden
         }
         guard WindowLocator.onScreenWindows().first?.id == windowID, let bounds else {
             return bringToFront(pid: pid, windowID: windowID, appName: appName) ? false : nil
         }
         guard Permissions.hasAccessibility else {
-            Feedback.show("要把「\(appName)」移到屏幕旁边并保持画面更新，需要在系统设置里给 PipDog 辅助功能权限")
+            let message = "要把「\(appName)」移到屏幕旁边并保持画面更新，需要在「系统设置 › 隐私与安全性 › 辅助功能」里打开 PipDog"
+            if requestedAccessibility {
+                Feedback.show(message)
+            } else {
+                requestedAccessibility = true
+                Permissions.showAlert(.accessibility, message: message) // 系统授权框，把 PipDog 登记到列表里
+            }
             return false
         }
-        let parked = parkedOrigin(for: bounds)
-        let title = WindowLocator.title(of: windowID)
-        Task {
-            let movedX = await Task.detached { moveWindow(pid: pid, bounds: bounds, title: title, to: parked) }.value
-            if let movedX {
-                stashed[windowID] = Stash(original: bounds, parkedX: movedX)
-            } else {
-                Feedback.show("无法移动「\(appName)」的窗口")
-            }
-        }
+        park(pid: pid, windowID: windowID, appName: appName, bounds: bounds)
         return false
     }
 
-    /// PiP 关闭时：窗口还在屏幕边上的话放回原位（不切前台）。
+    /// 先记下原位置再移到屏幕边上；成功后把前台交给下面的窗口，失败就丢掉记录。
     @MainActor
-    static func restoreIfStashed(pid: pid_t, windowID: CGWindowID) {
-        guard let stash = stashed.removeValue(forKey: windowID), Permissions.hasAccessibility,
-              let bounds = WindowLocator.bounds(of: windowID), abs(bounds.minX - stash.parkedX) <= tolerance
-        else { return }
+    private static func park(pid: pid_t, windowID: CGWindowID, appName: String, bounds: CGRect) {
+        let parked = parkedOrigin(for: bounds)
         let title = WindowLocator.title(of: windowID)
-        let origin = stash.original.origin
-        Task.detached { _ = moveWindow(pid: pid, bounds: bounds, title: title, to: origin) }
+        stashed[windowID] = Stash(pid: pid, original: bounds, parkedX: parked.x)
+        moving.insert(windowID)
+        Task {
+            let movedX = await Task.detached { moveWindow(pid: pid, bounds: bounds, title: title, to: parked) }.value
+            moving.remove(windowID)
+            let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
+            guard let movedX else {
+                stashed[windowID] = nil
+                Feedback.show("无法移动「\(appName)」的窗口")
+                return
+            }
+            stashed[windowID]?.parkedX = movedX
+            if closedMeanwhile {
+                restoreIfStashed(windowID: windowID)
+            } else {
+                handFocus(awayFrom: windowID, pid: pid)
+            }
+        }
     }
 
-    /// 先把窗口移回原位，再切到前台，这样窗口直接出现在原来的地方。
+    /// 先把窗口移回去（原位置或屏幕内），确认到位后才删记录、再切到前台；失败保留记录并提示。
     @MainActor
-    private static func restore(pid: pid_t, windowID: CGWindowID, appName: String, from bounds: CGRect, to origin: CGPoint) {
+    private static func moveBack(pid: pid_t, windowID: CGWindowID, appName: String, from bounds: CGRect, to origin: CGPoint) {
+        guard Permissions.hasAccessibility else {
+            Feedback.show("「\(appName)」的窗口在屏幕边上，移回需要辅助功能权限（菜单栏 › 辅助功能）")
+            bringToFront(pid: pid, windowID: windowID, appName: appName)
+            return
+        }
         let title = WindowLocator.title(of: windowID)
+        moving.insert(windowID)
         Task {
             let movedX = await Task.detached { moveWindow(pid: pid, bounds: bounds, title: title, to: origin) }.value
-            if movedX == nil { Feedback.show("无法把「\(appName)」的窗口移回原位") }
+            moving.remove(windowID)
+            restoreWhenDone.remove(windowID)
+            guard let movedX, abs(movedX - origin.x) <= tolerance else {
+                Feedback.show("无法把「\(appName)」的窗口移回原位")
+                return
+            }
+            stashed[windowID] = nil
             bringToFront(pid: pid, windowID: windowID, appName: appName)
         }
+    }
+
+    /// 停放后把前台和键盘交给下面那个窗口（不隐藏任何 app）：同 app 的窗口用 AX 提起；
+    /// 别的 app 用协作激活再 AX 提起；没有别的窗口就交给访达。
+    @MainActor
+    private static func handFocus(awayFrom windowID: CGWindowID, pid: pid_t) {
+        let next = WindowLocator.onScreenWindows().first { $0.id != windowID && !isMostlyOffscreen($0.bounds) }
+        let target = next.flatMap { NSRunningApplication(processIdentifier: $0.pid) }
+            ?? NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first
+        guard let target, !target.isTerminated else { return }
+        if target.processIdentifier != pid {
+            if !NSApp.isActive { NSApp.activate() }
+            NSApp.yieldActivation(to: target)
+            _ = target.activate(from: .current)
+        }
+        guard let next, let bounds = WindowLocator.bounds(of: next.id) else { return }
+        let title = WindowLocator.title(of: next.id)
+        Task.detached { raiseWindow(pid: next.pid, bounds: bounds, title: title) }
+    }
+
+    /// 某个窗口的最后一个 PiP 关闭时：窗口还在屏幕边上的话放回原位（不切前台）。
+    /// 正在停放就等移完再放回；放回失败保留记录（下次 PiP 这个窗口单击、或退出 PipDog 时再试）。
+    @MainActor
+    static func restoreIfStashed(windowID: CGWindowID) {
+        if moving.contains(windowID) {
+            restoreWhenDone.insert(windowID)
+            return
+        }
+        guard let stash = stashed[windowID] else { return }
+        // 窗口已经关了，或用户自己挪走了：不用再记
+        guard let bounds = WindowLocator.bounds(of: windowID),
+              abs(bounds.minX - stash.parkedX) <= tolerance || isMostlyOffscreen(bounds)
+        else {
+            stashed[windowID] = nil
+            return
+        }
+        guard Permissions.hasAccessibility else { return } // 移不了：保留记录，之后单击会提示
+        let title = WindowLocator.title(of: windowID)
+        let origin = stash.original.origin
+        moving.insert(windowID)
+        Task {
+            let movedX = await Task.detached { moveWindow(pid: stash.pid, bounds: bounds, title: title, to: origin) }.value
+            moving.remove(windowID)
+            if let movedX, abs(movedX - origin.x) <= tolerance { stashed[windowID] = nil }
+        }
+    }
+
+    /// 退出或重启 PipDog 前：同步把所有被移到屏幕边上的窗口放回原位（进程马上结束，不能交给 Task）。
+    /// 每个窗口最多约 0.5 秒。
+    @MainActor
+    static func restoreAllStashed() {
+        defer { stashed = [:] }
+        guard Permissions.hasAccessibility else { return }
+        for (windowID, stash) in stashed {
+            guard let bounds = WindowLocator.bounds(of: windowID),
+                  abs(bounds.minX - stash.original.minX) > tolerance || abs(bounds.minY - stash.original.minY) > tolerance
+            else { continue }
+            _ = moveWindow(pid: stash.pid, bounds: bounds, title: WindowLocator.title(of: windowID), to: stash.original.origin)
+        }
+    }
+
+    /// 窗口几乎完全在所有屏幕之外（只露出不到 tolerance 点宽），比如被停在屏幕边上的窗口。
+    @MainActor
+    private static func isMostlyOffscreen(_ bounds: CGRect) -> Bool {
+        let visible = NSScreen.screens.map { Geometry.flipped($0.frame).intersection(bounds) }
+            .filter { !$0.isNull }.map(\.width).max() ?? 0
+        return visible <= tolerance
+    }
+
+    /// 没有原位置记录时拉回屏幕的位置：窗口所在（或主）屏幕的可见区域内，离边缘留一点距离。
+    @MainActor
+    private static func onScreenOrigin(for bounds: CGRect) -> CGPoint {
+        let inset: CGFloat = 20
+        let screen = Geometry.screen(containingTopLeftRect: bounds) ?? NSScreen.main ?? NSScreen.screens.first
+        guard let screen else { return CGPoint(x: inset, y: max(bounds.minY, inset)) }
+        let visible = Geometry.flipped(screen.visibleFrame)
+        let x = min(max(bounds.minX, visible.minX + inset), max(visible.maxX - bounds.width - inset, visible.minX))
+        let y = min(max(bounds.minY, visible.minY), max(visible.maxY - 60, visible.minY))
+        return CGPoint(x: x, y: y)
     }
 
     /// 屏幕边上的停放位置（全局左上角坐标，和 AX 位置、CGWindow bounds 一致）：
