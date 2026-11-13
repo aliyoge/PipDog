@@ -11,7 +11,7 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # 界面文字都在 String Catalog（Localizable.xcstrings、InfoPlist.xcstrings）里，英文为源语言
     SWIFT_EMIT_LOC_STRINGS: YES
