@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// 增强模式：`fn` 组合热键和指针停在小窗上时的裸键，默认关闭。
+/// 键盘控制：`fn` 组合热键和指针停在小窗上时的裸键，默认关闭。
 /// 这两类键只能靠 CGEventTap 拦，需要「辅助功能」权限；关闭时不装任何 tap。
 @MainActor
 @Observable

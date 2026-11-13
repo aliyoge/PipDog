@@ -66,7 +66,7 @@ PipDog asks for nothing at launch. Each permission is requested the first time y
 | --- | --- |
 | **Screen Recording** (called **Screen & System Audio Recording** on macOS 15 and later) | Required. Shows the live content of the window in the PiP. Requested on your first PiP. After granting it, restart PipDog: it offers a **Relaunch PipDog** button. |
 | **Accessibility** | Optional. Modifier + double-click, raising the exact source window (not just its app), moving the source window to the screen edge, and telling when a source window is minimized. Requested when you first use one of these. |
-| **Accessibility** (Enhanced Mode) | Optional. The fn shortcuts, and the keys you press while the pointer rests on a PiP (zoom, frame rate, hide, close), need it. Requested when you turn Enhanced Mode on. |
+| **Accessibility** (Keyboard Control) | Optional. The fn shortcuts, and the keys you press while the pointer rests on a PiP (zoom, frame rate, hide, close), need it. Requested when you turn Keyboard Control on. |
 
 The menu-bar menu always shows the current state of both permissions; click one that is missing to fix it.
 
@@ -121,7 +121,7 @@ Defaults; change them in Settings (menu bar › **Settings…**, or ⌘,). Every
 - **Pause when covered or on another desktop** (on by default): a PiP that's completely covered by other windows or on another desktop drops to 1 fps until it's visible again. Pausing the source app (⌘H) is separate and shows the paused note as before.
 - **Chromium compatibility mode** (off by default): Chromium and Electron apps can stop redrawing while their window is on another desktop or completely covered, so the PiP keeps the last frame. When PipDog notices that, it shows a note once per app per run: by default it suggests turning this mode on; with the mode on, it suggests quitting the app and reopening it with `--disable-backgrounding-occluded-windows`. PipDog never restarts or quits apps for you.
 - **PiP window:** single- or double-click to switch back (default double), opacity 30–100%, and hover to hide.
-- **Enhanced Mode** (off by default): fn+P PiPs the focused window and fn+⇧+P selects a region. While the pointer rests on a PiP, = and - zoom, F switches the frame rate, D turns the static-picture frame rate reduction on or off, a tap of fn hides or shows the PiP, and ⌫ closes it. Hold = or - to keep zooming; F, D and ⌫ act once per press. Needs Accessibility; PipDog asks for it when you turn the mode on, and the shortcuts work as soon as the permission is granted.
+- **Keyboard Control** (off by default): fn+P PiPs the focused window and fn+⇧+P selects a region. While the pointer rests on a PiP, = and - zoom, F switches the frame rate, D turns the static-picture frame rate reduction on or off, a tap of fn hides or shows the PiP, and ⌫ closes it. Hold = or - to keep zooming; F, D and ⌫ act once per press. Needs Accessibility; PipDog asks for it when you turn the mode on, and the shortcuts work as soon as the permission is granted.
 - **Open at Login:** uses macOS Login Items; also in the menu bar menu.
 - **Language:** Follow System (default), English or 简体中文. PipDog offers to relaunch to apply the change. Follow System uses Simplified Chinese on a Chinese system and English otherwise.
 - **Restore Defaults** resets everything above except Open at Login, and clears the per-app frame rates so every app uses the default again.

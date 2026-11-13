@@ -81,8 +81,8 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Enhanced Mode") {
-                Toggle("Enhanced Mode", isOn: Binding(get: { enhancedMode.isEnabled },
+            Section("Keyboard Control") {
+                Toggle("Keyboard Control", isOn: Binding(get: { enhancedMode.isEnabled },
                                                      set: { enhancedMode.isEnabled = $0 }))
                 Text("fn+P PiPs the focused window and fn+⇧+P selects a region.")
                     .font(.caption).foregroundStyle(.secondary)

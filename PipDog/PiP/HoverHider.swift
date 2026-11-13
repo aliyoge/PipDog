@@ -71,7 +71,7 @@ final class HoverHider {
         suppressed = true
     }
 
-    /// 增强模式的 `fn` 轻点：隐藏 / 恢复。和悬停隐藏共用「淡出 + 点击穿透 + 移开或 ⌥ 轻点恢复」，
+    /// 键盘控制的 `fn` 轻点：隐藏 / 恢复。和悬停隐藏共用「淡出 + 点击穿透 + 移开或 ⌥ 轻点恢复」，
     /// 悬停自动隐藏关着时也能用（隐藏期间照样每 0.05 秒看一眼鼠标和修饰键）。
     func toggleManualHide() {
         guard let panel, panel.isVisible else { return }

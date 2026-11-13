@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         settings.onConfigChange = { [clickTrigger] config in clickTrigger.apply(config) }
         clickTrigger.start(config: settings.config)
-        // 增强模式：默认关。开关打开时提示一次辅助功能，关闭时把 tap 彻底拆掉
+        // 键盘控制：默认关。开关打开时提示一次辅助功能，关闭时把 tap 彻底拆掉
         EnhancedMode.shared.onGlobalKey = { action in
             ShortcutSettings.shared.performAction?(action == .pipWindow ? .pipWindow : .selectRegion)
         }

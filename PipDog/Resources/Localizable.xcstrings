@@ -1,16 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "+ %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "+ %@"
-          }
-        }
-      }
-    },
     "%@ (%@)": {
       "localizations": {
         "zh-Hans": {
@@ -111,6 +101,26 @@
         }
       }
     },
+    "+ %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+ %@"
+          }
+        }
+      }
+    },
+    "A PiP that's completely covered by other windows or on another desktop drops to 1 fps until it's visible again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗被其他窗口完全遮挡或不在当前桌面时降到每秒 1 帧，重新可见后恢复。"
+          }
+        }
+      }
+    },
     "About PipDog": {
       "localizations": {
         "zh-Hans": {
@@ -141,6 +151,26 @@
         }
       }
     },
+    "Accessibility granted. Keyboard Control is ready.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已获得辅助功能权限，键盘控制可以使用了"
+          }
+        }
+      }
+    },
+    "Accessibility was turned off, so Keyboard Control isn't available. Turn PipDog back on in System Settings › Privacy & Security › Accessibility.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能权限已被关闭，键盘控制暂时不可用。请在系统设置 › 隐私与安全性 › 辅助功能中重新打开 PipDog"
+          }
+        }
+      }
+    },
     "Accessibility was turned off. %@ + double-click now only observes, and the second click goes through to the app. Turn PipDog back on in System Settings › Privacy & Security › Accessibility to restore it.": {
       "localizations": {
         "zh-Hans": {
@@ -161,12 +191,22 @@
         }
       }
     },
-    "Accessibility: Not Granted (needed for edge parking, modifier + double-click and Enhanced Mode)": {
+    "Accessibility: Not Granted (needed for edge parking, modifier + double-click and Keyboard Control)": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "辅助功能：未授权（移到屏幕边上、修饰键 + 双击、增强模式需要）"
+            "value": "辅助功能：未授权（移到屏幕边上、修饰键 + 双击、键盘控制需要）"
+          }
+        }
+      }
+    },
+    "After about 5 seconds without a change, the PiP refreshes once a second until something moves again.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面约 5 秒没有变化后，小窗每秒只刷新一次，直到画面再次变化。"
           }
         }
       }
@@ -187,6 +227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "请在「系统设置 › 通用 › 登录项与扩展」里允许 PipDog，开机时才会启动"
+          }
+        }
+      }
+    },
+    "Apps whose frame rate you change keep it; terminal and editor apps, Activity Monitor and Console start at 5 fps the first time. Every other app uses the Frame Rate above.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只有你改过帧率的 app 会记住自己的帧率；终端、编辑器类 app 以及活动监视器、控制台第一次打开 PiP 时记为 5 fps；其余 app 都用上面选的默认值。"
           }
         }
       }
@@ -241,6 +291,16 @@
         }
       }
     },
+    "Chromium Compatibility Mode": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chromium 兼容模式"
+          }
+        }
+      }
+    },
     "Clear Shortcut": {
       "localizations": {
         "zh-Hans": {
@@ -271,12 +331,32 @@
         }
       }
     },
+    "Click its icon for PiP, region capture and settings. This guide is in the menu too, under Show Getting Started.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点这个图标就能把窗口或区域变成小窗，也能打开设置。这份引导在菜单的「显示上手指引」里可以再看"
+          }
+        }
+      }
+    },
     "Click to Record": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "点击录制"
+          }
+        }
+      }
+    },
+    "Click to switch frame rate": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一下切换帧率"
           }
         }
       }
@@ -531,12 +611,12 @@
         }
       }
     },
-    "For edge parking, modifier + double-click and Enhanced Mode; requested when needed": {
+    "For edge parking, modifier + double-click and Keyboard Control; requested when needed": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "把原窗口移到屏幕边上、修饰键 + 双击、增强模式，用到时再引导"
+            "value": "把原窗口移到屏幕边上、修饰键 + 双击、键盘控制，用到时再引导"
           }
         }
       }
@@ -631,6 +711,26 @@
         }
       }
     },
+    "Hide on Hover is off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬停时自动隐藏：关"
+          }
+        }
+      }
+    },
+    "Hide on Hover is on": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬停时自动隐藏：开"
+          }
+        }
+      }
+    },
     "Higher is smoother but uses more CPU; 5–10 fps is plenty for logs and progress bars.": {
       "localizations": {
         "zh-Hans": {
@@ -657,6 +757,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "至少要包含 ⌘、⌃ 或 ⌥ 中的一个（只有 ⇧ 不行）"
+          }
+        }
+      }
+    },
+    "Keyboard Control": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "键盘控制"
+          }
+        }
+      }
+    },
+    "Keyboard Control needs Accessibility permission. Turn it on in System Settings.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "键盘控制需要「辅助功能」权限，请在系统设置中打开"
+          }
+        }
+      }
+    },
+    "Keyboard Control needs Accessibility. Turn on PipDog in System Settings › Privacy & Security › Accessibility.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "键盘控制需要「辅助功能」权限。请在系统设置 › 隐私与安全性 › 辅助功能中打开 PipDog"
           }
         }
       }
@@ -701,6 +831,16 @@
         }
       }
     },
+    "No app has its own frame rate yet.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有单独设置帧率的 app。"
+          }
+        }
+      }
+    },
     "Not Granted": {
       "localizations": {
         "zh-Hans": {
@@ -727,6 +867,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "好"
+          }
+        }
+      }
+    },
+    "Off by default. Needs Accessibility: PipDog asks for it when you turn this on, and the shortcuts work once it's granted.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "默认关闭。需要「辅助功能」权限：打开开关时 PipDog 会请求授权，授权后快捷键立即可用"
+          }
+        }
+      }
+    },
+    "Off by default. When a Chromium or Electron app stops redrawing off screen, PipDog only suggests turning this mode on. With it on, the note suggests reopening the app with --disable-backgrounding-occluded-windows. PipDog never restarts apps for you.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "默认关闭。Chromium 或 Electron 应用在屏幕外停止重绘时，默认只提示去打开这个模式；打开后，提示才会建议带 --disable-backgrounding-occluded-windows 重新打开该 app。PipDog 不会替你重启任何 app。"
           }
         }
       }
@@ -787,6 +947,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "停到屏幕边 / 移回"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停"
+          }
+        }
+      }
+    },
+    "Pause When Covered or on Another Desktop": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "被遮挡或不在当前桌面时暂停"
+          }
+        }
+      }
+    },
+    "Per-App Frame Rate": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 App 帧率"
           }
         }
       }
@@ -861,12 +1051,32 @@
         }
       }
     },
+    "Picture paused\nClick the play button in the toolbar to resume": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面已暂停\n点顶部的播放按钮继续"
+          }
+        }
+      }
+    },
     "PipDog Settings": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "PipDog 设置"
+          }
+        }
+      }
+    },
+    "PipDog is in the menu bar": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PipDog 在菜单栏里"
           }
         }
       }
@@ -941,6 +1151,16 @@
         }
       }
     },
+    "Reduce to 1 fps when the picture is static": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面静止时降到 1 fps"
+          }
+        }
+      }
+    },
     "Registered. Allow PipDog in System Settings › General › Login Items & Extensions so it opens at login.": {
       "localizations": {
         "zh-Hans": {
@@ -987,6 +1207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "需重新启动"
+          }
+        }
+      }
+    },
+    "Remove this app's frame rate": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除这个 app 的帧率记录"
           }
         }
       }
@@ -1041,6 +1271,16 @@
         }
       }
     },
+    "Resume": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        }
+      }
+    },
     "Screen & System Audio Recording": {
       "localizations": {
         "zh-Hans": {
@@ -1057,16 +1297,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "屏幕录制"
-          }
-        }
-      }
-    },
-    "⌘-scroll / pinch": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌘ 滚动 / 捏合"
           }
         }
       }
@@ -1097,6 +1327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "快捷键"
+          }
+        }
+      }
+    },
+    "Show Getting Started": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示上手指引"
           }
         }
       }
@@ -1207,6 +1447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "重新启动 PipDog 后才会切换语言。"
+          }
+        }
+      }
+    },
+    "The picture from “%@” seems stuck. PipDog already tried restarting the capture; moving the source window or reopening the app may help.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」的画面似乎卡住了。PipDog 已经尝试重新开始抓取；移动原窗口或重新打开该 app 可能会好。"
           }
         }
       }
@@ -1351,6 +1601,16 @@
         }
       }
     },
+    "Waiting for “%@” to restart\nThe PiP reconnects when its window is back": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待「%@」重启\n窗口回来后小窗会自动重新连上"
+          }
+        }
+      }
+    },
     "Welcome Guide…": {
       "localizations": {
         "zh-Hans": {
@@ -1367,6 +1627,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "欢迎使用 PipDog"
+          }
+        }
+      }
+    },
+    "While the pointer rests on a PiP: = and - zoom, F switches the frame rate, D toggles the static-picture frame rate reduction, a tap of fn hides or shows the PiP, and ⌫ closes it.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针停在某个小窗上时：= 和 - 缩放，F 切换帧率，D 开关「画面静止时降到 1 fps」，轻点 fn 隐藏 / 显示小窗，⌫ 关闭"
           }
         }
       }
@@ -1397,6 +1667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法生成截图"
+          }
+        }
+      }
+    },
+    "fn+P PiPs the focused window and fn+⇧+P selects a region.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fn+P 把最前面 app 的窗口变成小窗，fn+⇧+P 框选区域"
           }
         }
       }
@@ -1487,6 +1767,16 @@
         }
       }
     },
+    "“%@” didn't come back, so the PiP ended": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」一直没有重新打开，小窗已关闭"
+          }
+        }
+      }
+    },
     "“%@” has no window to PiP": {
       "localizations": {
         "zh-Hans": {
@@ -1513,6 +1803,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "「%@」已在前台；要切到这个窗口，需要在系统设置里给 PipDog 辅助功能权限"
+          }
+        }
+      }
+    },
+    "“%@” may stop redrawing while it's off screen. Quit it and reopen it with --disable-backgrounding-occluded-windows to keep the picture updating.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」在屏幕外时可能停止重绘。退出它，带 --disable-backgrounding-occluded-windows 重新打开，画面就能继续更新。"
+          }
+        }
+      }
+    },
+    "“%@” may stop redrawing while it's off screen. Turn on Chromium Compatibility Mode in Settings to see how to reopen it yourself with a background-rendering switch.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」在屏幕外时可能停止重绘。打开设置里的「Chromium 兼容模式」后，会告诉你如何自己带后台渲染参数重新打开。"
           }
         }
       }
@@ -1547,332 +1857,22 @@
         }
       }
     },
+    "⌘-scroll / pinch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘ 滚动 / 捏合"
+          }
+        }
+      }
+    },
     "⌥-click": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "⌥ 单击"
-          }
-        }
-      }
-    },
-    "Reduce to 1 fps when the picture is static": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画面静止时降到 1 fps"
-          }
-        }
-      }
-    },
-    "After about 5 seconds without a change, the PiP refreshes once a second until something moves again.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画面约 5 秒没有变化后，小窗每秒只刷新一次，直到画面再次变化。"
-          }
-        }
-      }
-    },
-    "Pause When Covered or on Another Desktop": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "被遮挡或不在当前桌面时暂停"
-          }
-        }
-      }
-    },
-    "Per-App Frame Rate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按 App 帧率"
-          }
-        }
-      }
-    },
-    "Apps whose frame rate you change keep it; terminal and editor apps, Activity Monitor and Console start at 5 fps the first time. Every other app uses the Frame Rate above.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只有你改过帧率的 app 会记住自己的帧率；终端、编辑器类 app 以及活动监视器、控制台第一次打开 PiP 时记为 5 fps；其余 app 都用上面选的默认值。"
-          }
-        }
-      }
-    },
-    "No app has its own frame rate yet.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没有单独设置帧率的 app。"
-          }
-        }
-      }
-    },
-    "Remove this app's frame rate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除这个 app 的帧率记录"
-          }
-        }
-      }
-    },
-    "A PiP that's completely covered by other windows or on another desktop drops to 1 fps until it's visible again.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小窗被其他窗口完全遮挡或不在当前桌面时降到每秒 1 帧，重新可见后恢复。"
-          }
-        }
-      }
-    },
-    "Chromium Compatibility Mode": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chromium 兼容模式"
-          }
-        }
-      }
-    },
-    "Off by default. When a Chromium or Electron app stops redrawing off screen, PipDog only suggests turning this mode on. With it on, the note suggests reopening the app with --disable-backgrounding-occluded-windows. PipDog never restarts apps for you.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "默认关闭。Chromium 或 Electron 应用在屏幕外停止重绘时，默认只提示去打开这个模式；打开后，提示才会建议带 --disable-backgrounding-occluded-windows 重新打开该 app。PipDog 不会替你重启任何 app。"
-          }
-        }
-      }
-    },
-    "Waiting for “%@” to restart\nThe PiP reconnects when its window is back": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "等待「%@」重启\n窗口回来后小窗会自动重新连上"
-          }
-        }
-      }
-    },
-    "“%@” didn't come back, so the PiP ended": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「%@」一直没有重新打开，小窗已关闭"
-          }
-        }
-      }
-    },
-    "“%@” may stop redrawing while it's off screen. Quit it and reopen it with --disable-backgrounding-occluded-windows to keep the picture updating.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「%@」在屏幕外时可能停止重绘。退出它，带 --disable-backgrounding-occluded-windows 重新打开，画面就能继续更新。"
-          }
-        }
-      }
-    },
-    "“%@” may stop redrawing while it's off screen. Turn on Chromium Compatibility Mode in Settings to see how to reopen it yourself with a background-rendering switch.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「%@」在屏幕外时可能停止重绘。打开设置里的「Chromium 兼容模式」后，会告诉你如何自己带后台渲染参数重新打开。"
-          }
-        }
-      }
-    },
-    "The picture from “%@” seems stuck. PipDog already tried restarting the capture; moving the source window or reopening the app may help.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「%@」的画面似乎卡住了。PipDog 已经尝试重新开始抓取；移动原窗口或重新打开该 app 可能会好。"
-          }
-        }
-      }
-    },
-    "Accessibility granted. Enhanced Mode is ready.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已获得辅助功能权限，增强模式可以使用了"
-          }
-        }
-      }
-    },
-    "Accessibility was turned off, so Enhanced Mode isn't available. Turn PipDog back on in System Settings › Privacy & Security › Accessibility.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "辅助功能权限已被关闭，增强模式暂时不可用。请在系统设置 › 隐私与安全性 › 辅助功能中重新打开 PipDog"
-          }
-        }
-      }
-    },
-    "Click its icon for PiP, region capture and settings. This guide is in the menu too, under Show Getting Started.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点这个图标就能把窗口或区域变成小窗，也能打开设置。这份引导在菜单的「显示上手指引」里可以再看"
-          }
-        }
-      }
-    },
-    "Click to switch frame rate": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点一下切换帧率"
-          }
-        }
-      }
-    },
-    "Enhanced Mode": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "增强模式"
-          }
-        }
-      }
-    },
-    "Enhanced Mode needs Accessibility permission. Turn it on in System Settings.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "增强模式需要「辅助功能」权限，请在系统设置中打开"
-          }
-        }
-      }
-    },
-    "Enhanced Mode needs Accessibility. Turn on PipDog in System Settings › Privacy & Security › Accessibility.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "增强模式需要「辅助功能」权限。请在系统设置 › 隐私与安全性 › 辅助功能中打开 PipDog"
-          }
-        }
-      }
-    },
-    "Hide on Hover is off": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "悬停时自动隐藏：关"
-          }
-        }
-      }
-    },
-    "Hide on Hover is on": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "悬停时自动隐藏：开"
-          }
-        }
-      }
-    },
-    "Off by default. Needs Accessibility: PipDog asks for it when you turn this on, and the shortcuts work once it's granted.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "默认关闭。需要「辅助功能」权限：打开开关时 PipDog 会请求授权，授权后快捷键立即可用"
-          }
-        }
-      }
-    },
-    "Pause": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂停"
-          }
-        }
-      }
-    },
-    "Picture paused\nClick the play button in the toolbar to resume": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画面已暂停\n点顶部的播放按钮继续"
-          }
-        }
-      }
-    },
-    "PipDog is in the menu bar": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PipDog 在菜单栏里"
-          }
-        }
-      }
-    },
-    "Resume": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "继续"
-          }
-        }
-      }
-    },
-    "Show Getting Started": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "显示上手指引"
-          }
-        }
-      }
-    },
-    "While the pointer rests on a PiP: = and - zoom, F switches the frame rate, D toggles the static-picture frame rate reduction, a tap of fn hides or shows the PiP, and ⌫ closes it.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "指针停在某个小窗上时：= 和 - 缩放，F 切换帧率，D 开关「画面静止时降到 1 fps」，轻点 fn 隐藏 / 显示小窗，⌫ 关闭"
-          }
-        }
-      }
-    },
-    "fn+P PiPs the focused window and fn+⇧+P selects a region.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "fn+P 把最前面 app 的窗口变成小窗，fn+⇧+P 框选区域"
           }
         }
       }

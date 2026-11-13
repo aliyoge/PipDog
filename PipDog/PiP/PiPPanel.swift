@@ -55,7 +55,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
     var resolveDragFrame: ((CGRect, NSEvent.ModifierFlags) -> CGRect)?
     /// 拖动结束、位置定了才调用（PiPManager 注入）：参数是面板左上角的屏幕坐标
     var onMoved: ((NSPoint) -> Void)?
-    /// 面板大小变了（缩放手柄 / 系统边缘缩放 / 跟随源宽高比）时调用：增强模式要更新悬停按键的命中区
+    /// 面板大小变了（缩放手柄 / 系统边缘缩放 / 跟随源宽高比）时调用：键盘控制要更新悬停按键的命中区
     var onGeometryChanged: (() -> Void)?
 
     /// 内容视图（拖动、缩放、控制条都在它上面）
@@ -409,7 +409,7 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
                                    hoverAutoHide: PiPAppearanceSettings.shared.hoverAutoHide)
     }
 
-    /// 增强模式的悬停按键（指针已经确认停在这个小窗上）
+    /// 键盘控制的悬停按键（指针已经确认停在这个小窗上）
     func handleHoverKey(_ key: EnhancedHotKeys.HoverKey) {
         guard !isClosing else { return }
         switch key {

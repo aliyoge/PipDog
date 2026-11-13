@@ -197,7 +197,7 @@ enum Onboarding {
                 .init(icon: "rectangle.dashed.badge.record", name: Permissions.screenRecordingName,
                       note: String(localized: "Shows live content; requested on your first PiP"), state: screenState),
                 .init(icon: "accessibility", name: String(localized: "Accessibility"),
-                      note: String(localized: "For edge parking, modifier + double-click and Enhanced Mode; requested when needed"),
+                      note: String(localized: "For edge parking, modifier + double-click and Keyboard Control; requested when needed"),
                       state: Permissions.hasAccessibility ? .granted : .missing),
             ])
     }

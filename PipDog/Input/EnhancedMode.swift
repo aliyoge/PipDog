@@ -1,7 +1,7 @@
 import AppKit
 import CoreGraphics
 
-/// 增强模式的开关逻辑：开启时装上 EnhancedHotKeys（fn 组合热键 + 悬停裸键），关闭时彻底拆掉 tap。
+/// 键盘控制的开关逻辑：开启时装上 EnhancedHotKeys（fn 组合热键 + 悬停裸键），关闭时彻底拆掉 tap。
 ///
 /// 和 ClickTrigger 一样每秒复查一次辅助功能：授权后自动装上，运行中被撤销就拆掉并说明一次。
 /// 只有用户刚打开开关、当时还没有权限，才走系统的辅助功能提示（本次运行一次）；启动时没有权限只等，
@@ -42,11 +42,11 @@ final class EnhancedMode {
         refresh()
         guard justEnabled, !Permissions.hasAccessibility else { return }
         guard !didGuideAccessibility else {
-            Feedback.show(String(localized: "Enhanced Mode needs Accessibility permission. Turn it on in System Settings."))
+            Feedback.show(String(localized: "Keyboard Control needs Accessibility permission. Turn it on in System Settings."))
             return
         }
         didGuideAccessibility = true
-        Permissions.showAlert(.accessibility, message: String(localized: "Enhanced Mode needs Accessibility. Turn on PipDog in System Settings › Privacy & Security › Accessibility."))
+        Permissions.showAlert(.accessibility, message: String(localized: "Keyboard Control needs Accessibility. Turn on PipDog in System Settings › Privacy & Security › Accessibility."))
     }
 
     /// PiP 面板打开、关闭、移动、缩放或悬停隐藏时由 PiPManager 更新。
@@ -77,7 +77,7 @@ final class EnhancedMode {
             if tap != nil {
                 if waitingForAccessibility, !didAnnounceReady {
                     didAnnounceReady = true
-                    Feedback.show(String(localized: "Accessibility granted. Enhanced Mode is ready."))
+                    Feedback.show(String(localized: "Accessibility granted. Keyboard Control is ready."))
                 }
                 waitingForAccessibility = false
                 return
@@ -115,7 +115,7 @@ final class EnhancedMode {
             })
         tap.setPanelRects(panelRects)
         guard tap.start() else {
-            NSLog("PipDog: couldn't create the keyboard event tap for Enhanced Mode; waiting for Accessibility")
+            NSLog("PipDog: couldn't create the keyboard event tap for Keyboard Control; waiting for Accessibility")
             return
         }
         self.tap = tap
@@ -127,7 +127,7 @@ final class EnhancedMode {
     }
 
     private func tapLost() {
-        NSLog("PipDog: Enhanced Mode event tap was invalidated (Accessibility may have been revoked); checking again")
+        NSLog("PipDog: Keyboard Control event tap was invalidated (Accessibility may have been revoked); checking again")
         if !Permissions.hasAccessibility { announceRevoked() }
         removeTap()
         refresh()
@@ -137,6 +137,6 @@ final class EnhancedMode {
     private func announceRevoked() {
         guard !didAnnounceRevoked else { return }
         didAnnounceRevoked = true
-        Feedback.show(String(localized: "Accessibility was turned off, so Enhanced Mode isn't available. Turn PipDog back on in System Settings › Privacy & Security › Accessibility."))
+        Feedback.show(String(localized: "Accessibility was turned off, so Keyboard Control isn't available. Turn PipDog back on in System Settings › Privacy & Security › Accessibility."))
     }
 }

@@ -87,7 +87,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let accessibility = Permissions.hasAccessibility
         let accessibilityTitle = accessibility
             ? String(localized: "Accessibility: Granted")
-            : String(localized: "Accessibility: Not Granted (needed for edge parking, modifier + double-click and Enhanced Mode)")
+            : String(localized: "Accessibility: Not Granted (needed for edge parking, modifier + double-click and Keyboard Control)")
         add(accessibilityTitle, action: #selector(accessibilityGuide), enabled: !accessibility, to: menu)
         menu.addItem(.separator())
         add(String(localized: "Show Getting Started"), action: #selector(showGettingStarted), to: menu)

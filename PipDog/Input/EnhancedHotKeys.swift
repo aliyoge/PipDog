@@ -3,7 +3,7 @@ import Carbon.HIToolbox
 import CoreGraphics
 import Foundation
 
-/// 增强模式用的 CGEventTap：Carbon 的 RegisterEventHotKey 注册不了 `fn` 修饰键，
+/// 键盘控制用的 CGEventTap：Carbon 的 RegisterEventHotKey 注册不了 `fn` 修饰键，
 /// 悬停时的裸键（= - F D ⌫）也只有指针停在小窗上时才该拦截，所以这两类键都靠 tap 自己判断。
 ///
 /// 和 ClickTap 一样跑在自己的线程和 run loop 上：这个 tap 插在会话级最前面，每次按键都要等它返回，
