@@ -109,7 +109,7 @@ struct WelcomeView: View {
                         HStack(spacing: 4) {
                             ForEach(Array(item.keys.enumerated()), id: \.offset) { _, key in Keycap(key: key) }
                             if let suffix = item.suffix {
-                                Text(verbatim: "+ \(suffix)")
+                                Text("+ \(suffix)")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                                     .padding(.leading, 2)

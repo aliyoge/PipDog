@@ -36,4 +36,21 @@ enum Geometry {
         let mouse = NSEvent.mouseLocation
         return NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) }
     }
+
+    /// 网格采样判断 `rect` 是不是被 `covering` 里的一堆矩形完全盖住：只要有一个采样点露在外面就不算。
+    /// 边缘往里收 `tolerance`，免得取整误差把「露出半像素」当成可见。PiP 面板和源窗口的可见性都用这一套判断。
+    nonisolated static func isCovered(_ rect: CGRect, by covering: [CGRect],
+                                     gridSize: Int = 5, tolerance: CGFloat = 2) -> Bool {
+        guard !covering.isEmpty, gridSize > 0 else { return false }
+        let frame = rect.insetBy(dx: tolerance, dy: tolerance)
+        guard frame.width > 0, frame.height > 0 else { return false }
+        for row in 0..<gridSize {
+            for column in 0..<gridSize {
+                let point = CGPoint(x: frame.minX + frame.width * (CGFloat(column) + 0.5) / CGFloat(gridSize),
+                                    y: frame.minY + frame.height * (CGFloat(row) + 0.5) / CGFloat(gridSize))
+                if !covering.contains(where: { $0.contains(point) }) { return false }
+            }
+        }
+        return true
+    }
 }

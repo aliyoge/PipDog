@@ -16,28 +16,44 @@
 		1FC3DFB5FEDCAE41A0C02535 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B006B69A584D899E11229DD /* AppDelegate.swift */; };
 		24FA5EB2BA942AB7EAD58C7B /* Geometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6762FAD689375127E7E6877 /* Geometry.swift */; };
 		2DB16C3B5EA24CFD369A3EFD /* HotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE90D65C059A172F561D8B77 /* HotKeys.swift */; };
+		3729F5EE1EBB39EDE2D4440A /* EnhancedHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16913379F81509242C3B19DF /* EnhancedHotKeys.swift */; };
+		3C19702D8435948E4006625E /* SourceAppCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1C99550890D72412BEEE1E /* SourceAppCompatibility.swift */; };
 		433B67615F01299275AB250C /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3F8A540B7C34575FC94728C7 /* InfoPlist.xcstrings */; };
+		47F4B518599406400324FB4F /* FrameFingerprint.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D23C998C8688D96A7F95FD /* FrameFingerprint.swift */; };
 		4FA8A63A86154A4FDEA92255 /* AXRegionFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */; };
 		575B1984EB26E7FFDFC2B5FE /* LanguageSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2848994D1D78A70742A7440B /* LanguageSettings.swift */; };
+		5C41A3CD925E0CE6D746D594 /* EnhancedModeSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F4CB04635880CD55682018 /* EnhancedModeSettings.swift */; };
 		5EE94440916AF71B3F6901C8 /* ClickTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */; };
 		5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */; };
 		60287A9E87198FC4C0CD8224 /* PiPContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63478B0496FA5EFB6DE0764F /* PiPContentView.swift */; };
 		656C8999603E95181A047A9A /* CommonModeTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 267833821672BA2E70FBD941 /* CommonModeTimer.swift */; };
+		687DFE00A214861D2EAD7223 /* ChromiumRenderHint.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD33CCA60E56C03EC46D131A /* ChromiumRenderHint.swift */; };
 		7282503B8F3E17BC1D7BABB8 /* SnapshotPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */; };
 		7A6355873F14D8A5EC5B82D1 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6514690182DA0EE90EB6045D /* Localizable.xcstrings */; };
 		7E2F2CFFC1F21EE8E0169FF5 /* PiPAppearanceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E231B2FCE33D29E40CC228 /* PiPAppearanceSettings.swift */; };
+		7F6076FED1AE0A36A8A4A428 /* AppFrameRateSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49E3D451F6264CD0B483F1A /* AppFrameRateSettings.swift */; };
+		88082F0FC1271E49399C409D /* SourceWindowReconnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999D6200E985CAF0FEA9E7D3 /* SourceWindowReconnector.swift */; };
+		979F523BF3C08C560A81809C /* SourceWindowHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FDA84B7B4DC4C23721FAFDE /* SourceWindowHealth.swift */; };
 		A0BA9C151C9E070E0F6713B0 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC2DED32F21B7A9BE855B66 /* Feedback.swift */; };
 		A6972FFFA4C9291479CA5717 /* ShortcutConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */; };
 		ADEA8AE8FBE0C94E2117A9CF /* SettingsActivation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1454D76B7C93A30D308785A /* SettingsActivation.swift */; };
+		AF71222393F534B27DF07FB4 /* RendererWatchdog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DDB090D4238C2ACDBEC499D /* RendererWatchdog.swift */; };
+		BB5EC7AC49804F4AADDBFF41 /* GettingStarted.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4247FD6E3F32D1FE289372B /* GettingStarted.swift */; };
 		BC8D2F7EE59257E772F886B3 /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FA2A32898070B2C80DD660 /* Onboarding.swift */; };
 		BD384F9C03CDCE49E4B1596C /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB63328F1BA896B5166AEC83 /* ResizeHandle.swift */; };
 		BD4233E206B891D98EB2A231 /* PipDogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C94F14FF5432A7293CD6E6 /* PipDogApp.swift */; };
+		C17A0670FF0330D46A221D25 /* PiPControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8FB0A9F0D1D9B7ABC24D2E /* PiPControlBar.swift */; };
 		C2B5DF9C7BE8F6AB94F51DD5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57A089021CE6A958FE9A0EF8 /* Assets.xcassets */; };
 		C548D69CDFF39B524168EFB6 /* WindowLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */; };
 		C6D2C7C7605BD961DFD14312 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DB25E6799937CAC283C08D /* SettingsView.swift */; };
 		CA612C37B6F56C601F342269 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */; };
 		CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */; };
+		CF5EE515DFA6EDD8AD624D33 /* PiPVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75AEF65CD35D8C21B8C20DA9 /* PiPVisibility.swift */; };
+		D03C250C2B7B00A963AC7D27 /* EnhancedMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E2485D63F9F03C60D6A868 /* EnhancedMode.swift */; };
+		D3B8033717BEAAC64E86BE4C /* PiPPositionMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 324BB689B205E0156FC97AB9 /* PiPPositionMemory.swift */; };
+		D5B4A7E4F786F8BF8F847053 /* ChromiumCompatibilitySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FE992E209D78A4C1C0F6B6 /* ChromiumCompatibilitySettings.swift */; };
 		E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */; };
+		E52C8B7DE16CDD144F7E70FD /* SnappingGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B120105F355D26F48BCE1D2 /* SnappingGeometry.swift */; };
 		E5705A332274735FB13552E0 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD85E72736A8EA8A5D629639 /* WelcomeView.swift */; };
 		E9523AA60C5BEA8964565CBF /* HoverHider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42F95B9E5B3F2072756F951 /* HoverHider.swift */; };
 		ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187CF608B7735238BD5EC646 /* CaptureSettings.swift */; };
@@ -49,17 +65,24 @@
 /* Begin PBXFileReference section */
 		0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelector.swift; sourceTree = "<group>"; };
+		16913379F81509242C3B19DF /* EnhancedHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedHotKeys.swift; sourceTree = "<group>"; };
 		17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTap.swift; sourceTree = "<group>"; };
 		187CF608B7735238BD5EC646 /* CaptureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSettings.swift; sourceTree = "<group>"; };
 		1B006B69A584D899E11229DD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickTrigger.swift; sourceTree = "<group>"; };
 		267833821672BA2E70FBD941 /* CommonModeTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonModeTimer.swift; sourceTree = "<group>"; };
 		2848994D1D78A70742A7440B /* LanguageSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSettings.swift; sourceTree = "<group>"; };
+		2D1C99550890D72412BEEE1E /* SourceAppCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceAppCompatibility.swift; sourceTree = "<group>"; };
+		2FDA84B7B4DC4C23721FAFDE /* SourceWindowHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceWindowHealth.swift; sourceTree = "<group>"; };
 		3016E4E0729E8D4EEB6287D4 /* PipDog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PipDog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31FA2A32898070B2C80DD660 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
+		324BB689B205E0156FC97AB9 /* PiPPositionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPPositionMemory.swift; sourceTree = "<group>"; };
+		37E2485D63F9F03C60D6A868 /* EnhancedMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedMode.swift; sourceTree = "<group>"; };
+		3DDB090D4238C2ACDBEC499D /* RendererWatchdog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RendererWatchdog.swift; sourceTree = "<group>"; };
 		3F8A540B7C34575FC94728C7 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		41A899DE6811F684ECCFCC2C /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
 		4E5A85744DB48BD0C55BB5C4 /* PipDog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PipDog.entitlements; sourceTree = "<group>"; };
+		4F8FB0A9F0D1D9B7ABC24D2E /* PiPControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPControlBar.swift; sourceTree = "<group>"; };
 		5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXRegionFinder.swift; sourceTree = "<group>"; };
 		57A089021CE6A958FE9A0EF8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		62E231B2FCE33D29E40CC228 /* PiPAppearanceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPAppearanceSettings.swift; sourceTree = "<group>"; };
@@ -68,26 +91,35 @@
 		6E9C072D7011344CAE8F6E6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6EC30FB7E5A23E2FBF31082E /* ShortcutConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutConfig.swift; sourceTree = "<group>"; };
 		727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPPanel.swift; sourceTree = "<group>"; };
+		75AEF65CD35D8C21B8C20DA9 /* PiPVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPVisibility.swift; sourceTree = "<group>"; };
 		7B636C2FD9D5B2A654A32139 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
+		8B120105F355D26F48BCE1D2 /* SnappingGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnappingGeometry.swift; sourceTree = "<group>"; };
 		8CC2DED32F21B7A9BE855B66 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
 		8F30E976895527D62F26E134 /* WindowCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCapture.swift; sourceTree = "<group>"; };
+		999D6200E985CAF0FEA9E7D3 /* SourceWindowReconnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceWindowReconnector.swift; sourceTree = "<group>"; };
 		A3950C4FCCCCBFEA679F8311 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		A6D23C998C8688D96A7F95FD /* FrameFingerprint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameFingerprint.swift; sourceTree = "<group>"; };
+		B6F4CB04635880CD55682018 /* EnhancedModeSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedModeSettings.swift; sourceTree = "<group>"; };
 		BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLocator.swift; sourceTree = "<group>"; };
+		C4247FD6E3F32D1FE289372B /* GettingStarted.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStarted.swift; sourceTree = "<group>"; };
 		C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotPreview.swift; sourceTree = "<group>"; };
 		C9DB25E6799937CAC283C08D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeNames.swift; sourceTree = "<group>"; };
 		CB63328F1BA896B5166AEC83 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
 		D41B07AB4EDDBFE2AA6ABCDB /* CapturedFrame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturedFrame.swift; sourceTree = "<group>"; };
 		D4FA7079BB3F1B4D5633DF32 /* ShortcutSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutSettings.swift; sourceTree = "<group>"; };
+		D6FE992E209D78A4C1C0F6B6 /* ChromiumCompatibilitySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumCompatibilitySettings.swift; sourceTree = "<group>"; };
 		DD85E72736A8EA8A5D629639 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		E3C94F14FF5432A7293CD6E6 /* PipDogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipDogApp.swift; sourceTree = "<group>"; };
 		E42F95B9E5B3F2072756F951 /* HoverHider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverHider.swift; sourceTree = "<group>"; };
+		E49E3D451F6264CD0B483F1A /* AppFrameRateSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFrameRateSettings.swift; sourceTree = "<group>"; };
 		E6762FAD689375127E7E6877 /* Geometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Geometry.swift; sourceTree = "<group>"; };
 		ED851B69B19361467D43631F /* SourceWindowActivator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceWindowActivator.swift; sourceTree = "<group>"; };
 		EE90D65C059A172F561D8B77 /* HotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeys.swift; sourceTree = "<group>"; };
 		F1454D76B7C93A30D308785A /* SettingsActivation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsActivation.swift; sourceTree = "<group>"; };
 		F2A7C23304FFEABAC88E4784 /* WindowClickSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowClickSettings.swift; sourceTree = "<group>"; };
 		F73D14FD74636A14F77D2C35 /* PiPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPManager.swift; sourceTree = "<group>"; };
+		FD33CCA60E56C03EC46D131A /* ChromiumRenderHint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumRenderHint.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -95,6 +127,7 @@
 			isa = PBXGroup;
 			children = (
 				1B006B69A584D899E11229DD /* AppDelegate.swift */,
+				C4247FD6E3F32D1FE289372B /* GettingStarted.swift */,
 				31FA2A32898070B2C80DD660 /* Onboarding.swift */,
 				41A899DE6811F684ECCFCC2C /* Permissions.swift */,
 				E3C94F14FF5432A7293CD6E6 /* PipDogApp.swift */,
@@ -106,7 +139,10 @@
 		579EB24C4BAC778481DA4E55 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				E49E3D451F6264CD0B483F1A /* AppFrameRateSettings.swift */,
 				187CF608B7735238BD5EC646 /* CaptureSettings.swift */,
+				D6FE992E209D78A4C1C0F6B6 /* ChromiumCompatibilitySettings.swift */,
+				B6F4CB04635880CD55682018 /* EnhancedModeSettings.swift */,
 				2848994D1D78A70742A7440B /* LanguageSettings.swift */,
 				0722FEEF9E156F226A289B57 /* LaunchAtLogin.swift */,
 				62E231B2FCE33D29E40CC228 /* PiPAppearanceSettings.swift */,
@@ -138,6 +174,8 @@
 				5563F34E29F3D1E3DF68ABB1 /* AXRegionFinder.swift */,
 				17F3EF27BC7BA54AEC58C4AB /* ClickTap.swift */,
 				235DBE54CD20644E8BDC67A2 /* ClickTrigger.swift */,
+				16913379F81509242C3B19DF /* EnhancedHotKeys.swift */,
+				37E2485D63F9F03C60D6A868 /* EnhancedMode.swift */,
 				EE90D65C059A172F561D8B77 /* HotKeys.swift */,
 				0FD18DCA4855653C4E86AE71 /* RegionSelector.swift */,
 			);
@@ -148,13 +186,22 @@
 			isa = PBXGroup;
 			children = (
 				D41B07AB4EDDBFE2AA6ABCDB /* CapturedFrame.swift */,
+				FD33CCA60E56C03EC46D131A /* ChromiumRenderHint.swift */,
+				A6D23C998C8688D96A7F95FD /* FrameFingerprint.swift */,
 				E42F95B9E5B3F2072756F951 /* HoverHider.swift */,
 				63478B0496FA5EFB6DE0764F /* PiPContentView.swift */,
+				4F8FB0A9F0D1D9B7ABC24D2E /* PiPControlBar.swift */,
 				F73D14FD74636A14F77D2C35 /* PiPManager.swift */,
 				727B7A8B372F3003A7A45EC1 /* PiPPanel.swift */,
+				324BB689B205E0156FC97AB9 /* PiPPositionMemory.swift */,
+				75AEF65CD35D8C21B8C20DA9 /* PiPVisibility.swift */,
+				3DDB090D4238C2ACDBEC499D /* RendererWatchdog.swift */,
 				CB63328F1BA896B5166AEC83 /* ResizeHandle.swift */,
 				C726F6D2E40E067E379D6F61 /* SnapshotPreview.swift */,
+				2D1C99550890D72412BEEE1E /* SourceAppCompatibility.swift */,
 				ED851B69B19361467D43631F /* SourceWindowActivator.swift */,
+				2FDA84B7B4DC4C23721FAFDE /* SourceWindowHealth.swift */,
+				999D6200E985CAF0FEA9E7D3 /* SourceWindowReconnector.swift */,
 				8F30E976895527D62F26E134 /* WindowCapture.swift */,
 			);
 			path = PiP;
@@ -197,6 +244,7 @@
 				8CC2DED32F21B7A9BE855B66 /* Feedback.swift */,
 				E6762FAD689375127E7E6877 /* Geometry.swift */,
 				CB4B65792CA61663D8B4F803 /* KeyCodeNames.swift */,
+				8B120105F355D26F48BCE1D2 /* SnappingGeometry.swift */,
 				BD4B99FDDEFC2C0457A44730 /* WindowLocator.swift */,
 			);
 			path = Support;
@@ -286,13 +334,21 @@
 			files = (
 				4FA8A63A86154A4FDEA92255 /* AXRegionFinder.swift in Sources */,
 				1FC3DFB5FEDCAE41A0C02535 /* AppDelegate.swift in Sources */,
+				7F6076FED1AE0A36A8A4A428 /* AppFrameRateSettings.swift in Sources */,
 				ECDA9C720CBCBE9C355777B6 /* CaptureSettings.swift in Sources */,
 				02CDCCD6E31778929D45F9C0 /* CapturedFrame.swift in Sources */,
+				D5B4A7E4F786F8BF8F847053 /* ChromiumCompatibilitySettings.swift in Sources */,
+				687DFE00A214861D2EAD7223 /* ChromiumRenderHint.swift in Sources */,
 				CBBE686E49469F4BD05EC41F /* ClickTap.swift in Sources */,
 				5EE94440916AF71B3F6901C8 /* ClickTrigger.swift in Sources */,
 				656C8999603E95181A047A9A /* CommonModeTimer.swift in Sources */,
+				3729F5EE1EBB39EDE2D4440A /* EnhancedHotKeys.swift in Sources */,
+				D03C250C2B7B00A963AC7D27 /* EnhancedMode.swift in Sources */,
+				5C41A3CD925E0CE6D746D594 /* EnhancedModeSettings.swift in Sources */,
 				A0BA9C151C9E070E0F6713B0 /* Feedback.swift in Sources */,
+				47F4B518599406400324FB4F /* FrameFingerprint.swift in Sources */,
 				24FA5EB2BA942AB7EAD58C7B /* Geometry.swift in Sources */,
+				BB5EC7AC49804F4AADDBFF41 /* GettingStarted.swift in Sources */,
 				2DB16C3B5EA24CFD369A3EFD /* HotKeys.swift in Sources */,
 				E9523AA60C5BEA8964565CBF /* HoverHider.swift in Sources */,
 				5F132E4EEC54E0974FB6E098 /* KeyCodeNames.swift in Sources */,
@@ -302,18 +358,26 @@
 				F547B4B118C9E44DC266FF85 /* Permissions.swift in Sources */,
 				7E2F2CFFC1F21EE8E0169FF5 /* PiPAppearanceSettings.swift in Sources */,
 				60287A9E87198FC4C0CD8224 /* PiPContentView.swift in Sources */,
+				C17A0670FF0330D46A221D25 /* PiPControlBar.swift in Sources */,
 				13CC6602DC53FA1B62AECD0A /* PiPManager.swift in Sources */,
 				1359FEACEA2C6FE8D7DBA4A8 /* PiPPanel.swift in Sources */,
+				D3B8033717BEAAC64E86BE4C /* PiPPositionMemory.swift in Sources */,
+				CF5EE515DFA6EDD8AD624D33 /* PiPVisibility.swift in Sources */,
 				BD4233E206B891D98EB2A231 /* PipDogApp.swift in Sources */,
 				082127F2669C1625D8474B43 /* RegionSelector.swift in Sources */,
+				AF71222393F534B27DF07FB4 /* RendererWatchdog.swift in Sources */,
 				BD384F9C03CDCE49E4B1596C /* ResizeHandle.swift in Sources */,
 				ADEA8AE8FBE0C94E2117A9CF /* SettingsActivation.swift in Sources */,
 				C6D2C7C7605BD961DFD14312 /* SettingsView.swift in Sources */,
 				A6972FFFA4C9291479CA5717 /* ShortcutConfig.swift in Sources */,
 				E380DB2183DF8BDF33357F44 /* ShortcutRecorder.swift in Sources */,
 				0F3EC39CD016B935D5B78A64 /* ShortcutSettings.swift in Sources */,
+				E52C8B7DE16CDD144F7E70FD /* SnappingGeometry.swift in Sources */,
 				7282503B8F3E17BC1D7BABB8 /* SnapshotPreview.swift in Sources */,
+				3C19702D8435948E4006625E /* SourceAppCompatibility.swift in Sources */,
 				EED1C0C55B705B18CD82846F /* SourceWindowActivator.swift in Sources */,
+				979F523BF3C08C560A81809C /* SourceWindowHealth.swift in Sources */,
+				88082F0FC1271E49399C409D /* SourceWindowReconnector.swift in Sources */,
 				E5705A332274735FB13552E0 /* WelcomeView.swift in Sources */,
 				F8E942665A86F876A9BE372C /* WindowCapture.swift in Sources */,
 				11059A60828C1C8E09654895 /* WindowClickSettings.swift in Sources */,

@@ -8,7 +8,7 @@ import AppKit
 /// 检查（读 `NSEvent.modifierFlags` / `pressedMouseButtons`，不需要权限）：鼠标移到叠在一起的另一个小窗上
 /// （本 app 的不是 key 的面板未必收到 mouseMoved），或没有权限收不到全局 flagsChanged 时也能恢复。
 /// 「这次悬停不再隐藏，直到鼠标离开」（suppressed）的情况：在小窗上按下、滚动、捏合；按一下 ⌥ 或再次 PiP 同一窗口让它恢复；
-/// 小窗出现时鼠标已经在它上面；按着鼠标经过（拖文件等）。按住 ⌥、指着 × 或缩放手柄时也先不隐藏。
+/// 小窗出现时鼠标已经在它上面；按着鼠标经过（拖文件等）。按住 ⌥、指着 ×、缩放手柄或控制条时也先不隐藏。
 /// 只改窗口的 alphaValue，不改保存的不透明度：恢复时用当时设置里的不透明度。
 @MainActor
 final class HoverHider {
@@ -69,6 +69,18 @@ final class HoverHider {
         guard isHidden else { return }
         reveal()
         suppressed = true
+    }
+
+    /// 增强模式的 `fn` 轻点：隐藏 / 恢复。和悬停隐藏共用「淡出 + 点击穿透 + 移开或 ⌥ 轻点恢复」，
+    /// 悬停自动隐藏关着时也能用（隐藏期间照样每 0.05 秒看一眼鼠标和修饰键）。
+    func toggleManualHide() {
+        guard let panel, panel.isVisible else { return }
+        if isHidden {
+            reveal()
+            suppressed = true // 手动恢复后这次悬停别再马上淡出
+        } else {
+            hide()
+        }
     }
 
     /// 跟踪区域报告鼠标进入（小窗不在前台时也有）
@@ -172,7 +184,8 @@ final class HoverHider {
 
     /// 鼠标移动、修饰键变化、定时检查都走这里。
     private func pointerMoved() {
-        guard enabled else { return }
+        // 悬停自动隐藏关着时，隐藏期间照样要检查（`fn` 轻点藏起来的小窗靠它恢复）
+        guard enabled || isHidden else { return }
         let inside = pointerInside
         if isHidden {
             if !inside {
@@ -238,6 +251,8 @@ final class HoverHider {
         guard isHidden, let panel else { return }
         isHidden = false
         panel.ignoresMouseEvents = false
+        // 隐藏时鼠标收到的 mouseExited 把 × 和控制条藏了；指针还在小窗里时补一次显示
+        if pointerInside { (panel.contentView as? PiPContentView)?.showChrome() }
         fade(panel, to: PiPAppearanceSettings.shared.opacity) // 隐藏期间改过不透明度也用新的
         NotificationCenter.default.post(name: Self.clickThroughDidChange, object: panel)
     }

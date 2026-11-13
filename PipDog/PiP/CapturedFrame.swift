@@ -37,10 +37,23 @@ struct CapturedFrame: @unchecked Sendable {
 }
 
 /// 抓取线程和主线程之间只传「最新一帧」：主线程来不及显示时旧帧直接被覆盖，不会积压。
+/// 另外记下任意一帧（包括内容没变的 idle 帧）到达的时间：渲染卡顿判断靠它区分
+/// 「画面静止，流还在给帧」和「流真的不给帧了」。
 final class FrameMailbox: @unchecked Sendable {
     private let lock = NSLock()
     private var latest: CapturedFrame?
     private var deliveryScheduled = false
+    private var lastArrival: TimeInterval?
+
+    /// 抓取回调线程：记下这一帧到达的时间（systemUptime）。
+    func noteArrival(at uptime: TimeInterval) {
+        lock.withLock { lastArrival = uptime }
+    }
+
+    /// 最近一次有帧到达的时间（任意状态）；还没有为 nil。
+    var arrivalTime: TimeInterval? {
+        lock.withLock { lastArrival }
+    }
 
     /// 放入最新一帧。返回 true 表示需要安排一次主线程投递（已经安排过就返回 false）。
     func put(_ frame: CapturedFrame) -> Bool {

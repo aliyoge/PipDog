@@ -15,7 +15,7 @@ PipDog lives in the menu bar and turns any window, or any region of a window, in
 
 - **Any window, any region.** PiP the focused window with a hotkey, drag out a region, or hold a modifier and double-click a panel (a log view, a chat list) to PiP just that element.
 - **Back to the source in one click.** Double-click the PiP (or single-click, your choice) to bring the original window to the front. Do it again and PipDog tucks the window away at the screen edge, where it keeps updating, until you call it back.
-- **Zoom, peek, fade.** Scroll or pinch to zoom up to 8×, ⌥-click for a full-resolution Quick Look snapshot, set the opacity, or let the PiP fade out and pass clicks through while the pointer rests on it.
+- **Zoom, peek, fade.** ⌘-scroll or pinch to zoom up to 20× around the pointer (the capture itself is cropped, so the picture stays sharp), ⌥-click for a full-resolution Quick Look snapshot, set the opacity, or let the PiP fade out and pass clicks through while the pointer rests on it.
 - **Stays out of your way.** PiPs never take keyboard focus, capture only at the resolution they are shown at, and refresh at 10 fps by default (5 to 60 fps).
 - **Native and private.** Swift, AppKit and ScreenCaptureKit, public APIs only. No account and no network access: nothing leaves your Mac.
 - **Free and open source** under the Apache-2.0 license.
@@ -66,12 +66,13 @@ PipDog asks for nothing at launch. Each permission is requested the first time y
 | --- | --- |
 | **Screen Recording** (called **Screen & System Audio Recording** on macOS 15 and later) | Required. Shows the live content of the window in the PiP. Requested on your first PiP. After granting it, restart PipDog: it offers a **Relaunch PipDog** button. |
 | **Accessibility** | Optional. Modifier + double-click, raising the exact source window (not just its app), moving the source window to the screen edge, and telling when a source window is minimized. Requested when you first use one of these. |
+| **Accessibility** (Enhanced Mode) | Optional. The fn shortcuts, and the keys you press while the pointer rests on a PiP (zoom, frame rate, hide, close), need it. Requested when you turn Enhanced Mode on. |
 
 The menu-bar menu always shows the current state of both permissions; click one that is missing to fix it.
 
 ### 3. Try it
 
-Focus any window and press **⌃⌥P**. A welcome window on first launch lists your shortcuts and gestures; you can reopen it from the menu at any time (**Welcome Guide…**).
+Focus any window and press **⌃⌥P**. On first launch a welcome window lists your shortcuts and gestures (reopen it any time from **Welcome Guide…**); once it closes, a short guide points at the PipDog icon in the menu bar. Replay that guide from **Show Getting Started**.
 
 ## Usage
 
@@ -93,26 +94,37 @@ Defaults; change them in Settings (menu bar › **Settings…**, or ⌘,). Every
 | Double-click (or single-click, see Settings) | Bring the source window to the front |
 | Double-click again while the source is in front | Move the source window to the screen edge (it keeps updating); once more to bring it back |
 | ⌥-click | Quick Look snapshot of the source at native resolution |
-| Scroll or pinch | Zoom the picture 1–8× around the pointer |
+| ⌘-scroll or pinch | Zoom the picture 1–20× around the pointer |
+| ⌘-drag | Draw a rectangle to zoom into that part of the source |
+| Scroll while zoomed in | Pan the picture |
 | Drag | Move the PiP; when zoomed in, pan the picture |
-| ⌘-click | Reset zoom |
+| ⌘-double-click | Reset zoom |
 | Drag the bottom-right corner | Resize, keeping the aspect ratio |
 | × at the top-left (on hover) | Close this PiP |
+| Point at the PiP | The toolbar appears along the top: pause/resume, frame rate, reset zoom, hover-to-hide and close. Point at a button to see its name; drag the empty part of the toolbar to move the PiP |
 
 - You can open several PiPs at once. Triggering the same window or region again brings its PiP to the front.
-- A PiP follows its source: it adapts when the window is resized and closes when the window closes or the app quits.
-- When the source app is hidden (⌘H), the PiP keeps its last frame with a "paused" note; click the PiP to unhide the app. When the source window is minimized, the PiP shows a note until you restore it from the Dock.
+- A PiP follows its source: it adapts when the window is resized and ends when the window is closed.
+- When the source app is hidden (⌘H), the PiP keeps its last frame with a "paused" note; click the PiP to unhide the app. When the source window is minimized, the PiP shows a note and picks the picture up again by itself once you restore it from the Dock.
+- If the source app quits, the PiP keeps its last frame with a "waiting" note. Reopen the app and the PiP reconnects on its own: the same window if it's still there, otherwise the one with a matching title and size. Without the app coming back it closes after about 5 minutes; you can keep dragging it meanwhile, and clicking it checks again right away.
+- If the capture stops delivering frames, PipDog reapplies the capture settings, then restarts the stream, and only then tells you the picture seems stuck.
 - **Hover to hide** (off by default): rest the pointer on a PiP for about 1.5 s and it fades out and lets clicks pass through to the window below. Move the pointer away, or tap ⌥ on its own, to bring it back.
+- **Toolbar:** point at a PiP and a toolbar fades in along its top. Pause keeps the last frame until you resume; it's unavailable while the source app is hidden or minimized or the PiP is waiting for the app to restart, so those notes stay in charge. The frame rate button cycles through the frame rates and remembers the choice for that app; reset zoom, hover-to-hide and close do what their names say. The toolbar never zooms with the picture, and clicking it doesn't count as switching back to the source.
 
 ### Settings
 
 - **Shortcuts:** click an action's shortcut and press a new combination. It must include ⌘, ⌃ or ⌥, and ⌘ alone (or ⌘⇧) with a plain key isn't allowed, so ⌘C or ⌘Q stay safe.
 - **Modifier + double-click:** turn it on or off and pick the modifiers (default ⌥⇧).
 - **Frame rate:** 5, 10, 15, 24, 30 or 60 fps (default 10). Higher is smoother and uses more CPU.
+- **Per-app frame rate:** Only apps whose frame rate you change keep their own; the frame rate above is the default for the others. Terminal and editor apps, Activity Monitor and Console start at 5 fps the first time you PiP them. Change a row to override it, or delete the row to go back to the default.
+- **Reduce to 1 fps when the picture is static** (on by default): after about 5 seconds without a change, a PiP refreshes once a second until something moves again.
+- **Pause when covered or on another desktop** (on by default): a PiP that's completely covered by other windows or on another desktop drops to 1 fps until it's visible again. Pausing the source app (⌘H) is separate and shows the paused note as before.
+- **Chromium compatibility mode** (off by default): Chromium and Electron apps can stop redrawing while their window is on another desktop or completely covered, so the PiP keeps the last frame. When PipDog notices that, it shows a note once per app per run: by default it suggests turning this mode on; with the mode on, it suggests quitting the app and reopening it with `--disable-backgrounding-occluded-windows`. PipDog never restarts or quits apps for you.
 - **PiP window:** single- or double-click to switch back (default double), opacity 30–100%, and hover to hide.
+- **Enhanced Mode** (off by default): fn+P PiPs the focused window and fn+⇧+P selects a region. While the pointer rests on a PiP, = and - zoom, F switches the frame rate, D turns the static-picture frame rate reduction on or off, a tap of fn hides or shows the PiP, and ⌫ closes it. Hold = or - to keep zooming; F, D and ⌫ act once per press. Needs Accessibility; PipDog asks for it when you turn the mode on, and the shortcuts work as soon as the permission is granted.
 - **Open at Login:** uses macOS Login Items; also in the menu bar menu.
 - **Language:** Follow System (default), English or 简体中文. PipDog offers to relaunch to apply the change. Follow System uses Simplified Chinese on a Chinese system and English otherwise.
-- **Restore Defaults** resets everything above except Open at Login.
+- **Restore Defaults** resets everything above except Open at Login, and clears the per-app frame rates so every app uses the default again.
 
 ## FAQ
 
@@ -139,7 +151,7 @@ Another app or macOS itself may use the same combination. PipDog tells you at la
 
 - **Source window minimized:** restore the window from the Dock and the picture resumes. Telling that a window is minimized needs Accessibility.
 - **Source app hidden:** click the PiP, or switch to the app, to unhide it.
-- When the source window is on another Space or minimized, macOS may stop capturing it. PipDog then closes the PiP and tells you; bring the window back and PiP it again.
+- When macOS stops capturing a source window that is on another Space or minimized, the PiP stays paused and picks up again once the window is back. If the source window was closed instead, the PiP closes and tells you.
 </details>
 
 <details>

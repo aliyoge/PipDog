@@ -17,6 +17,9 @@ enum Onboarding {
     private static var openSettingsOnClose = false
     /// 第一次启动时：欢迎窗口关掉后再继续后面的启动提示
     private static var onClose: (@MainActor () -> Void)?
+    /// 首启：欢迎窗口后面紧跟引导浮层，等浮层真的关掉再把前台还回去
+    private static var waitsForGuideToHandBack = false
+    private static var previousAppAfterGuide: NSRunningApplication?
 
     /// 第一次启动时显示使用说明，关掉后调用 completion；之前显示过就直接调用 completion。
     static func showOnFirstLaunch(then completion: @escaping @MainActor () -> Void) {
@@ -113,12 +116,30 @@ enum Onboarding {
         if openSettingsOnClose {
             openSettingsOnClose = false
             SettingsActivation.shared.open(returningTo: app) // 关掉设置后前台回到打开说明前的 app
+        } else if onClose != nil {
+            // 欢迎窗口后面紧跟首启引导浮层：等浮层关掉再还前台（见 handBackActivationAfterGuide）
+            previousAppAfterGuide = app
+            waitsForGuideToHandBack = true
         } else {
-            handBackActivation(to: app)
+            // willClose 时窗口通常还 visible：等这一轮跑完、窗口真的关掉后再还前台
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { handBackActivation(to: app) }
+            }
         }
         let completion = onClose
         onClose = nil
         completion?()
+    }
+
+    /// 首启引导浮层关掉之后：把前台还给打开欢迎窗口前的 app。
+    static func handBackActivationAfterGuide() {
+        guard waitsForGuideToHandBack else { return }
+        waitsForGuideToHandBack = false
+        let app = previousAppAfterGuide
+        previousAppAfterGuide = nil
+        DispatchQueue.main.async { // 也等这一轮跑完：欢迎窗口可能刚在同一轮里关闭
+            MainActor.assumeIsolated { handBackActivation(to: app) }
+        }
     }
 
     /// 关掉窗口或提示框后把前台还给之前的 app（和设置窗口关闭时一样）；设置或欢迎窗口还开着时不还。
@@ -153,8 +174,9 @@ enum Onboarding {
             .init(icon: "arrow.right.to.line", action: String(localized: "Park at edge / bring back"),
                   gesture: String(localized: "\(click) again when in front")),
             .init(icon: "eye", action: String(localized: "Quick Look"), gesture: String(localized: "⌥-click")),
-            .init(icon: "plus.magnifyingglass", action: String(localized: "Zoom in"), gesture: String(localized: "Scroll / pinch")),
-            .init(icon: "arrow.counterclockwise", action: String(localized: "Reset zoom"), gesture: String(localized: "⌘-click")),
+            .init(icon: "plus.magnifyingglass", action: String(localized: "Zoom in"), gesture: String(localized: "⌘-scroll / pinch")),
+            .init(icon: "rectangle.dashed", action: String(localized: "Zoom to selection"), gesture: String(localized: "⌘-drag")),
+            .init(icon: "arrow.counterclockwise", action: String(localized: "Reset zoom"), gesture: String(localized: "⌘-double-click")),
             .init(icon: "hand.draw", action: String(localized: "Move / pan"), gesture: String(localized: "Drag")),
             .init(icon: "arrow.up.left.and.arrow.down.right", action: String(localized: "Resize"),
                   gesture: String(localized: "Drag bottom-right corner")),
@@ -175,7 +197,7 @@ enum Onboarding {
                 .init(icon: "rectangle.dashed.badge.record", name: Permissions.screenRecordingName,
                       note: String(localized: "Shows live content; requested on your first PiP"), state: screenState),
                 .init(icon: "accessibility", name: String(localized: "Accessibility"),
-                      note: String(localized: "For edge parking and modifier + double-click; requested when needed"),
+                      note: String(localized: "For edge parking, modifier + double-click and Enhanced Mode; requested when needed"),
                       state: Permissions.hasAccessibility ? .granted : .missing),
             ])
     }

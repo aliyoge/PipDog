@@ -46,6 +46,8 @@ enum SourceWindowActivator {
     @MainActor private static var moving: Set<CGWindowID> = []
     /// 移动途中最后一个 PiP 被关掉了：移完（或移回失败后）再放回原位
     @MainActor private static var restoreWhenDone: Set<CGWindowID> = []
+    /// 源 app 重启后换过 windowID 的窗口：还在进行中的停放收尾按新 ID 写回（`migrateStash` 记下，收尾时消费）
+    @MainActor private static var redirectedWindowIDs: [CGWindowID: CGWindowID] = [:]
     /// 本次运行是否已经为移动窗口弹过辅助功能系统授权框（之后只提示）
     @MainActor private static var requestedAccessibility = false
     /// 停放移动的闸门：退出时关上，之后后台不再开始停放移动；锁保证关上之前正在设位置的那一次已经做完。
@@ -126,20 +128,28 @@ enum SourceWindowActivator {
                 moveWindow(pid: pid, windowID: windowID, known: nil, bounds: bounds, title: title, to: parked,
                            allowClamped: true, gated: true)
             }.value
-            parkGate.withLock { _ = $0.applied.remove(windowID) }
+            // 停放途中源 app 可能重启、窗口换了 ID：收尾按现在的 ID 写回
+            let id = currentWindowID(windowID)
+            redirectedWindowIDs.removeValue(forKey: windowID)
+            parkGate.withLock { state in
+                _ = state.applied.remove(windowID)
+                _ = state.applied.remove(id)
+            }
             moving.remove(windowID)
-            let closedMeanwhile = restoreWhenDone.remove(windowID) != nil
+            moving.remove(id)
+            let closedMeanwhile = restoreWhenDone.remove(id) != nil
             guard let result else {
-                stashed[windowID] = nil
+                stashed[id] = nil
                 Feedback.show(String(localized: "Can't move the window of “\(appName)” (it's full screen, or the app doesn't allow it). Exit full screen and try again."))
                 return
             }
-            stashed[windowID]?.parkedX = result.x
-            stashed[windowID]?.window = result.window
+            stashed[id]?.parkedX = result.x
+            // 迁移过的记录属于新进程：旧进程的 AX 窗口引用作废，移回时按位置大小重新找
+            stashed[id]?.window = id == windowID ? result.window : nil
             if closedMeanwhile {
-                restoreIfStashed(windowID: windowID)
+                restoreIfStashed(windowID: id)
             } else {
-                handFocus(awayFrom: windowID, pid: pid)
+                handFocus(awayFrom: id, pid: pid)
             }
         }
     }
@@ -214,6 +224,36 @@ enum SourceWindowActivator {
     @MainActor
     static func cancelPendingRestore(windowID: CGWindowID) {
         restoreWhenDone.remove(windowID)
+    }
+
+    /// 源 app 重启后窗口 ID 变了：把停放记录改到新窗口上，关闭 PiP 时才知道该把哪个窗口放回去。
+    /// 新窗口在新进程里：pid 换成新的，AX 窗口引用（旧进程的）丢掉，移回时按位置大小重新找。
+    /// 进行中的停放和「移完再放回」标记一起改到新 ID；停放收尾用 `currentWindowID(_:)` 找回新 ID。
+    @MainActor
+    static func migrateStash(from oldWindowID: CGWindowID, to newWindowID: CGWindowID, pid: pid_t) {
+        guard oldWindowID != newWindowID else { return }
+        if let stash = stashed.removeValue(forKey: oldWindowID) {
+            stashed[newWindowID] = Stash(pid: pid, original: stash.original, parkedX: stash.parkedX, window: nil)
+        }
+        if moving.remove(oldWindowID) != nil {
+            moving.insert(newWindowID)
+        }
+        if restoreWhenDone.remove(oldWindowID) != nil {
+            restoreWhenDone.insert(newWindowID)
+        }
+        parkGate.withLock { state in
+            if state.applied.remove(oldWindowID) != nil { state.applied.insert(newWindowID) }
+        }
+        redirectedWindowIDs[oldWindowID] = newWindowID
+    }
+
+    /// 停放收尾时窗口可能已经因源 app 重启换了 ID：追着换 ID 链拿到现在的 ID（遇到环就停）。
+    @MainActor
+    private static func currentWindowID(_ windowID: CGWindowID) -> CGWindowID {
+        var id = windowID
+        var seen: Set<CGWindowID> = []
+        while seen.insert(id).inserted, let next = redirectedWindowIDs[id] { id = next }
+        return id
     }
 
     /// 某个窗口的最后一个 PiP 关闭时：窗口还在屏幕边上的话放回原位（不切前台）。

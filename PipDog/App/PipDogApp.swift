@@ -42,6 +42,17 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         statusItem.menu = menu
     }
 
+    /// 菜单栏图标在屏幕上的位置（首启引导浮层的箭头指向它）；刚创建还没布局好时为 nil
+    var statusItemScreenFrame: NSRect? {
+        guard let button = statusItem.button, let window = button.window else { return nil }
+        let onScreen = window.convertToScreen(button.convert(button.bounds, to: nil))
+        guard onScreen.width > 1, onScreen.height > 1 else { return nil }
+        // 菜单栏图标必然贴着某块屏幕的顶边
+        guard let screen = NSScreen.screens.first(where: { $0.frame.intersects(onScreen) }),
+              onScreen.maxY > screen.frame.maxY - 40 else { return nil }
+        return onScreen
+    }
+
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         let settings = ShortcutSettings.shared
@@ -76,9 +87,10 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let accessibility = Permissions.hasAccessibility
         let accessibilityTitle = accessibility
             ? String(localized: "Accessibility: Granted")
-            : String(localized: "Accessibility: Not Granted (needed for edge parking and modifier + double-click)")
+            : String(localized: "Accessibility: Not Granted (needed for edge parking, modifier + double-click and Enhanced Mode)")
         add(accessibilityTitle, action: #selector(accessibilityGuide), enabled: !accessibility, to: menu)
         menu.addItem(.separator())
+        add(String(localized: "Show Getting Started"), action: #selector(showGettingStarted), to: menu)
         add(String(localized: "Welcome Guide…"), action: #selector(showGuide), to: menu)
         add(String(localized: "About PipDog"), action: #selector(showAbout), to: menu)
         let quit = add(String(localized: "Quit PipDog"), action: #selector(terminate), to: menu)
@@ -105,6 +117,13 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     @objc private func accessibilityGuide() { Permissions.showAlert(.accessibility) }
     @objc private func terminate() { NSApp.terminate(nil) }
     @objc private func showGuide() { Onboarding.showGuide() }
+    @objc private func showGettingStarted() {
+        // 菜单要先关掉（否则浮层会被菜单盖住或和菜单抢一次点击）
+        let anchor = statusItemScreenFrame
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            MainActor.assumeIsolated { GettingStarted.replay(anchor: anchor) }
+        }
+    }
     @objc private func showAbout() { Onboarding.showAbout() }
     @objc private func toggleLaunchAtLogin() {
         let launchAtLogin = LaunchAtLogin.shared
