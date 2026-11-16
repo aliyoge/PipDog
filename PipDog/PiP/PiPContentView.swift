@@ -20,10 +20,10 @@ final class PiPContentView: NSView {
     private static let regionUpdateDelay: TimeInterval = 0.25
     /// 框选放大的最小边长（点），再小当成误触
     private static let minimumSelection: CGFloat = 8
-    private static let buttonSize: CGFloat = 20
-    private static let buttonInset: CGFloat = 6
-    /// 控制条与面板左、右、上边缘的距离
-    private static let controlBarInset: CGFloat = 6
+    /// 左上角 × 的直径（和悬停控制条同一种 HUD 圆形底座）
+    private static let closeButtonSize: CGFloat = 22
+    /// × 和控制条与面板左、右、上边缘的距离
+    private static let chromeInset: CGFloat = 8
 
     /// 单击（松开时调用），参数是松开时的修饰键
     var onClick: ((NSEvent.ModifierFlags) -> Void)?
@@ -84,17 +84,13 @@ final class PiPContentView: NSView {
             : CGRect(origin: .zero, size: frameRect.size)
         super.init(frame: frameRect)
         wantsLayer = true
-        let size = Self.buttonSize
-        closeButton.frame = NSRect(x: Self.buttonInset, y: frame.height - Self.buttonInset - size, width: size, height: size)
-        closeButton.autoresizingMask = [.maxXMargin, .minYMargin] // 跟着左上角
-        closeButton.target = self
-        closeButton.action = #selector(closeClicked)
+        closeButton.onClick = { [weak self] in self?.onCloseButton?() }
         closeButton.isHidden = true
         addSubview(closeButton)
         zoomBadge.isHidden = true
         addSubview(zoomBadge)
         addSubview(controlBar)
-        layoutControlBar(for: frameRect.size)
+        layoutChrome(for: frameRect.size) // × 和控制条的中线一起对齐（× 跟着控制条的实际高度走）
         selectionLayer.fillColor = NSColor.white.withAlphaComponent(0.16).cgColor
         selectionLayer.strokeColor = NSColor.controlAccentColor.cgColor
         selectionLayer.lineWidth = 1.5
@@ -151,16 +147,31 @@ final class PiPContentView: NSView {
         super.setFrameSize(newSize)
         layoutImageLayer() // 小窗缩放后画面还是 1:1 铺满
         selectionLayer.frame = bounds
-        layoutControlBar(for: newSize)
+        layoutChrome(for: newSize)
     }
 
-    /// 控制条贴在顶部，左边让开左上角的 ×，右边内缩一点（面板圆角会把它的上角裁掉）
-    private func layoutControlBar(for size: NSSize) {
-        let leading = Self.buttonInset + Self.buttonSize + 6 // × 占的宽度
-        controlBar.frame = NSRect(x: leading,
-                                  y: size.height - Self.controlBarInset - PiPControlBar.height,
-                                  width: max(size.width - leading - Self.controlBarInset, 1),
-                                  height: PiPControlBar.height)
+    /// 控制条在 `update()` 里按帧率文字重算宽度后会要求父视图重摆，真正落地在这里
+    override func layout() {
+        super.layout()
+        layoutChrome(for: bounds.size)
+    }
+
+    /// × 和控制条并排悬浮在顶部：控制条宽度跟着按钮收成胶囊，右边、上边内缩 8pt；窄面板时仍然让开左上角的 ×。
+    /// × 的中线跟着控制条的实际高度走（最窄一档条高 24，不是常规档的 28）
+    private func layoutChrome(for size: NSSize) {
+        let barSize = controlBar.size(fittingPanelWidth: size.width)
+        let minX = Self.chromeInset + Self.closeButtonSize + 6
+        let x = max(size.width - Self.chromeInset - barSize.width, minX)
+        let barFrame = NSRect(x: x,
+                              y: size.height - barSize.height - Self.chromeInset,
+                              width: max(size.width - Self.chromeInset - x, 1),
+                              height: barSize.height)
+        if controlBar.frame != barFrame { controlBar.frame = barFrame }
+        let closeFrame = NSRect(x: Self.chromeInset,
+                                y: barFrame.midY - Self.closeButtonSize / 2,
+                                width: Self.closeButtonSize,
+                                height: Self.closeButtonSize)
+        if closeButton.frame != closeFrame { closeButton.frame = closeFrame }
     }
 
     override func viewDidChangeBackingProperties() {
@@ -452,24 +463,41 @@ final class PiPContentView: NSView {
         isMovingWindow = false
         seriesOption = nil
     }
-
-    @objc private func closeClicked() { onCloseButton?() }
 }
 
-/// 画面放大时左下角的倍数提示（如「2.5×」），1 倍时隐藏。不接收鼠标。
-private final class ZoomBadge: NSTextField {
-    init() {
-        super.init(frame: .zero)
-        isEditable = false
-        isSelectable = false
-        isBordered = false
-        drawsBackground = false
-        font = .monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
-        textColor = .white
-        alignment = .center
+/// 画面放大时左下角的倍数提示（如「2.5×」），1 倍时隐藏。和名称提示同构：HUD 材质全胶囊 + 细描边，不接收鼠标。
+private final class ZoomBadge: NSView {
+    private enum Metrics {
+        static let height: CGFloat = 18
+        static let width: CGFloat = 44
+    }
+
+    private let backdrop = NSVisualEffectView()
+    private let label = NSTextField(labelWithString: "")
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
         wantsLayer = true
-        layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
-        layer?.cornerRadius = 4
+        appearance = NSAppearance(named: .darkAqua)
+
+        backdrop.material = .hudWindow
+        backdrop.blendingMode = .withinWindow
+        backdrop.state = .active
+        backdrop.wantsLayer = true
+        backdrop.layer?.cornerRadius = Metrics.height / 2
+        backdrop.layer?.masksToBounds = true
+        backdrop.layer?.borderWidth = 0.5
+        backdrop.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
+        addSubview(backdrop)
+
+        label.font = .monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+        label.textColor = .white
+        label.alignment = .center
+        label.lineBreakMode = .byClipping
+        label.usesSingleLineMode = true
+        addSubview(label)
+
+        layoutContents()
     }
 
     @available(*, unavailable)
@@ -477,32 +505,81 @@ private final class ZoomBadge: NSTextField {
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        layoutContents()
+    }
+
+    private func layoutContents() {
+        backdrop.frame = bounds
+        label.frame = bounds
+    }
+
     func show(zoom: CGFloat, in bounds: NSRect) {
         isHidden = zoom <= 1
         guard !isHidden else { return }
-        stringValue = String(format: "%.1f×", zoom)
-        let size = NSSize(width: 44, height: 18)
-        frame = NSRect(x: 6, y: 6, width: size.width, height: size.height)
+        label.stringValue = String(format: "%.1f×", zoom)
+        frame = NSRect(x: 6, y: 6, width: Metrics.width, height: Metrics.height)
     }
 }
 
-/// 左上角的 × 按钮：深色圆底、白色叉，面板不在前台时第一次点击也生效。
-private final class CloseButton: NSButton {
-    init() {
-        super.init(frame: .zero)
-        isBordered = false
-        imagePosition = .imageOnly
-        imageScaling = .scaleProportionallyUpOrDown
-        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
-            .applying(NSImage.SymbolConfiguration(paletteColors: [.white, NSColor.black.withAlphaComponent(0.6)]))
-        image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: String(localized: "Close"))?
-            .withSymbolConfiguration(config)
-        toolTip = String(localized: "Close This PiP")
+/// 左上角的 × 按钮：和悬停控制条同一种视觉语言——22pt HUD 圆形底座 + 0.5pt 细描边 + 11pt 白色叉。
+/// 面板不在前台时第一次点击也生效。
+private final class CloseButton: NSView {
+    /// 点击后调用（关闭路径不变：仍然经 PiPContentView.onCloseButton 走到 PiPPanel.close）
+    var onClick: (() -> Void)?
+
+    private let backdrop = NSVisualEffectView()
+    private let button = CloseHitButton()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        appearance = NSAppearance(named: .darkAqua)
+
+        backdrop.material = .hudWindow
+        backdrop.blendingMode = .withinWindow
+        backdrop.state = .active
+        backdrop.wantsLayer = true
+        backdrop.layer?.masksToBounds = true
+        backdrop.layer?.borderWidth = 0.5
+        backdrop.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
+        addSubview(backdrop)
+
+        button.isBordered = false
+        button.imagePosition = .imageOnly
+        button.imageScaling = .scaleProportionallyUpOrDown
+        button.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: String(localized: "Close"))?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 11, weight: .semibold))
+        button.contentTintColor = .white
+        button.toolTip = String(localized: "Close This PiP")
+        button.target = self
+        button.action = #selector(clicked)
+        addSubview(button)
+
+        layoutContents()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        layoutContents()
+    }
+
+    private func layoutContents() {
+        backdrop.frame = bounds
+        backdrop.layer?.cornerRadius = bounds.height / 2 // 圆角跟着实际直径走（init 时 frame 还是 .zero）
+        button.frame = bounds
+    }
+
+    @objc private func clicked() { onClick?() }
+}
+
+/// × 内部的命中按钮：`acceptsFirstMouse` 问的是 hit-test 到的那个视图，只写在 `CloseButton` 上不够；
+/// 面板平时不是 key window，没有这一层第一次点击会被吃掉。
+private final class CloseHitButton: NSButton {
     override var mouseDownCanMoveWindow: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

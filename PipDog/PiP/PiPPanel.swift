@@ -125,7 +125,6 @@ final class PiPPanel: NSPanel, NSWindowDelegate {
         view.controlBar.onCycleFrameRate = { [weak self] in self?.cycleFrameRate() }
         view.controlBar.onResetZoom = { [weak self] in self?.pipView?.resetZoom() }
         view.controlBar.onToggleHoverAutoHide = { [weak self] in self?.toggleHoverAutoHide() }
-        view.controlBar.onClose = { [weak self] in self?.close() }
         contentView = view
         alphaValue = PiPAppearanceSettings.shared.opacity
         let hider = HoverHider(panel: self) { [weak view] point in view?.isOverChrome(screenPoint: point) ?? false }
@@ -752,7 +751,16 @@ private final class PauseOverlay: NSView {
     private let label = NSTextField(wrappingLabelWithString: "")
 
     func update(text: String) {
-        label.stringValue = text
+        // 13pt semibold + 微弱文字投影：压在亮色视频上也字字清楚
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.45)
+        shadow.shadowBlurRadius = 2
+        shadow.shadowOffset = NSSize(width: 0, height: -1)
+        label.attributedStringValue = NSAttributedString(string: text, attributes: [
+            .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
+            .foregroundColor: NSColor.white,
+            .shadow: shadow,
+        ])
         needsLayout = true
     }
 
@@ -760,7 +768,7 @@ private final class PauseOverlay: NSView {
         super.init(frame: frame)
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
-        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.font = .systemFont(ofSize: 13, weight: .semibold)
         label.textColor = .white
         label.alignment = .center
         addSubview(label)

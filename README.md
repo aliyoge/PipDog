@@ -101,7 +101,7 @@ Defaults; change them in Settings (menu bar › **Settings…**, or ⌘,). Every
 | ⌘-double-click | Reset zoom |
 | Drag the bottom-right corner | Resize, keeping the aspect ratio |
 | × at the top-left (on hover) | Close this PiP |
-| Point at the PiP | The toolbar appears along the top: pause/resume, frame rate, reset zoom, hover-to-hide and close. Point at a button to see its name; drag the empty part of the toolbar to move the PiP |
+| Point at the PiP | A floating capsule fades in at the top-right: pause/resume, frame rate, reset zoom and hover-to-hide (the × at the top-left closes the PiP). Point at a button to see its name; drag the empty part of the capsule to move the PiP |
 
 - You can open several PiPs at once. Triggering the same window or region again brings its PiP to the front.
 - A PiP follows its source: it adapts when the window is resized and ends when the window is closed.
@@ -109,7 +109,7 @@ Defaults; change them in Settings (menu bar › **Settings…**, or ⌘,). Every
 - If the source app quits, the PiP keeps its last frame with a "waiting" note. Reopen the app and the PiP reconnects on its own: the same window if it's still there, otherwise the one with a matching title and size. Without the app coming back it closes after about 5 minutes; you can keep dragging it meanwhile, and clicking it checks again right away.
 - If the capture stops delivering frames, PipDog reapplies the capture settings, then restarts the stream, and only then tells you the picture seems stuck.
 - **Hover to hide** (off by default): rest the pointer on a PiP for about 1.5 s and it fades out and lets clicks pass through to the window below. Move the pointer away, or tap ⌥ on its own, to bring it back.
-- **Toolbar:** point at a PiP and a toolbar fades in along its top. Pause keeps the last frame until you resume; it's unavailable while the source app is hidden or minimized or the PiP is waiting for the app to restart, so those notes stay in charge. The frame rate button cycles through the frame rates and remembers the choice for that app; reset zoom, hover-to-hide and close do what their names say. The toolbar never zooms with the picture, and clicking it doesn't count as switching back to the source.
+- **Toolbar:** point at a PiP and a small capsule fades in at its top-right. Pause keeps the last frame until you resume; it's unavailable while the source app is hidden or minimized or the PiP is waiting for the app to restart, so those notes stay in charge. The frame rate button cycles through the frame rates and remembers the choice for that app; reset zoom and hover-to-hide do what their names say. Closing stays on the × at the top-left. The toolbar never zooms with the picture, and clicking it doesn't count as switching back to the source.
 
 ### Settings
 
